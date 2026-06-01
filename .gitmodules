@@ -1,0 +1,9 @@
+[submodule "vendor/symbolic_options"]
+	path = vendor/symbolic_options
+	url = https://github.com/remunds/symbolic_options
+[submodule "vendor/purejaxql"]
+	path = vendor/purejaxql
+	url = https://github.com/mttga/purejaxql
+[submodule "vendor/mujoco_playground"]
+	path = vendor/mujoco_playground
+	url = https://github.com/google-deepmind/mujoco_playground
