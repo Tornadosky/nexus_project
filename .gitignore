@@ -1,0 +1,79 @@
+# Python bytecode and caches
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+
+# Virtual environments
+.venv/
+.venv-*/
+venv/
+env/
+ENV/
+
+# Packaging / build
+*.egg-info/
+.eggs/
+dist/
+build/
+*.egg
+pip-wheel-metadata/
+
+# Test and lint caches
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+.tox/
+.nox/
+.hypothesis/
+
+# Experiment outputs and checkpoints
+runs/
+wandb/
+checkpoints/
+outputs/
+models*/
+renders*/
+*.pkl
+*.pickle
+*.npz
+*.safetensors
+
+# Hydra
+multirun/
+.hydra/
+
+# MuJoCo / Playground assets (see vendor/mujoco_playground)
+MUJOCO_LOG.TXT
+.mujoco_playground_asset_cache/
+mujoco_menagerie/
+
+# Jupyter
+.ipynb_checkpoints/
+*.ipynb
+
+# Environment and secrets
+.env
+.env.*
+!.env.example
+
+# OS files
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# IDE (local editor settings)
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Logs
+*.log
+
+# Accidental shell/pip artifacts (e.g. mistyped "pip install pkg>=X")
+=*

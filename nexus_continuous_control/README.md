@@ -54,10 +54,10 @@ python -m pip install -U pip
 # CPU smoke tests / development
 pip install -e .[dev]
 
-# GPU / Playground training. Use the JAX CUDA wheel appropriate for your machine.
+# GPU / Playground training. Current Playground source requires Python 3.11+.
+# Use the JAX CUDA wheel appropriate for your machine.
 pip install -U "jax[cuda12]" --index-url https://pypi.org/simple
-pip install playground
-pip install git+https://github.com/mttga/purejaxql.git
+pip install git+https://github.com/google-deepmind/mujoco_playground.git
 pip install -e .[dev]
 ```
 

@@ -13,14 +13,11 @@ and writes a zip that can be uploaded for review.
 from __future__ import annotations
 
 import argparse
-import csv
 import json
 import math
-import os
 import pickle
 import re
 import shutil
-import sys
 import traceback
 import zipfile
 from collections import defaultdict
@@ -603,6 +600,7 @@ def write_diagnostics(
     records: list[RunRecord],
     load_failures: list[dict[str, str]],
     metric_errors: list[dict[str, str]],
+    long_df: pd.DataFrame,
     wide_df: pd.DataFrame,
     summary_df: pd.DataFrame,
 ) -> None:
@@ -648,22 +646,19 @@ def write_diagnostics(
 
     lines.append("## Finite-value checks")
     lines.append("")
-    if wide_df.empty:
+    if long_df.empty:
         lines.append("- FATAL: no metrics were extracted.")
     else:
-        numeric_cols = [c for c in wide_df.columns if c not in {
-            "run_id", "stage", "seed", "env_name", "policy", "meta_policy_type", "source_pickle"
-        }]
-        fatal_cols = []
-        for col in numeric_cols:
-            vals = pd.to_numeric(wide_df[col], errors="coerce").to_numpy(dtype=float)
-            vals = vals[~np.isnan(vals)]
-            if len(vals) and not np.isfinite(vals).all():
-                fatal_cols.append(col)
-        if fatal_cols:
-            lines.append("- FATAL: non-finite values in columns: " + ", ".join(fatal_cols))
+        values = pd.to_numeric(long_df["value"], errors="coerce").to_numpy(dtype=float)
+        bad_rows = long_df.loc[~np.isfinite(values), ["run_id", "seed", "metric"]]
+        if not bad_rows.empty:
+            lines.append("- FATAL: non-finite metric values detected:")
+            for row in bad_rows.drop_duplicates().head(100).itertuples(index=False):
+                lines.append(f"  - {row.run_id} seed{row.seed} {row.metric}")
+            if len(bad_rows) > 100:
+                lines.append(f"  - ... {len(bad_rows) - 100} more")
         else:
-            lines.append("- OK: no non-finite numeric metric values detected after NaN filtering.")
+            lines.append("- OK: no non-finite numeric metric values detected.")
 
     lines.append("")
     lines.append("## Skill usage checks")
@@ -804,7 +799,7 @@ def main(argv: list[str] | None = None) -> int:
 
     make_plots(wide_df, summary_df, out_dir / "plots")
     copy_supporting_files(runs_root, out_dir, records, include_checkpoints=args.include_checkpoints)
-    write_diagnostics(out_dir, records, load_failures, metric_errors, wide_df, summary_df)
+    write_diagnostics(out_dir, records, load_failures, metric_errors, long_df, wide_df, summary_df)
     write_manifest(out_dir, runs_root, records)
 
     zip_path = args.zip or out_dir.with_suffix(".zip")

@@ -9,6 +9,7 @@ from typing import Any
 
 import jax
 import numpy as np
+from flax import serialization
 
 from nexus_continuous.algorithms.hierarchical_ac_pqn_playground import run_training
 from nexus_continuous.policies.registry import load_policy_module, list_policies
@@ -64,7 +65,7 @@ def main(argv: list[str] | None = None) -> None:
     if save_path:
         payload = {
             "config": cfg,
-            "runner_state": output.runner_state,
+            "runner_state": serialization.to_state_dict(output.runner_state),
             "metrics": output.metrics,
         }
         save_pickle_checkpoint(Path(save_path), payload)

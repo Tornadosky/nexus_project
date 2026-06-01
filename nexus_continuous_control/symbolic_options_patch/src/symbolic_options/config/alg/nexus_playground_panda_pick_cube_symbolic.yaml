@@ -1,5 +1,6 @@
 ALG_NAME: nexus_ac_pqn
 ENV_NAME: PandaPickCube
+PLAYGROUND_IMPL: jax
 POLICY: panda_pick_cube
 META_POLICY_TYPE: symbolic
 TOTAL_TIMESTEPS: 10000000

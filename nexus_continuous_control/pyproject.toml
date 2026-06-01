@@ -21,8 +21,7 @@ dependencies = [
 
 [project.optional-dependencies]
 playground = [
-  "playground",
-  "purejaxql @ git+https://github.com/mttga/purejaxql.git"
+  "playground @ git+https://github.com/google-deepmind/mujoco_playground.git"
 ]
 vision = ["Pillow>=10.0"]
 dev = ["pytest>=8.0", "ruff>=0.5.0"]

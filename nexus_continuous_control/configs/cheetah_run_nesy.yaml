@@ -1,5 +1,6 @@
 ALG_NAME: nexus_ac_pqn
 ENV_NAME: CheetahRun
+PLAYGROUND_IMPL: jax
 POLICY: cheetah_run
 META_POLICY_TYPE: nesy
 TOTAL_TIMESTEPS: 5000000

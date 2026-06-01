@@ -1,5 +1,6 @@
 ALG_NAME: nexus_ac_pqn
 ENV_NAME: CartpoleBalance
+PLAYGROUND_IMPL: jax
 POLICY: cartpole_balance
 META_POLICY_TYPE: symbolic
 TOTAL_TIMESTEPS: 2000000

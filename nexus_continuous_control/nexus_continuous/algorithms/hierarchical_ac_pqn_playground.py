@@ -18,7 +18,6 @@ Supported meta-policy variants:
 
 from __future__ import annotations
 
-import functools
 import time
 from typing import Any, Callable, NamedTuple
 
@@ -26,7 +25,6 @@ import jax
 import jax.numpy as jnp
 import numpy as np
 import optax
-from flax.training.train_state import TrainState
 
 from nexus_continuous.envs.playground_adapter import (
     build_playground_env,
