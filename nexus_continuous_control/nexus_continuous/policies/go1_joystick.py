@@ -111,13 +111,51 @@ def diagnostics(
     info: Any | None = None,
 ) -> dict[str, jnp.ndarray]:
     del prev_obs, action, env_reward, done
-    height, roll, pitch, _vx, _vy, _yaw_rate, cmd_x, cmd_y, cmd_yaw = _features(obs, info)
+    height, roll, pitch, vx, vy, yaw_rate, cmd_x, cmd_y, cmd_yaw = _features(obs, info)
+    vel_error = l2_norm(jnp.stack([vx - cmd_x, vy - cmd_y], axis=-1))
+    yaw_error = jnp.abs(yaw_rate - cmd_yaw)
+    not_fallen = (height > 0.22) & (jnp.abs(roll) < 0.6) & (jnp.abs(pitch) < 0.6)
+    tracking_success = not_fallen & (vel_error < 0.6) & (yaw_error < 0.6)
     return {
         "go1/base_height": height,
         "go1/roll": roll,
         "go1/pitch": pitch,
+        "go1/lin_vel_x": vx,
+        "go1/lin_vel_y": vy,
+        "go1/yaw_rate": yaw_rate,
+        "go1/velocity_tracking_error": vel_error,
+        "go1/yaw_tracking_error": yaw_error,
+        "go1/not_fallen": not_fallen.astype(jnp.float32),
+        "go1/tracking_success": tracking_success.astype(jnp.float32),
         "go1/command_xy_norm": l2_norm(jnp.stack([cmd_x, cmd_y], axis=-1)),
         "go1/command_yaw": cmd_yaw,
+    }
+
+
+def task_metrics(
+    prev_obs: Any,
+    obs: Any,
+    action: jnp.ndarray,
+    env_reward: jnp.ndarray,
+    done: jnp.ndarray,
+    info: Any | None = None,
+) -> dict[str, jnp.ndarray]:
+    del prev_obs, action, env_reward, done
+    height, roll, pitch, vx, vy, yaw_rate, cmd_x, cmd_y, cmd_yaw = _features(obs, info)
+    not_fallen = (height > 0.22) & (jnp.abs(roll) < 0.6) & (jnp.abs(pitch) < 0.6)
+    velocity_tracking_error = l2_norm(jnp.stack([vx - cmd_x, vy - cmd_y], axis=-1))
+    yaw_tracking_error = jnp.abs(yaw_rate - cmd_yaw)
+    tracking_success = (
+        not_fallen & (velocity_tracking_error < 0.6) & (yaw_tracking_error < 0.6)
+    )
+    primary_goal = -(velocity_tracking_error + 0.5 * yaw_tracking_error)
+    return {
+        "go1/no_fall_rate": not_fallen.astype(jnp.float32),
+        "go1/tracking_success_rate": tracking_success.astype(jnp.float32),
+        "go1/velocity_tracking_error_mean": velocity_tracking_error,
+        "go1/yaw_tracking_error_mean": yaw_tracking_error,
+        "primary_goal_metric": primary_goal,
+        "primary_success_rate": tracking_success.astype(jnp.float32),
     }
 
 

@@ -59,6 +59,9 @@ class Transition(NamedTuple):
 class NexusTrainOutput(NamedTuple):
     runner_state: Any
     metrics: Any
+    eval_metrics: Any
+    eval_episode_table: Any
+    normalization_stats: Any
 
 
 def _schedule(start: float, end: float, decay_fraction: float, num_updates: int):
@@ -99,6 +102,20 @@ def masked_meta_bootstrap_value(q_values: jnp.ndarray, mask: jnp.ndarray | None 
     if mask is not None:
         q_values = jnp.where(mask, q_values, -1.0e9)
     return jnp.max(q_values, axis=-1)
+
+
+def mask_violation_metrics(
+    skill_one_hot: jnp.ndarray,
+    mask_float: jnp.ndarray,
+    skill_names: tuple[str, ...],
+) -> dict[str, jnp.ndarray]:
+    selected_available = jnp.sum(skill_one_hot * mask_float, axis=-1)
+    metrics = {"mask/violation_rate": 1.0 - jnp.mean(selected_available)}
+    for idx, name in enumerate(skill_names):
+        metrics[f"mask_violation/{idx}_{name}"] = jnp.mean(
+            skill_one_hot[..., idx] * (1.0 - mask_float[..., idx])
+        )
+    return metrics
 
 
 def skill_actor_bootstrap_values(
@@ -145,6 +162,7 @@ def make_train(config: dict[str, Any]) -> Callable[[jax.Array], NexusTrainOutput
     _as_num_steps(config)
 
     policy_module = load_policy_module(config.get("POLICY", config["ENV_NAME"]))
+    task_policy_module = load_policy_module(config.get("TASK_POLICY", config["ENV_NAME"]))
     num_skills = int(getattr(policy_module, "NUM_SKILLS"))
     skill_names = tuple(getattr(policy_module, "SKILL_NAMES"))
     meta_policy_type = config.get("META_POLICY_TYPE", "nesy").lower()
@@ -156,6 +174,21 @@ def make_train(config: dict[str, Any]) -> Callable[[jax.Array], NexusTrainOutput
     env_bundle = build_playground_env(config)
     env = env_bundle.env
     env_params = env_bundle.env_params
+    eval_enabled = bool(config.get("EVAL_AFTER_TRAIN", False))
+    eval_num_envs = int(config.get("EVAL_NUM_ENVS", 64))
+    eval_num_episodes = int(config.get("EVAL_NUM_EPISODES", 128))
+    eval_max_steps = int(config.get("EVAL_MAX_STEPS") or env_bundle.episode_length)
+    eval_num_batches = max(1, int(np.ceil(eval_num_episodes / eval_num_envs)))
+    if eval_enabled:
+        eval_config = dict(config)
+        eval_config["NORMALIZE_OBS"] = False
+        eval_config["NORMALIZE_REWARD"] = False
+        eval_bundle = build_playground_env(eval_config)
+        eval_env = eval_bundle.env
+        eval_env_params = eval_bundle.env_params
+    else:
+        eval_env = None
+        eval_env_params = None
     action_low = jnp.asarray(env_bundle.action_low)
     action_high = jnp.asarray(env_bundle.action_high)
     action_dim = env_bundle.action_dim
@@ -267,11 +300,31 @@ def make_train(config: dict[str, Any]) -> Callable[[jax.Array], NexusTrainOutput
         return masked_meta_bootstrap_value(q)
 
     def _policy_diagnostics(prev_policy_obs, policy_obs, action, env_reward, done, info):
+        diagnostics = {}
         if hasattr(policy_module, "diagnostics"):
-            return policy_module.diagnostics(prev_policy_obs, policy_obs, action, env_reward, done, info)
-        return {}
+            diagnostics.update(
+                policy_module.diagnostics(prev_policy_obs, policy_obs, action, env_reward, done, info)
+            )
+        if hasattr(task_policy_module, "task_metrics"):
+            diagnostics.update(
+                task_policy_module.task_metrics(
+                    prev_policy_obs,
+                    policy_obs,
+                    action,
+                    env_reward,
+                    done,
+                    info,
+                )
+            )
+        return diagnostics
 
-    def _select_action(train_state: NexusTrainState, obs: Any, rng: jax.Array, update_idx: int):
+    def _select_action(
+        train_state: NexusTrainState,
+        obs: Any,
+        rng: jax.Array,
+        update_idx: int,
+        explore: bool,
+    ):
         obs_actor = get_actor_obs(obs)
         policy_obs = get_policy_obs(obs)
         all_actions = _actor_apply(train_state.actor.params, obs_actor)  # [N, E, A]
@@ -294,21 +347,241 @@ def make_train(config: dict[str, Any]) -> Callable[[jax.Array], NexusTrainOutput
             else:
                 mask = jnp.ones_like(meta_values, dtype=bool)
                 greedy_skill = jnp.argmax(meta_values, axis=-1).astype(jnp.int32)
-            epsilon = epsilon_schedule(update_idx)
+            epsilon = epsilon_schedule(update_idx) if explore else jnp.asarray(0.0)
             rng, rng_eps = jax.random.split(rng)
             selected_skill = _epsilon_greedy_skill(rng_eps, greedy_skill, epsilon, num_skills, mask)
 
         original_action = _select_rows(all_actions_env_major, selected_skill)
-        rng, rng_noise = jax.random.split(rng)
-        noise_std = noise_schedule(update_idx)
-        if config.get("LINSPACE_NOISE", False):
-            per_env_noise = jnp.linspace(0.0, noise_std, obs_actor.shape[0])[:, None]
+        if explore:
+            rng, rng_noise = jax.random.split(rng)
+            noise_std = noise_schedule(update_idx)
+            if config.get("LINSPACE_NOISE", False):
+                per_env_noise = jnp.linspace(0.0, noise_std, obs_actor.shape[0])[:, None]
+            else:
+                per_env_noise = noise_std
+            noise = jax.random.normal(rng_noise, original_action.shape) * per_env_noise * action_scale
+            action = jnp.clip(original_action + noise, action_low, action_high)
         else:
-            per_env_noise = noise_std
-        noise = jax.random.normal(rng_noise, original_action.shape) * per_env_noise * action_scale
-        action = jnp.clip(original_action + noise, action_low, action_high)
+            action = jnp.clip(original_action, action_low, action_high)
         meta_selected_value = _select_rows(meta_values, selected_skill)
         return original_action, action, selected_skill, meta_selected_value, mask, rng
+
+    def _normalization_stats_from_state(env_state: Any, obs: Any) -> dict[str, jnp.ndarray]:
+        obs_actor = get_actor_obs(obs)
+        obs_critic = get_critic_obs(obs)
+        if config.get("NORMALIZE_OBS", True):
+            return {
+                "actor_mean": env_state.actor_mean,
+                "actor_var": env_state.actor_var,
+                "actor_count": env_state.actor_count,
+                "critic_mean": env_state.critic_mean,
+                "critic_var": env_state.critic_var,
+                "critic_count": env_state.critic_count,
+            }
+        return {
+            "actor_mean": jnp.zeros(obs_actor.shape[1:], dtype=obs_actor.dtype),
+            "actor_var": jnp.ones(obs_actor.shape[1:], dtype=obs_actor.dtype),
+            "actor_count": jnp.asarray(0.0, dtype=obs_actor.dtype),
+            "critic_mean": jnp.zeros(obs_critic.shape[1:], dtype=obs_critic.dtype),
+            "critic_var": jnp.ones(obs_critic.shape[1:], dtype=obs_critic.dtype),
+            "critic_count": jnp.asarray(0.0, dtype=obs_critic.dtype),
+        }
+
+    def _normalized_eval_obs(raw_obs: Any, stats: dict[str, jnp.ndarray]) -> Any:
+        if not config.get("NORMALIZE_OBS", True):
+            return raw_obs
+        raw_actor = raw_obs["raw_actor"] if isinstance(raw_obs, dict) else raw_obs
+        raw_critic = raw_obs["raw_critic"] if isinstance(raw_obs, dict) else raw_obs
+        obs = {
+            "actor": (raw_actor - stats["actor_mean"]) / jnp.sqrt(stats["actor_var"] + 1e-8),
+            "critic": (raw_critic - stats["critic_mean"]) / jnp.sqrt(stats["critic_var"] + 1e-8),
+            "raw_actor": raw_actor,
+            "raw_critic": raw_critic,
+        }
+        if isinstance(raw_obs, dict) and "policy_info" in raw_obs:
+            obs["policy_info"] = raw_obs["policy_info"]
+        return obs
+
+    def _task_metrics(prev_policy_obs, policy_obs, action, env_reward, done, info):
+        if hasattr(task_policy_module, "task_metrics"):
+            return task_policy_module.task_metrics(
+                prev_policy_obs,
+                policy_obs,
+                action,
+                env_reward,
+                done,
+                info,
+            )
+        return {}
+
+    def _panda_episode_overrides(
+        mean_metrics: dict[str, jnp.ndarray],
+        max_metrics: dict[str, jnp.ndarray],
+        initial_metrics: dict[str, jnp.ndarray],
+    ) -> dict[str, jnp.ndarray]:
+        if "panda/cube_height_max_mean" not in mean_metrics:
+            return mean_metrics
+        out = dict(mean_metrics)
+        max_height = max_metrics["panda/cube_height_max_mean"]
+        initial_height = initial_metrics["panda/cube_height_max_mean"]
+        initial_height = jnp.where(initial_height > 0.01, initial_height, 0.03)
+        max_delta = max_height - initial_height
+        lift_success = (max_height > initial_height + 0.05) | (max_height > 0.08)
+        out["panda/reach_success_rate"] = max_metrics["panda/reach_success_rate"]
+        out["panda/closed_near_cube_rate"] = max_metrics["panda/closed_near_cube_rate"]
+        out["panda/lift_success_rate"] = lift_success.astype(jnp.float32)
+        out["panda/place_success_rate"] = max_metrics["panda/place_success_rate"]
+        out["panda/cube_height_max_mean"] = max_height
+        out["panda/cube_height_delta_max_mean"] = max_delta
+        out["primary_goal_metric"] = max_delta
+        out["primary_success_rate"] = lift_success.astype(jnp.float32)
+        return out
+
+    def _summarize_eval_table(table: dict[str, jnp.ndarray]) -> dict[str, jnp.ndarray]:
+        summary = {
+            "eval_seed": jnp.asarray(int(config.get("EVAL_SEED", 10000)), dtype=jnp.int32),
+            "num_eval_episodes": jnp.asarray(eval_num_episodes, dtype=jnp.int32),
+            "episode_return_mean": jnp.mean(table["episode_return"]),
+            "episode_return_std": jnp.std(table["episode_return"]),
+            "episode_length_mean": jnp.mean(table["episode_length"]),
+        }
+        for key, value in table.items():
+            if key in ("eval_episode_index", "episode_return", "episode_length"):
+                continue
+            summary[key] = jnp.mean(value)
+        return summary
+
+    def _run_deterministic_evaluation(
+        train_state: NexusTrainState,
+        stats: dict[str, jnp.ndarray],
+    ) -> tuple[dict[str, jnp.ndarray], dict[str, jnp.ndarray]]:
+        if not eval_enabled:
+            return {}, {}
+        assert eval_env is not None
+
+        zero_action = jnp.zeros((eval_num_envs, action_dim), dtype=action_low.dtype)
+        zero_reward = jnp.zeros((eval_num_envs,), dtype=action_low.dtype)
+        zero_done = jnp.zeros((eval_num_envs,), dtype=bool)
+
+        def _eval_batch(batch_rng):
+            reset_rng = jax.random.split(batch_rng, eval_num_envs)
+            raw_obs, eval_state = eval_env.reset(reset_rng, eval_env_params)
+            obs = _normalized_eval_obs(raw_obs, stats)
+            policy_obs = get_policy_obs(obs)
+            initial_metrics = _task_metrics(
+                policy_obs,
+                policy_obs,
+                zero_action,
+                zero_reward,
+                zero_done,
+                None,
+            )
+            zeros_like_metrics = jax.tree_util.tree_map(jnp.zeros_like, initial_metrics)
+            neg_inf_metrics = jax.tree_util.tree_map(
+                lambda x: jnp.full_like(x, -jnp.inf),
+                initial_metrics,
+            )
+            returns = jnp.zeros((eval_num_envs,), dtype=zero_reward.dtype)
+            lengths = jnp.zeros((eval_num_envs,), dtype=zero_reward.dtype)
+            done_seen = jnp.zeros((eval_num_envs,), dtype=bool)
+
+            def _eval_step(carry, unused):
+                eval_state, last_obs, rng, done_seen, returns, lengths, sum_metrics, max_metrics = carry
+                rng, rng_action = jax.random.split(rng)
+                _original_action, action, _skill, _value, _mask, rng_action = _select_action(
+                    train_state,
+                    last_obs,
+                    rng_action,
+                    train_state.actor.n_updates,
+                    explore=False,
+                )
+                rng, rng_step = jax.random.split(rng)
+                step_rng = jax.random.split(rng_step, eval_num_envs)
+                raw_next_obs, next_eval_state, reward, done, info = eval_env.step(
+                    step_rng,
+                    eval_state,
+                    action,
+                    eval_env_params,
+                )
+                next_obs = _normalized_eval_obs(raw_next_obs, stats)
+                metrics = _task_metrics(
+                    get_policy_obs(last_obs),
+                    get_policy_obs(next_obs),
+                    action,
+                    reward,
+                    done,
+                    info,
+                )
+                active = (~done_seen).astype(jnp.float32)
+                active_bool = active.astype(bool)
+                returns = returns + reward * active
+                lengths = lengths + active
+                sum_metrics = jax.tree_util.tree_map(
+                    lambda acc, value: acc + value * active,
+                    sum_metrics,
+                    metrics,
+                )
+                max_metrics = jax.tree_util.tree_map(
+                    lambda acc, value: jnp.maximum(acc, jnp.where(active_bool, value, -jnp.inf)),
+                    max_metrics,
+                    metrics,
+                )
+                done_seen = done_seen | done
+                return (
+                    next_eval_state,
+                    next_obs,
+                    rng,
+                    done_seen,
+                    returns,
+                    lengths,
+                    sum_metrics,
+                    max_metrics,
+                ), None
+
+            init_carry = (
+                eval_state,
+                obs,
+                batch_rng,
+                done_seen,
+                returns,
+                lengths,
+                zeros_like_metrics,
+                neg_inf_metrics,
+            )
+            final_carry, _ = jax.lax.scan(_eval_step, init_carry, None, eval_max_steps)
+            (
+                _eval_state,
+                _last_obs,
+                _rng,
+                _done_seen,
+                returns,
+                lengths,
+                sum_metrics,
+                max_metrics,
+            ) = final_carry
+            denom = jnp.maximum(lengths, 1.0)
+            mean_metrics = jax.tree_util.tree_map(lambda value: value / denom, sum_metrics)
+            episode_metrics = _panda_episode_overrides(mean_metrics, max_metrics, initial_metrics)
+            table = {
+                "episode_return": returns,
+                "episode_length": lengths,
+            }
+            table.update(episode_metrics)
+            return table
+
+        eval_rng = jax.random.PRNGKey(int(config.get("EVAL_SEED", 10000)))
+        batch_rngs = jax.random.split(eval_rng, eval_num_batches)
+
+        def _batch_scan(_, batch_rng):
+            return None, _eval_batch(batch_rng)
+
+        _, batched_table = jax.lax.scan(_batch_scan, None, batch_rngs)
+        flat_table = jax.tree_util.tree_map(
+            lambda x: x.reshape((-1,) + x.shape[2:])[:eval_num_episodes],
+            batched_table,
+        )
+        flat_table["eval_episode_index"] = jnp.arange(eval_num_episodes, dtype=jnp.int32)
+        return _summarize_eval_table(flat_table), flat_table
 
     def train(rng: jax.Array) -> NexusTrainOutput:
         # Initialize environment.
@@ -351,7 +624,7 @@ def make_train(config: dict[str, Any]) -> Callable[[jax.Array], NexusTrainOutput
             train_state, env_state, last_obs, rng = carry
             update_idx = train_state.actor.n_updates
             original_action, action, skill, meta_selected_value, mask, rng = _select_action(
-                train_state, last_obs, rng, update_idx
+                train_state, last_obs, rng, update_idx, explore=True
             )
             obs_actor = get_actor_obs(last_obs)
             obs_critic = get_critic_obs(last_obs)
@@ -604,6 +877,7 @@ def make_train(config: dict[str, Any]) -> Callable[[jax.Array], NexusTrainOutput
                 mask_available,
                 1e-6,
             )
+            violation_metrics = mask_violation_metrics(skill_one_hot, mask_float, skill_names)
             noise_norm = jnp.linalg.norm(traj.action - traj.original_action, axis=-1)
             metrics = {
                 "env_step": timesteps,
@@ -625,6 +899,7 @@ def make_train(config: dict[str, Any]) -> Callable[[jax.Array], NexusTrainOutput
                 ),
                 "action/noise_norm_mean": jnp.mean(noise_norm),
             }
+            metrics.update(violation_metrics)
             # PureJAXQL LogVecWrapper exposes returned_episode_returns/lengths in info.
             if isinstance(traj.info, dict):
                 for key, value in traj.info.items():
@@ -678,7 +953,19 @@ def make_train(config: dict[str, Any]) -> Callable[[jax.Array], NexusTrainOutput
         runner_state, metrics = jax.lax.scan(
             _update_step, runner_state, None, config["NUM_UPDATES"]
         )
-        return NexusTrainOutput(runner_state=runner_state, metrics=metrics)
+        train_state, env_state, obs, _rng = runner_state
+        normalization_stats = _normalization_stats_from_state(env_state, obs)
+        eval_metrics, eval_episode_table = _run_deterministic_evaluation(
+            train_state,
+            normalization_stats,
+        )
+        return NexusTrainOutput(
+            runner_state=runner_state,
+            metrics=metrics,
+            eval_metrics=eval_metrics,
+            eval_episode_table=eval_episode_table,
+            normalization_stats=normalization_stats,
+        )
 
     return train
 

@@ -98,6 +98,27 @@ def diagnostics(
     }
 
 
+def task_metrics(
+    prev_obs: Any,
+    obs: Any,
+    action: jnp.ndarray,
+    env_reward: jnp.ndarray,
+    done: jnp.ndarray,
+    info: Any | None = None,
+) -> dict[str, jnp.ndarray]:
+    del prev_obs, action, env_reward, done
+    torso_height, torso_pitch, forward_velocity, _joint_speed = _features(obs, info)
+    stand_success = (torso_height > 0.85) & (jnp.abs(torso_pitch) < 0.5)
+    walk_success = stand_success & (forward_velocity > 0.5)
+    return {
+        "walker/stand_success_rate": stand_success.astype(jnp.float32),
+        "walker/walk_success_rate": walk_success.astype(jnp.float32),
+        "walker/forward_velocity_mean": forward_velocity,
+        "primary_goal_metric": forward_velocity,
+        "primary_success_rate": walk_success.astype(jnp.float32),
+    }
+
+
 def explain_policy() -> str:
     return (
         "WalkerWalk: stand_recover for low/tilted torso; walk_forward below target speed; "

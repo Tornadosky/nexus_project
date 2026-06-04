@@ -53,6 +53,8 @@ class RunRecord:
     rel_path: str
     config: dict[str, Any]
     metrics: dict[str, Any]
+    eval_metrics: dict[str, Any]
+    eval_episode_table: dict[str, Any]
     stage: str
     seed_from_name: int | None
 
@@ -148,14 +150,24 @@ def discover_runs(runs_root: Path) -> tuple[list[RunRecord], list[dict[str, str]
             payload = _load_pickle(path)
             config = payload.get("config", {}) or {}
             metrics = payload.get("metrics", {}) or {}
+            eval_metrics = payload.get("eval_metrics", {}) or {}
+            eval_episode_table = payload.get("eval_episode_table", {}) or {}
             if not isinstance(metrics, dict):
                 raise ValueError(f"metrics is not a dict: {type(metrics)}")
+            if not isinstance(eval_metrics, dict):
+                raise ValueError(f"eval_metrics is not a dict: {type(eval_metrics)}")
+            if not isinstance(eval_episode_table, dict):
+                raise ValueError(
+                    f"eval_episode_table is not a dict: {type(eval_episode_table)}"
+                )
             rec = RunRecord(
                 run_id=_run_id_from_path(path),
                 path=path,
                 rel_path=str(path.relative_to(runs_root)),
                 config=dict(config),
                 metrics=metrics,
+                eval_metrics=eval_metrics,
+                eval_episode_table=eval_episode_table,
                 stage=_infer_stage(path),
                 seed_from_name=_infer_seed(path, dict(config)),
             )
@@ -315,6 +327,97 @@ def metrics_to_dataframes(records: list[RunRecord]) -> tuple[pd.DataFrame, pd.Da
     return long_df, wide_df, inventory_df, errors
 
 
+def deterministic_eval_to_dataframes(
+    records: list[RunRecord],
+) -> tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame, list[dict[str, str]]]:
+    episode_rows: list[dict[str, Any]] = []
+    summary_rows: list[dict[str, Any]] = []
+    errors: list[dict[str, str]] = []
+
+    for rec in records:
+        if not rec.eval_episode_table:
+            continue
+        cfg = rec.config
+        env_name = cfg.get("ENV_NAME", "unknown")
+        policy = cfg.get("POLICY", env_name)
+        meta_type = cfg.get("META_POLICY_TYPE", "unknown")
+        seed = int(rec.seed_from_name if rec.seed_from_name is not None else cfg.get("SEED", 0))
+
+        arrays: dict[str, np.ndarray] = {}
+        for metric, value in rec.eval_episode_table.items():
+            try:
+                arr = _to_numpy(value).reshape(-1)
+                arrays[metric] = arr
+            except Exception as exc:
+                errors.append({"run_id": rec.run_id, "metric": metric, "error": repr(exc)})
+        if not arrays:
+            continue
+
+        num_rows = max(len(arr) for arr in arrays.values())
+        eval_seed = cfg.get("EVAL_SEED", rec.eval_metrics.get("eval_seed", None))
+        try:
+            eval_seed = int(np.asarray(_to_numpy(eval_seed)).reshape(-1)[0])
+        except Exception:
+            eval_seed = None
+
+        for idx in range(num_rows):
+            row = {
+                "run_id": rec.run_id,
+                "stage": rec.stage,
+                "env_name": env_name,
+                "policy": policy,
+                "meta_policy_type": meta_type,
+                "seed": seed,
+                "eval_seed": eval_seed,
+                "source_pickle": rec.rel_path,
+                "eval_episode_index": idx,
+            }
+            for metric, arr in arrays.items():
+                if idx < len(arr):
+                    value = arr[idx]
+                    row[metric] = float(value) if np.isfinite(value) else value
+            episode_rows.append(row)
+
+        summary: dict[str, Any] = {
+            "run_id": rec.run_id,
+            "stage": rec.stage,
+            "env_name": env_name,
+            "policy": policy,
+            "meta_policy_type": meta_type,
+            "seed": seed,
+            "eval_seed": eval_seed,
+            "source_pickle": rec.rel_path,
+            "num_eval_episodes": int(num_rows),
+        }
+        returns = pd.to_numeric(pd.Series(arrays.get("episode_return", [])), errors="coerce")
+        lengths = pd.to_numeric(pd.Series(arrays.get("episode_length", [])), errors="coerce")
+        summary["episode_return_mean"] = float(returns.mean()) if len(returns) else math.nan
+        summary["episode_return_std"] = float(returns.std(ddof=0)) if len(returns) else math.nan
+        summary["episode_length_mean"] = float(lengths.mean()) if len(lengths) else math.nan
+        for metric, arr in arrays.items():
+            if metric in ("eval_episode_index", "episode_return", "episode_length"):
+                continue
+            vals = pd.to_numeric(pd.Series(arr), errors="coerce")
+            summary[metric] = float(vals.mean()) if len(vals) else math.nan
+
+        # Prefer payload summary values where present; they should match the episode table.
+        for metric, value in rec.eval_metrics.items():
+            if metric in {"eval_seed", "num_eval_episodes"}:
+                continue
+            try:
+                arr = _to_numpy(value).reshape(-1)
+                if arr.size:
+                    summary[metric] = float(arr[0]) if np.isfinite(arr[0]) else arr[0]
+            except Exception:
+                pass
+        summary_rows.append(summary)
+
+    episodes_df = pd.DataFrame(episode_rows)
+    summary_df = pd.DataFrame(summary_rows)
+    task_success_df = summary_df.copy()
+    return episodes_df, summary_df, task_success_df, errors
+
+
 def _last_window_mean(df: pd.DataFrame, metric: str, frac: float = 0.1) -> float:
     if metric not in df.columns or df.empty:
         return math.nan
@@ -352,6 +455,8 @@ def make_final_summary(wide_df: pd.DataFrame) -> pd.DataFrame:
             if c.startswith("mask_available/")
             or c.startswith("mask_selected_when_available/")
             or c.startswith("mask_selected_given_available/")
+            or c.startswith("mask/violation_rate")
+            or c.startswith("mask_violation/")
         ]
     )
     raw_diag_metrics = sorted([c for c in metric_cols if c.startswith("policy_diag/")])
@@ -457,6 +562,43 @@ def make_baseline_comparison(summary_df: pd.DataFrame) -> pd.DataFrame:
     return pd.DataFrame(rows)
 
 
+def make_deterministic_baseline_comparison(eval_summary_df: pd.DataFrame) -> pd.DataFrame:
+    if eval_summary_df.empty or "episode_return_mean" not in eval_summary_df.columns:
+        return pd.DataFrame()
+    df = eval_summary_df[
+        ["env_name", "meta_policy_type", "seed", "episode_return_mean"]
+    ].copy()
+    df["episode_return_mean"] = pd.to_numeric(df["episode_return_mean"], errors="coerce")
+    agg = df.groupby(["env_name", "meta_policy_type"], dropna=False)["episode_return_mean"].agg(
+        ["mean", "std", "count"]
+    )
+    rows = []
+    for env, env_df in agg.reset_index().groupby("env_name", dropna=False):
+        flat = env_df.loc[env_df["meta_policy_type"] == "flat"]
+        flat_mean = float(flat["mean"].iloc[0]) if not flat.empty else math.nan
+        for item in env_df.itertuples(index=False):
+            ratio = item.mean / flat_mean if np.isfinite(flat_mean) and flat_mean != 0.0 else math.nan
+            rows.append(
+                {
+                    "env_name": env,
+                    "meta_policy_type": item.meta_policy_type,
+                    "metric": "deterministic_episode_return",
+                    "final_mean": item.mean,
+                    "final_std": item.std,
+                    "num_seeds": item.count,
+                    "flat_final_mean": flat_mean,
+                    "ratio_to_flat": ratio,
+                    "meets_neural_80pct": bool(
+                        item.meta_policy_type == "neural" and np.isfinite(ratio) and ratio >= 0.8
+                    ),
+                    "meets_nesy_70pct": bool(
+                        item.meta_policy_type == "nesy" and np.isfinite(ratio) and ratio >= 0.7
+                    ),
+                }
+            )
+    return pd.DataFrame(rows)
+
+
 def make_skill_disentanglement(summary_df: pd.DataFrame) -> pd.DataFrame:
     if summary_df.empty:
         return pd.DataFrame()
@@ -501,11 +643,18 @@ def make_mask_diagnostics(summary_df: pd.DataFrame) -> pd.DataFrame:
         if c.startswith("last10pct_mean/mask_available/")
         or c.startswith("last10pct_mean/mask_selected_when_available/")
         or c.startswith("last10pct_mean/mask_selected_given_available/")
+        or c.startswith("last10pct_mean/mask/violation_rate")
+        or c.startswith("last10pct_mean/mask_violation/")
     ]
     rows = []
     for _, row in summary_df.iterrows():
         for col in mask_cols:
-            kind, skill = col.split("/", 1)[1].split("/", 1)
+            metric = col.split("last10pct_mean/", 1)[1]
+            if metric.startswith("mask/violation_rate"):
+                kind = "mask_violation_rate"
+                skill = "all"
+            else:
+                kind, skill = metric.split("/", 1)
             value = pd.to_numeric(pd.Series([row[col]]), errors="coerce").iloc[0]
             rows.append(
                 {
@@ -513,9 +662,11 @@ def make_mask_diagnostics(summary_df: pd.DataFrame) -> pd.DataFrame:
                     "seed": row["seed"],
                     "env_name": row["env_name"],
                     "meta_policy_type": row["meta_policy_type"],
+                    "metric": metric,
                     "kind": kind,
                     "skill": skill,
                     "last10pct_mean": value,
+                    "mask_violation_value": value if "violation" in metric else math.nan,
                 }
             )
     return pd.DataFrame(rows)
@@ -916,13 +1067,13 @@ def write_diagnostics(
         "flat_walker_walk",
         "walker_walk_neural",
         "walker_walk_nesy",
-        "flat_hopper_hop",
-        "hopper_hop_neural",
-        "hopper_hop_nesy",
         "flat_panda_pick_cube",
         "panda_pick_cube_neural",
         "panda_pick_cube_nesy",
         "panda_pick_cube_symbolic",
+        "flat_go1_joystick",
+        "go1_joystick_neural",
+        "go1_joystick_nesy_phase2",
     }
     found = set(summary_df["run_id"].unique()) if not summary_df.empty and "run_id" in summary_df else set()
     for run_id in sorted(required_main):
@@ -930,8 +1081,8 @@ def write_diagnostics(
         marker = "x" if run_id in found else " "
         status = "OK" if count >= 3 else "MISSING_OR_INCOMPLETE"
         lines.append(f"- [{marker}] {run_id}: {count} seed rows ({status})")
-    go1_count = int((summary_df["run_id"] == "go1_joystick_nesy").sum()) if not summary_df.empty and "run_id" in summary_df else 0
-    lines.append(f"- [{'x' if go1_count else ' '}] go1_joystick_nesy extension: {go1_count} seed rows")
+    go1_count = int((summary_df["run_id"] == "go1_joystick_nesy_phase2").sum()) if not summary_df.empty and "run_id" in summary_df else 0
+    lines.append(f"- [{'x' if go1_count else ' '}] go1_joystick_nesy_phase2: {go1_count} seed rows")
 
     lines.append("")
     lines.append("## Checklist failure flags")
@@ -1044,9 +1195,17 @@ def main(argv: list[str] | None = None) -> int:
 
     records, load_failures = discover_runs(runs_root)
     long_df, wide_df, inventory_df, metric_errors = metrics_to_dataframes(records)
+    (
+        det_eval_episodes_df,
+        det_eval_summary_df,
+        task_success_summary_df,
+        eval_metric_errors,
+    ) = deterministic_eval_to_dataframes(records)
     summary_df = make_final_summary(wide_df)
     learning_trends_df = make_learning_trends(summary_df)
-    baseline_comparison_df = make_baseline_comparison(summary_df)
+    baseline_comparison_df = make_deterministic_baseline_comparison(det_eval_summary_df)
+    if baseline_comparison_df.empty:
+        baseline_comparison_df = make_baseline_comparison(summary_df)
     skill_disentanglement_df = make_skill_disentanglement(summary_df)
     mask_diagnostics_df = make_mask_diagnostics(summary_df)
     raw_feature_diagnostics_df = make_raw_feature_diagnostics(wide_df)
@@ -1060,15 +1219,22 @@ def main(argv: list[str] | None = None) -> int:
     skill_disentanglement_df.to_csv(out_dir / "skill_disentanglement.csv", index=False)
     mask_diagnostics_df.to_csv(out_dir / "mask_diagnostics.csv", index=False)
     raw_feature_diagnostics_df.to_csv(out_dir / "raw_feature_diagnostics.csv", index=False)
+    det_eval_episodes_df.to_csv(out_dir / "det_eval_episodes.csv", index=False)
+    det_eval_summary_df.to_csv(out_dir / "det_eval_summary.csv", index=False)
+    task_success_summary_df.to_csv(out_dir / "task_success_summary.csv", index=False)
 
     if load_failures:
         (out_dir / "pickle_load_failures.json").write_text(json.dumps(load_failures, indent=2), encoding="utf-8")
-    if metric_errors:
-        (out_dir / "metric_extraction_errors.json").write_text(json.dumps(metric_errors, indent=2), encoding="utf-8")
+    all_metric_errors = metric_errors + eval_metric_errors
+    if all_metric_errors:
+        (out_dir / "metric_extraction_errors.json").write_text(
+            json.dumps(all_metric_errors, indent=2),
+            encoding="utf-8",
+        )
 
     make_plots(wide_df, summary_df, out_dir / "plots")
     copy_supporting_files(runs_root, out_dir, records, include_checkpoints=args.include_checkpoints)
-    write_diagnostics(out_dir, records, load_failures, metric_errors, long_df, wide_df, summary_df)
+    write_diagnostics(out_dir, records, load_failures, all_metric_errors, long_df, wide_df, summary_df)
     write_manifest(out_dir, runs_root, records)
 
     zip_path = args.zip or out_dir.with_suffix(".zip")

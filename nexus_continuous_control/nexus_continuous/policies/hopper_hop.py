@@ -121,6 +121,27 @@ def diagnostics(
     }
 
 
+def task_metrics(
+    prev_obs: Any,
+    obs: Any,
+    action: jnp.ndarray,
+    env_reward: jnp.ndarray,
+    done: jnp.ndarray,
+    info: Any | None = None,
+) -> dict[str, jnp.ndarray]:
+    del prev_obs, action, env_reward, done
+    height, pitch, x_velocity, _speed = _features(obs, info)
+    upright = (height > 0.9) & (jnp.abs(pitch) < 0.5)
+    hopping = upright & (x_velocity > TARGET_HOP_SPEED)
+    return {
+        "hopper/upright_rate": upright.astype(jnp.float32),
+        "hopper/hop_success_rate": hopping.astype(jnp.float32),
+        "hopper/forward_velocity_mean": x_velocity,
+        "primary_goal_metric": x_velocity,
+        "primary_success_rate": hopping.astype(jnp.float32),
+    }
+
+
 def explain_policy() -> str:
     return (
         "HopperHop: stand_recover for low or tilted torso; hop_forward below target speed; "

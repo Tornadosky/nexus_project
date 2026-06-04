@@ -53,5 +53,20 @@ def diagnostics(
     return {"flat/env_reward": env_reward}
 
 
+def task_metrics(
+    prev_obs: Any,
+    obs: Any,
+    action: jnp.ndarray,
+    env_reward: jnp.ndarray,
+    done: jnp.ndarray,
+    info: Any | None = None,
+) -> dict[str, jnp.ndarray]:
+    del prev_obs, obs, action, done, info
+    return {
+        "primary_goal_metric": env_reward,
+        "primary_success_rate": (env_reward > 0.0).astype(jnp.float32),
+    }
+
+
 def explain_policy() -> str:
     return "Flat baseline: one actor/critic trained directly on environment reward."

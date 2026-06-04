@@ -89,6 +89,28 @@ def diagnostics(
     }
 
 
+def task_metrics(
+    prev_obs: Any,
+    obs: Any,
+    action: jnp.ndarray,
+    env_reward: jnp.ndarray,
+    done: jnp.ndarray,
+    info: Any | None = None,
+) -> dict[str, jnp.ndarray]:
+    del prev_obs, action, env_reward, done
+    forward_velocity, torso_pitch, _joint_speed = _features(obs, info)
+    posture_stable = jnp.abs(torso_pitch) < 0.6
+    speed_success = forward_velocity > 2.0
+    success = speed_success & posture_stable
+    return {
+        "cheetah/forward_velocity_mean": forward_velocity,
+        "cheetah/speed_success_rate": speed_success.astype(jnp.float32),
+        "cheetah/posture_stable_rate": posture_stable.astype(jnp.float32),
+        "primary_goal_metric": forward_velocity,
+        "primary_success_rate": success.astype(jnp.float32),
+    }
+
+
 def explain_policy() -> str:
     return (
         "CheetahRun: accelerate_forward while below target speed; stabilize_posture "

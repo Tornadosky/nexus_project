@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import subprocess
 from pathlib import Path
 from typing import Any
 
@@ -30,6 +31,17 @@ def _summarize_metrics(metrics: Any) -> dict[str, float]:
         return out
     # NexusTrainOutput under vmap stores metrics as a pytree in output.metrics.
     return _summarize_metrics(metrics)
+
+
+def _commit_hash() -> str:
+    try:
+        return subprocess.check_output(
+            ["git", "rev-parse", "HEAD"],
+            text=True,
+            stderr=subprocess.DEVNULL,
+        ).strip()
+    except Exception:
+        return "unknown"
 
 
 def main(argv: list[str] | None = None) -> None:
@@ -60,6 +72,11 @@ def main(argv: list[str] | None = None) -> None:
         print("Metric summary:")
         for key in sorted(summary):
             print(f"  {key}: {summary[key]:.6g}")
+    eval_summary = _summarize_metrics(getattr(output, "eval_metrics", None))
+    if eval_summary:
+        print("Deterministic eval summary:")
+        for key in sorted(eval_summary):
+            print(f"  {key}: {eval_summary[key]:.6g}")
 
     save_path = args.save or cfg.get("SAVE_PATH")
     if save_path:
@@ -67,6 +84,10 @@ def main(argv: list[str] | None = None) -> None:
             "config": cfg,
             "runner_state": serialization.to_state_dict(output.runner_state),
             "metrics": output.metrics,
+            "eval_metrics": output.eval_metrics,
+            "eval_episode_table": output.eval_episode_table,
+            "normalization_stats": output.normalization_stats,
+            "commit_hash": _commit_hash(),
         }
         save_pickle_checkpoint(Path(save_path), payload)
         print(f"Saved checkpoint to {save_path}")

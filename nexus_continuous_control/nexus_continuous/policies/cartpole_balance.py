@@ -94,6 +94,29 @@ def diagnostics(
     }
 
 
+def task_metrics(
+    prev_obs: Any,
+    obs: Any,
+    action: jnp.ndarray,
+    env_reward: jnp.ndarray,
+    done: jnp.ndarray,
+    info: Any | None = None,
+) -> dict[str, jnp.ndarray]:
+    del prev_obs, action, env_reward, done
+    cart, pole_angle, _cart_vel, _ang_vel = _features(obs, info)
+    angle = jnp.arctan2(jnp.sin(pole_angle), jnp.cos(pole_angle))
+    upright = jnp.abs(angle) < 0.25
+    centered = jnp.abs(cart) < 1.0
+    success = upright & centered
+    return {
+        "cartpole/upright_fraction": upright.astype(jnp.float32),
+        "cartpole/centered_fraction": centered.astype(jnp.float32),
+        "cartpole/angle_abs_mean": jnp.abs(angle),
+        "primary_goal_metric": jnp.cos(angle),
+        "primary_success_rate": success.astype(jnp.float32),
+    }
+
+
 def explain_policy() -> str:
     return (
         "CartpoleBalance: recover_balance when pole angle/angular velocity is large; "
