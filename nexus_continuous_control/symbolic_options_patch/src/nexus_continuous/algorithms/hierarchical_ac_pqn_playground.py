@@ -632,6 +632,7 @@ def make_train(config: dict[str, Any]) -> Callable[[jax.Array], NexusTrainOutput
                         "returned_episode_returns",
                         "returned_episode_lengths",
                         "original_reward",
+                        "nonfinite_reward",
                     ):
                         metrics[f"env/{key}"] = jnp.mean(value)
                 if "returned_episode_returns" in traj.info:

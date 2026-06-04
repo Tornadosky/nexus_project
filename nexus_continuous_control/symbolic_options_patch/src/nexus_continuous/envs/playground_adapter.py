@@ -304,6 +304,8 @@ class _LogVecWrapper(_EnvWrapper):
         self, key: jax.Array, state: _LogVecEnvState, action: jax.Array, params: Any = None
     ) -> tuple[Any, _LogVecEnvState, jax.Array, jax.Array, dict[str, Any]]:
         obs, env_state, reward, done, info = self._env.step(key, state.env_state, action, params)
+        finite_reward = jnp.isfinite(reward)
+        reward = jnp.nan_to_num(reward, nan=0.0, posinf=0.0, neginf=0.0)
         episode_returns = state.episode_returns + reward
         episode_lengths = state.episode_lengths + 1
         next_state = _LogVecEnvState(
@@ -321,6 +323,7 @@ class _LogVecWrapper(_EnvWrapper):
         info["returned_episode"] = done
         info["timestep"] = next_state.timestep
         info["original_reward"] = reward
+        info["nonfinite_reward"] = (~finite_reward).astype(jnp.float32)
         return obs, next_state, reward, done, info
 
 

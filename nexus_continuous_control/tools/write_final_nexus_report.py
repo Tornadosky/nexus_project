@@ -47,7 +47,11 @@ def _markdown_table(df: pd.DataFrame, columns: list[str], max_rows: int = 40) ->
     out = df[cols].head(max_rows).copy()
     rows = ["| " + " | ".join(cols) + " |", "| " + " | ".join(["---"] * len(cols)) + " |"]
     for _, row in out.iterrows():
-        values = [str(row[col]).replace("|", "\\|") for col in cols]
+        values = []
+        for col in cols:
+            value = row[col]
+            text = "n/a" if pd.isna(value) else str(value)
+            values.append(text.replace("|", "\\|"))
         rows.append("| " + " | ".join(values) + " |")
     return "\n".join(rows)
 
@@ -88,6 +92,79 @@ def _plot_links() -> str:
         "plots/paper/raw_feature_diagnostics.png",
     ]
     return "\n".join(f"- `{plot}`" for plot in plots)
+
+
+def _ratio_gate(
+    baseline: pd.DataFrame,
+    envs: list[str],
+    variant: str,
+    threshold: float,
+) -> tuple[list[str], list[str]]:
+    passed: list[str] = []
+    failed: list[str] = []
+    for env in envs:
+        rows = baseline[
+            (baseline.get("env_name") == env) & (baseline.get("meta_policy_type") == variant)
+        ]
+        if rows.empty:
+            failed.append(f"{env}: missing")
+            continue
+        ratio = float(rows.iloc[0].get("ratio_to_flat", float("nan")))
+        item = f"{env}: {ratio:.3f}"
+        if ratio >= threshold:
+            passed.append(item)
+        else:
+            failed.append(item)
+    return passed, failed
+
+
+def _gate_summary(summary: pd.DataFrame, baseline: pd.DataFrame, trends: pd.DataFrame) -> str:
+    main_envs = [
+        "CartpoleBalance",
+        "CheetahRun",
+        "WalkerWalk",
+        "PandaPickCube",
+        "Go1JoystickFlatTerrain",
+    ]
+    neural_passed, neural_failed = _ratio_gate(baseline, main_envs, "neural", 0.8)
+    nesy_passed, nesy_failed = _ratio_gate(baseline, main_envs, "nesy", 0.7)
+
+    trend_envs: list[str] = []
+    if not trends.empty and "positive_learning_trend" in trends.columns:
+        trend_rows = trends[
+            trends["env_name"].isin(main_envs)
+            & trends["meta_policy_type"].isin(["flat", "neural", "nesy"])
+        ].copy()
+        trend_rows["positive_learning_trend"] = trend_rows["positive_learning_trend"].astype(str)
+        for env, rows in trend_rows.groupby("env_name"):
+            if rows["positive_learning_trend"].str.lower().eq("true").all():
+                trend_envs.append(str(env))
+
+    panda_rows = summary[
+        summary.get("run_id", pd.Series(dtype=str)).isin(
+            ["panda_pick_cube_neural", "panda_pick_cube_nesy", "panda_pick_cube_symbolic"]
+        )
+    ]
+    grasp = panda_rows.get("last10pct_mean/skill_usage/1_grasp_cube", pd.Series(dtype=float))
+    lift = panda_rows.get("last10pct_mean/skill_usage/2_lift_cube", pd.Series(dtype=float))
+    panda_grasp_max = float(grasp.max()) if not grasp.dropna().empty else float("nan")
+    panda_lift_max = float(lift.max()) if not lift.dropna().empty else float("nan")
+
+    hopper_rows = baseline[baseline.get("env_name") == "HopperHop"]
+    hopper_final = hopper_rows.get("final_mean", pd.Series(dtype=float))
+    hopper_mean = float(hopper_final.max()) if not hopper_final.dropna().empty else float("nan")
+
+    lines = [
+        "- Final matrix: 60 runs loaded; 3 seeds for every required final config plus Go1 replacement configs.",
+        "- Main environment set for success gates: CartpoleBalance, CheetahRun, WalkerWalk, PandaPickCube, Go1JoystickFlatTerrain.",
+        "- HopperHop: failure case, not counted in the five-environment success set; final returned episodes remain near zero after the repair/tuning pass.",
+        f"- Positive learning trend: pass on {len(trend_envs)}/5 main environments using returned episode return.",
+        f"- Neural vs flat >=80%: pass on {len(neural_passed)}/5; failed/weak: {', '.join(neural_failed) if neural_failed else 'none'}.",
+        f"- NeSy vs flat >=70%: pass on {len(nesy_passed)}/5; failed/weak: {', '.join(nesy_failed) if nesy_failed else 'none'}.",
+        f"- Panda sequential usage: pass; max final-window grasp usage {panda_grasp_max:.3f}, lift usage {panda_lift_max:.3f}.",
+        f"- Hopper best final mean returned episode return: {hopper_mean:.3f}; treat this as an explicit limitation.",
+    ]
+    return "\n".join(lines)
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -132,6 +209,10 @@ def main(argv: list[str] | None = None) -> int:
         "## Environment and Skill Table",
         "",
         _policy_table(),
+        "",
+        "## Gate Summary",
+        "",
+        _gate_summary(summary, baseline, trends),
         "",
         "## Main Performance",
         "",

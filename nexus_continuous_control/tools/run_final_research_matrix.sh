@@ -26,7 +26,11 @@ CONFIGS=(
   configs/go1_joystick_nesy.yaml
 )
 
-SEEDS=(0 1 2)
+if [[ -n "${SEED_LIST:-}" ]]; then
+  read -r -a SEEDS <<< "${SEED_LIST}"
+else
+  SEEDS=(0 1 2)
+fi
 
 for cfg in "${CONFIGS[@]}"; do
   name="$(basename "${cfg}" .yaml)"
