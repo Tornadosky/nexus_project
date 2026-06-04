@@ -13,7 +13,15 @@ from typing import Any
 
 import jax.numpy as jnp
 
-from nexus_continuous.policies.common import actor_obs, action_cost, info_value, l2_norm, safe_index, safe_slice
+from nexus_continuous.policies.common import (
+    actor_obs,
+    action_cost,
+    feature_info,
+    info_value,
+    l2_norm,
+    safe_index,
+    safe_slice,
+)
 
 SKILL_NAMES = ("stand", "track_velocity", "turn", "recover")
 NUM_SKILLS = len(SKILL_NAMES)
@@ -21,17 +29,34 @@ NUM_SKILLS = len(SKILL_NAMES)
 
 def _features(obs: Any, info: Any | None = None):
     x = actor_obs(obs)
-    base_height = info_value(info, ("base_height", "height", "metrics/base_height"), safe_index(x, 0, 0.32))
-    roll = info_value(info, ("roll", "base_roll", "metrics/roll"), safe_index(x, 1))
-    pitch = info_value(info, ("pitch", "base_pitch", "metrics/pitch"), safe_index(x, 2))
+    semantic = feature_info(obs, info)
+    base_height = info_value(
+        semantic,
+        ("base_height", "height", "metrics/base_height"),
+        safe_index(x, 0, 0.32),
+    )
+    roll = info_value(semantic, ("roll", "base_roll", "metrics/roll"), safe_index(x, 1))
+    pitch = info_value(semantic, ("pitch", "base_pitch", "metrics/pitch"), safe_index(x, 2))
     lin_vel = safe_slice(x, 3, 5)
-    lin_vel_x = info_value(info, ("lin_vel_x", "x_velocity", "forward_velocity"), lin_vel[..., 0])
-    lin_vel_y = info_value(info, ("lin_vel_y", "y_velocity", "lateral_velocity"), lin_vel[..., 1])
-    yaw_rate = info_value(info, ("yaw_rate", "ang_vel_yaw", "metrics/yaw_rate"), safe_index(x, 5))
+    lin_vel_x = info_value(
+        semantic,
+        ("lin_vel_x", "x_velocity", "forward_velocity"),
+        lin_vel[..., 0],
+    )
+    lin_vel_y = info_value(
+        semantic,
+        ("lin_vel_y", "y_velocity", "lateral_velocity"),
+        lin_vel[..., 1],
+    )
+    yaw_rate = info_value(
+        semantic,
+        ("yaw_rate", "ang_vel_yaw", "metrics/yaw_rate"),
+        safe_index(x, 5),
+    )
     command = safe_slice(x, 6, 9)
-    cmd_x = info_value(info, ("command_x", "cmd_x", "commands/x"), command[..., 0])
-    cmd_y = info_value(info, ("command_y", "cmd_y", "commands/y"), command[..., 1])
-    cmd_yaw = info_value(info, ("command_yaw", "cmd_yaw", "commands/yaw"), command[..., 2])
+    cmd_x = info_value(semantic, ("command_x", "cmd_x", "commands/x"), command[..., 0])
+    cmd_y = info_value(semantic, ("command_y", "cmd_y", "commands/y"), command[..., 1])
+    cmd_yaw = info_value(semantic, ("command_yaw", "cmd_yaw", "commands/yaw"), command[..., 2])
     return base_height, roll, pitch, lin_vel_x, lin_vel_y, yaw_rate, cmd_x, cmd_y, cmd_yaw
 
 

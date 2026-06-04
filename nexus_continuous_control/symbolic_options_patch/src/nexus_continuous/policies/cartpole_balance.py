@@ -12,18 +12,22 @@ from typing import Any
 
 import jax.numpy as jnp
 
-from nexus_continuous.policies.common import actor_obs, decrease, safe_index
+from nexus_continuous.policies.common import actor_obs, decrease, feature_info, info_value, safe_index
 
 SKILL_NAMES = ("recover_balance", "center_cart", "damp_motion")
 NUM_SKILLS = len(SKILL_NAMES)
 
 
-def _features(obs: Any) -> tuple[jnp.ndarray, jnp.ndarray, jnp.ndarray, jnp.ndarray]:
+def _features(
+    obs: Any,
+    info: Any | None = None,
+) -> tuple[jnp.ndarray, jnp.ndarray, jnp.ndarray, jnp.ndarray]:
     x = actor_obs(obs)
-    cart_pos = safe_index(x, 0)
-    pole_angle = safe_index(x, 1)
-    cart_vel = safe_index(x, 2)
-    pole_ang_vel = safe_index(x, 3)
+    semantic = feature_info(obs, info)
+    cart_pos = info_value(semantic, ("cart_position",), safe_index(x, 0))
+    pole_angle = info_value(semantic, ("pole_angle",), safe_index(x, 1))
+    cart_vel = info_value(semantic, ("cart_velocity",), safe_index(x, -2))
+    pole_ang_vel = info_value(semantic, ("pole_angular_velocity",), safe_index(x, -1))
     return cart_pos, pole_angle, cart_vel, pole_ang_vel
 
 
@@ -35,9 +39,9 @@ def skill_rewards(
     done: jnp.ndarray,
     info: Any | None = None,
 ) -> jnp.ndarray:
-    del env_reward, info
+    del env_reward
     prev_cart, prev_angle, prev_cart_vel, prev_ang_vel = _features(prev_obs)
-    cart, angle, cart_vel, ang_vel = _features(obs)
+    cart, angle, cart_vel, ang_vel = _features(obs, info)
     act_penalty = 1e-3 * jnp.sum(jnp.square(action), axis=-1)
 
     angle_error = jnp.abs(angle)
@@ -55,8 +59,7 @@ def skill_rewards(
 
 
 def symbolic_meta_policy(obs: Any, info: Any | None = None) -> jnp.ndarray:
-    del info
-    cart, angle, cart_vel, ang_vel = _features(obs)
+    cart, angle, cart_vel, ang_vel = _features(obs, info)
     urgent_angle = (jnp.abs(angle) > 0.20) | (jnp.abs(ang_vel) > 1.5)
     off_center = jnp.abs(cart) > 0.35
     high_velocity = (jnp.abs(cart_vel) + jnp.abs(ang_vel)) > 1.0
@@ -66,8 +69,7 @@ def symbolic_meta_policy(obs: Any, info: Any | None = None) -> jnp.ndarray:
 
 
 def skill_mask(obs: Any, info: Any | None = None) -> jnp.ndarray:
-    del info
-    cart, angle, cart_vel, ang_vel = _features(obs)
+    cart, angle, cart_vel, ang_vel = _features(obs, info)
     recover = (jnp.abs(angle) > 0.08) | (jnp.abs(ang_vel) > 0.7)
     center = jnp.abs(cart) > 0.12
     damp = jnp.ones_like(recover, dtype=bool)
@@ -82,8 +84,8 @@ def diagnostics(
     done: jnp.ndarray,
     info: Any | None = None,
 ) -> dict[str, jnp.ndarray]:
-    del prev_obs, action, env_reward, done, info
-    cart, angle, cart_vel, ang_vel = _features(obs)
+    del prev_obs, action, env_reward, done
+    cart, angle, cart_vel, ang_vel = _features(obs, info)
     return {
         "cartpole/cart_position": cart,
         "cartpole/pole_angle": angle,

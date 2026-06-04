@@ -7,13 +7,13 @@ readme = "README.md"
 license = {text = "MIT"}
 authors = [{name = "Generated for NEXUS continuous-control deliverables"}]
 dependencies = [
-  "jax>=0.4.30,<0.5",
-  "flax>=0.8.4,<0.9",
-  "optax>=0.2.3,<0.3",
-  "numpy>=1.24,<2",
+  "jax>=0.4.30",
+  "flax>=0.8.4",
+  "optax>=0.2.3",
+  "numpy>=1.24",
   "pyyaml>=6.0",
-  "chex>=0.1.86,<0.1.90",
-  "orbax-checkpoint>=0.6.4,<0.7",
+  "chex>=0.1.86",
+  "orbax-checkpoint>=0.6.4",
   "wandb>=0.17.0",
   "hydra-core>=1.3.2",
   "omegaconf>=2.3.0"

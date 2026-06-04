@@ -12,7 +12,7 @@ from typing import Any
 
 import jax.numpy as jnp
 
-from nexus_continuous.policies.common import actor_obs, action_cost, info_value, safe_index
+from nexus_continuous.policies.common import actor_obs, action_cost, feature_info, info_value, safe_index
 
 SKILL_NAMES = ("accelerate_forward", "stabilize_posture", "energy_efficient_run")
 NUM_SKILLS = len(SKILL_NAMES)
@@ -20,11 +20,16 @@ NUM_SKILLS = len(SKILL_NAMES)
 
 def _features(obs: Any, info: Any | None = None) -> tuple[jnp.ndarray, jnp.ndarray, jnp.ndarray]:
     x = actor_obs(obs)
-    torso_pitch = safe_index(x, 1)
-    joint_speed = jnp.mean(jnp.abs(x[..., x.shape[-1] // 2 :]), axis=-1)
+    semantic = feature_info(obs, info)
+    torso_pitch = info_value(semantic, ("torso_pitch", "pitch"), safe_index(x, 1))
+    joint_speed = info_value(
+        semantic,
+        ("joint_speed", "metrics/joint_speed"),
+        jnp.mean(jnp.abs(x[..., x.shape[-1] // 2 :]), axis=-1),
+    )
     default_vel = safe_index(x, -1)
     x_velocity = info_value(
-        info,
+        semantic,
         ("x_velocity", "forward_velocity", "reward/forward", "metrics/forward_velocity"),
         default_vel,
     )

@@ -21,6 +21,9 @@ CONFIGS=(
   configs/panda_pick_cube_neural.yaml
   configs/panda_pick_cube_symbolic.yaml
   configs/panda_pick_cube_nesy.yaml
+  configs/flat_go1_joystick.yaml
+  configs/go1_joystick_neural.yaml
+  configs/go1_joystick_nesy.yaml
 )
 
 SEEDS=(0 1 2)

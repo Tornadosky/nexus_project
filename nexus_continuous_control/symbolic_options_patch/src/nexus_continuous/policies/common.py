@@ -22,6 +22,23 @@ def actor_obs(obs: Any) -> jnp.ndarray:
     return jnp.asarray(obs)
 
 
+def feature_info(obs: Any, info: Any | None = None) -> Any:
+    """Return compact semantic policy features carried in obs/info, if present."""
+
+    obs_info = None
+    if isinstance(obs, Mapping):
+        maybe_info = obs.get("policy_info")
+        if isinstance(maybe_info, Mapping):
+            obs_info = maybe_info
+    if isinstance(info, Mapping):
+        if obs_info is None:
+            return info
+        merged = dict(obs_info)
+        merged.update(info)
+        return merged
+    return obs_info if obs_info is not None else info
+
+
 def safe_index(x: jnp.ndarray, idx: int, default: float = 0.0) -> jnp.ndarray:
     """Read a feature index if available; otherwise return a broadcast default."""
 

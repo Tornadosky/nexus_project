@@ -13,7 +13,7 @@ from typing import Any
 
 import jax.numpy as jnp
 
-from nexus_continuous.policies.common import actor_obs, action_cost, info_value, safe_index
+from nexus_continuous.policies.common import actor_obs, action_cost, feature_info, info_value, safe_index
 
 SKILL_NAMES = ("stand_recover", "walk_forward", "stabilize_gait", "energy_efficient")
 NUM_SKILLS = len(SKILL_NAMES)
@@ -22,14 +22,19 @@ TARGET_SPEED = 1.2
 
 def _features(obs: Any, info: Any | None = None) -> tuple[jnp.ndarray, jnp.ndarray, jnp.ndarray, jnp.ndarray]:
     x = actor_obs(obs)
-    height = info_value(info, ("torso_height", "height", "metrics/height"), safe_index(x, 0, 1.2))
-    pitch = info_value(info, ("torso_pitch", "pitch", "metrics/pitch"), safe_index(x, 1))
+    semantic = feature_info(obs, info)
+    height = info_value(semantic, ("torso_height", "height", "metrics/height"), safe_index(x, 0, 1.2))
+    pitch = info_value(semantic, ("torso_pitch", "pitch", "metrics/pitch"), safe_index(x, 1))
     x_velocity = info_value(
-        info,
+        semantic,
         ("x_velocity", "forward_velocity", "metrics/forward_velocity", "reward/forward"),
         safe_index(x, -1),
     )
-    joint_speed = jnp.mean(jnp.abs(x[..., x.shape[-1] // 2 :]), axis=-1)
+    joint_speed = info_value(
+        semantic,
+        ("joint_speed", "metrics/joint_speed"),
+        jnp.mean(jnp.abs(x[..., x.shape[-1] // 2 :]), axis=-1),
+    )
     return height, pitch, x_velocity, joint_speed
 
 

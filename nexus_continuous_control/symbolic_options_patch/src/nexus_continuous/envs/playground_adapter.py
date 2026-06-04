@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from functools import partial
-from typing import Any
+from typing import Any, Mapping
 
 import jax
 import jax.numpy as jnp
@@ -37,9 +37,10 @@ class _EnvWrapper:
 
 
 class _PlaygroundVecWrapper(_EnvWrapper):
-    def __init__(self, env: Any, env_config: Any):
+    def __init__(self, env: Any, env_config: Any, env_name: str):
         super().__init__(env)
         self.env_config = env_config
+        self.env_name = env_name
         self.action_scale = 1.0
         self.episode_length = env_config.episode_length
         self.action_repeat = env_config.action_repeat
@@ -51,7 +52,7 @@ class _PlaygroundVecWrapper(_EnvWrapper):
     def reset(self, key: jax.Array, params: Any = None) -> tuple[Any, Any]:
         del params
         state = self._env.reset(key)
-        return self._get_obs(state.obs), state
+        return self._get_obs(state), state
 
     @partial(jax.jit, static_argnums=(0,))
     def step(
@@ -60,11 +61,11 @@ class _PlaygroundVecWrapper(_EnvWrapper):
         del key, params
         next_state = self._env.step(state, action)
         return (
-            self._get_obs(next_state.obs),
+            self._get_obs(next_state),
             next_state,
             next_state.reward,
             next_state.done > 0.5,
-            {},
+            self._state_info(next_state),
         )
 
     def action_space(self, params: Any = None) -> _Box:
@@ -75,7 +76,8 @@ class _PlaygroundVecWrapper(_EnvWrapper):
             shape=(self.action_size,),
         )
 
-    def _get_obs(self, obs: Any) -> dict[str, Any]:
+    def _get_obs(self, state: Any) -> dict[str, Any]:
+        obs = state.obs
         if self.privileged_state:
             actor_obs = obs["state"]
             critic_obs = obs["privileged_state"]
@@ -87,7 +89,196 @@ class _PlaygroundVecWrapper(_EnvWrapper):
             "critic": critic_obs,
             "raw_actor": actor_obs,
             "raw_critic": critic_obs,
+            "policy_info": self._state_info(state),
         }
+
+    @staticmethod
+    def _is_small_array(value: Any) -> bool:
+        return hasattr(value, "shape") and hasattr(value, "dtype") and len(value.shape) <= 2
+
+    @staticmethod
+    def _tail_abs_mean(value: Any, start: int) -> Any:
+        if value is None:
+            return None
+        if value.shape[-1] <= start:
+            return jnp.zeros(value.shape[:-1], dtype=value.dtype)
+        return jnp.mean(jnp.abs(value[..., start:]), axis=-1)
+
+    @staticmethod
+    def _safe_attr(env: Any, name: str, default: Any = None) -> Any:
+        try:
+            return getattr(env, name)
+        except AttributeError:
+            return default
+
+    @staticmethod
+    def _static_int(value: Any) -> int | None:
+        if value is None:
+            return None
+        try:
+            return int(value)
+        except TypeError:
+            pass
+        if hasattr(value, "item"):
+            try:
+                return int(value.item())
+            except ValueError:
+                pass
+        return int(value[0])
+
+    def _state_info(self, state: Any) -> dict[str, Any]:
+        info: dict[str, Any] = {}
+        metrics = getattr(state, "metrics", None)
+        if isinstance(metrics, Mapping):
+            for key, value in metrics.items():
+                if self._is_small_array(value):
+                    info[str(key)] = value
+        raw_info = getattr(state, "info", None)
+        if isinstance(raw_info, Mapping):
+            for key, value in raw_info.items():
+                key = str(key)
+                if key.startswith("AutoResetWrapper") or key == "rng":
+                    continue
+                if self._is_small_array(value):
+                    info[key] = value
+        info.update(self._semantic_state_info(state))
+        return info
+
+    def _semantic_state_info(self, state: Any) -> dict[str, Any]:
+        data = getattr(state, "data", None)
+        if data is None:
+            return {}
+        qpos = getattr(data, "qpos", None)
+        qvel = getattr(data, "qvel", None)
+        xpos = getattr(data, "xpos", None)
+        xipos = getattr(data, "xipos", None)
+        site_xmat = getattr(data, "site_xmat", None)
+        site_xpos = getattr(data, "site_xpos", None)
+        mocap_pos = getattr(data, "mocap_pos", None)
+        env_name = self.env_name.lower()
+        info: dict[str, Any] = {}
+        raw_info = getattr(state, "info", None)
+
+        if "cartpole" in env_name and qpos is not None and qvel is not None:
+            slider = self._static_int(self._safe_attr(self._env, "_slider_qposadr", 0))
+            hinge = self._static_int(self._safe_attr(self._env, "_hinge_1_qposadr", 1))
+            info.update(
+                {
+                    "cart_position": qpos[..., slider],
+                    "pole_angle": qpos[..., hinge],
+                    "cart_velocity": qvel[..., slider],
+                    "pole_angular_velocity": qvel[..., hinge],
+                }
+            )
+
+        if "cheetah" in env_name and qpos is not None and qvel is not None:
+            info.update(
+                {
+                    "torso_pitch": qpos[..., 2],
+                    "pitch": qpos[..., 2],
+                    "x_velocity": qvel[..., 0],
+                    "forward_velocity": qvel[..., 0],
+                    "joint_speed": self._tail_abs_mean(qvel, 3),
+                }
+            )
+
+        if "walker" in env_name and qpos is not None and qvel is not None and xpos is not None:
+            torso = self._safe_attr(self._env, "_torso_id")
+            torso_idx = self._static_int(torso)
+            if torso_idx is not None:
+                info.update(
+                    {
+                        "torso_height": xpos[..., torso_idx, 2],
+                        "height": xpos[..., torso_idx, 2],
+                    }
+                )
+            info.update(
+                {
+                    "torso_pitch": qpos[..., 2],
+                    "pitch": qpos[..., 2],
+                    "x_velocity": qvel[..., 0],
+                    "forward_velocity": qvel[..., 0],
+                    "joint_speed": self._tail_abs_mean(qvel, 3),
+                }
+            )
+
+        if "hopper" in env_name and qpos is not None and qvel is not None:
+            torso = self._safe_attr(self._env, "_torso_id")
+            foot = self._safe_attr(self._env, "_foot_id")
+            torso_idx = self._static_int(torso)
+            foot_idx = self._static_int(foot)
+            if torso_idx is not None and foot_idx is not None and xipos is not None:
+                height = xipos[..., torso_idx, 2] - xipos[..., foot_idx, 2]
+                info.update({"torso_height": height, "height": height})
+            info.update(
+                {
+                    "torso_pitch": qpos[..., 2],
+                    "pitch": qpos[..., 2],
+                    "x_velocity": qvel[..., 0],
+                    "forward_velocity": qvel[..., 0],
+                    "joint_speed": self._tail_abs_mean(qvel, 3),
+                }
+            )
+
+        if "panda" in env_name and qpos is not None:
+            gripper_site = self._safe_attr(self._env, "_gripper_site")
+            obj_body = self._safe_attr(self._env, "_obj_body")
+            mocap_target = self._safe_attr(self._env, "_mocap_target")
+            gripper_site_idx = self._static_int(gripper_site)
+            obj_body_idx = self._static_int(obj_body)
+            mocap_target_idx = self._static_int(mocap_target)
+            if gripper_site_idx is not None and site_xpos is not None:
+                tcp_pos = site_xpos[..., gripper_site_idx, :]
+                info.update({"tcp_pos": tcp_pos, "gripper_pos": tcp_pos, "eef_pos": tcp_pos})
+            if obj_body_idx is not None and xpos is not None:
+                cube_pos = xpos[..., obj_body_idx, :]
+                info.update({"cube_pos": cube_pos, "object_pos": cube_pos, "obj_pos": cube_pos})
+            if mocap_target_idx is not None and mocap_pos is not None:
+                target_pos = mocap_pos[..., mocap_target_idx, :]
+                info.update({"target_pos": target_pos, "goal_pos": target_pos})
+            robot_qposadr = self._safe_attr(self._env, "_robot_qposadr")
+            if robot_qposadr is not None and len(robot_qposadr) >= 2:
+                finger_idx = tuple(int(idx) for idx in robot_qposadr[-2:])
+                gripper_width = jnp.sum(qpos[..., list(finger_idx)], axis=-1)
+                info["gripper_width"] = gripper_width
+                info["gripper_open"] = jnp.clip(gripper_width / 0.08, 0.0, 1.0)
+
+        if "go1" in env_name and qpos is not None and qvel is not None:
+            info.update(
+                {
+                    "base_height": qpos[..., 2],
+                    "height": qpos[..., 2],
+                    "lin_vel_x": qvel[..., 0],
+                    "lin_vel_y": qvel[..., 1],
+                    "x_velocity": qvel[..., 0],
+                    "y_velocity": qvel[..., 1],
+                    "yaw_rate": qvel[..., 5],
+                    "ang_vel_yaw": qvel[..., 5],
+                }
+            )
+            imu_site = self._static_int(self._safe_attr(self._env, "_imu_site_id"))
+            if imu_site is not None and site_xmat is not None:
+                up = site_xmat[..., imu_site, :, 2]
+                roll = jnp.arctan2(up[..., 1], up[..., 2])
+                pitch = jnp.arctan2(
+                    -up[..., 0],
+                    jnp.sqrt(jnp.square(up[..., 1]) + jnp.square(up[..., 2])),
+                )
+                info.update({"roll": roll, "base_roll": roll, "pitch": pitch, "base_pitch": pitch})
+            if isinstance(raw_info, Mapping) and "command" in raw_info:
+                command = raw_info["command"]
+                info.update(
+                    {
+                        "command_x": command[..., 0],
+                        "cmd_x": command[..., 0],
+                        "command_y": command[..., 1],
+                        "cmd_y": command[..., 1],
+                        "command_yaw": command[..., 2],
+                        "cmd_yaw": command[..., 2],
+                    }
+                )
+
+        return info
 
 
 @struct.dataclass
@@ -226,6 +417,7 @@ class _NormalizeVecObservation(_EnvWrapper):
             "critic": (obs["critic"] - state.critic_mean) / jnp.sqrt(state.critic_var + 1e-8),
             "raw_actor": obs.get("raw_actor", obs["actor"]),
             "raw_critic": obs.get("raw_critic", obs["critic"]),
+            "policy_info": obs.get("policy_info", {}),
         }
 
 
@@ -290,7 +482,7 @@ def build_playground_env(config: dict[str, Any]) -> PlaygroundEnvBundle:
         episode_length=env_config.episode_length,
         action_repeat=env_config.action_repeat,
     )
-    env = _PlaygroundVecWrapper(env, env_config)
+    env = _PlaygroundVecWrapper(env, env_config, config["ENV_NAME"])
     env_params = None
     action_space = env.action_space(env_params)
     env = _LogVecWrapper(env)
@@ -336,9 +528,12 @@ def get_policy_obs(obs: Any) -> dict[str, Any]:
         return {"actor": obs, "critic": obs, "raw_actor": obs, "raw_critic": obs}
     raw_actor = obs.get("raw_actor", obs.get("actor"))
     raw_critic = obs.get("raw_critic", obs.get("critic", raw_actor))
-    return {
+    policy_obs = {
         "actor": raw_actor,
         "critic": raw_critic,
         "raw_actor": raw_actor,
         "raw_critic": raw_critic,
     }
+    if "policy_info" in obs:
+        policy_obs["policy_info"] = obs["policy_info"]
+    return policy_obs

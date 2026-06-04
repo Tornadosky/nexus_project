@@ -17,7 +17,15 @@ from typing import Any
 import jax
 import jax.numpy as jnp
 
-from nexus_continuous.policies.common import actor_obs, decrease, info_value, l2_norm, safe_index, safe_slice
+from nexus_continuous.policies.common import (
+    actor_obs,
+    decrease,
+    feature_info,
+    info_value,
+    l2_norm,
+    safe_index,
+    safe_slice,
+)
 
 SKILL_NAMES = ("reach_cube", "grasp_cube", "lift_cube", "place_or_stabilize")
 NUM_SKILLS = len(SKILL_NAMES)
@@ -34,14 +42,31 @@ def _vec_info(info: Any | None, keys: tuple[str, ...], default: jnp.ndarray) -> 
 
 def _features(obs: Any, info: Any | None = None):
     x = actor_obs(obs)
-    tcp = _vec_info(info, ("tcp_pos", "eef_pos", "gripper_pos", "hand_pos"), safe_slice(x, 0, 3))
-    cube = _vec_info(info, ("cube_pos", "object_pos", "obj_pos", "block_pos"), safe_slice(x, 3, 6))
-    target = _vec_info(info, ("target_pos", "goal_pos", "mocap_target_pos"), safe_slice(x, 6, 9))
-    gripper = info_value(info, ("gripper_open", "finger_pos", "gripper_width"), safe_index(x, 9, 1.0))
+    semantic = feature_info(obs, info)
+    tcp = _vec_info(semantic, ("tcp_pos", "eef_pos", "gripper_pos", "hand_pos"), safe_slice(x, 0, 3))
+    cube = _vec_info(
+        semantic,
+        ("cube_pos", "object_pos", "obj_pos", "block_pos"),
+        safe_slice(x, 3, 6),
+    )
+    target = _vec_info(
+        semantic,
+        ("target_pos", "goal_pos", "mocap_target_pos"),
+        safe_slice(x, 6, 9),
+    )
+    gripper = info_value(
+        semantic,
+        ("gripper_open", "finger_pos", "gripper_width"),
+        safe_index(x, 9, 1.0),
+    )
     cube_height = cube[..., 2]
     dist_tcp_cube = l2_norm(tcp - cube)
     dist_cube_target = l2_norm(cube - target)
-    grasped_info = info_value(info, ("grasped", "is_grasped", "object_grasped"), jnp.zeros_like(dist_tcp_cube))
+    grasped_info = info_value(
+        semantic,
+        ("grasped", "is_grasped", "object_grasped"),
+        jnp.zeros_like(dist_tcp_cube),
+    )
     inferred_grasped = (dist_tcp_cube < REACH_RADIUS) & (gripper < 0.35)
     grasped = (grasped_info > 0.5) | inferred_grasped
     return tcp, cube, target, gripper, cube_height, dist_tcp_cube, dist_cube_target, grasped
@@ -56,7 +81,7 @@ def skill_rewards(
     info: Any | None = None,
 ) -> jnp.ndarray:
     del env_reward
-    *_, prev_height, prev_dist_tcp_cube, prev_dist_cube_target, _prev_grasped = _features(prev_obs, info)
+    *_, prev_height, prev_dist_tcp_cube, prev_dist_cube_target, _prev_grasped = _features(prev_obs)
     _tcp, _cube, _target, gripper, height, dist_tcp_cube, dist_cube_target, grasped = _features(obs, info)
     ctrl = 1e-4 * jnp.sum(jnp.square(action), axis=-1)
 

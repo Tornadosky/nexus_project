@@ -19,15 +19,42 @@ POLICIES = [
 def test_get_policy_obs_prefers_raw_actor():
     actor = jnp.ones((2, 4)) * 100.0
     raw_actor = jnp.arange(8, dtype=jnp.float32).reshape(2, 4)
+    policy_info = {"pole_angle": jnp.asarray([0.2, -0.2])}
     obs = {
         "actor": actor,
         "critic": actor + 1.0,
         "raw_actor": raw_actor,
         "raw_critic": raw_actor + 1.0,
+        "policy_info": policy_info,
     }
     policy_obs = get_policy_obs(obs)
     assert jnp.array_equal(policy_obs["actor"], raw_actor)
     assert jnp.array_equal(policy_obs["raw_actor"], raw_actor)
+    assert policy_obs["policy_info"] is policy_info
+
+
+def test_policy_info_drives_symbolic_features_before_step_info_exists():
+    raw_actor = jnp.zeros((1, 5), dtype=jnp.float32)
+    policy_obs = get_policy_obs(
+        {
+            "actor": raw_actor + 100.0,
+            "raw_actor": raw_actor,
+            "policy_info": {
+                "cart_position": jnp.asarray([0.0]),
+                "pole_angle": jnp.asarray([0.31]),
+                "cart_velocity": jnp.asarray([0.0]),
+                "pole_angular_velocity": jnp.asarray([0.0]),
+            },
+        }
+    )
+    diagnostics = cartpole_balance.diagnostics(
+        policy_obs,
+        policy_obs,
+        jnp.zeros((1, 1)),
+        jnp.zeros((1,)),
+        jnp.zeros((1,), dtype=bool),
+    )
+    assert jnp.allclose(diagnostics["cartpole/pole_angle"], jnp.asarray([0.31]))
 
 
 def test_symbolic_policy_ignores_changed_normalized_actor_when_raw_fixed():
