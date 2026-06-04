@@ -10,6 +10,7 @@ POLICIES = [
     "hopper_hop",
     "panda_pick_cube",
     "go1_joystick",
+    "flat_baseline",
 ]
 
 
@@ -25,7 +26,10 @@ def test_policy_shapes():
         rewards = module.skill_rewards(prev_obs, obs, action, env_reward, done, {})
         skill = module.symbolic_meta_policy(obs, {})
         mask = module.skill_mask(obs, {})
+        diagnostics = module.diagnostics(prev_obs, obs, action, env_reward, done, {})
         assert rewards.shape == (batch, module.NUM_SKILLS)
         assert skill.shape == (batch,)
         assert mask.shape == (batch, module.NUM_SKILLS)
         assert mask.dtype == jnp.bool_
+        for value in diagnostics.values():
+            assert value.shape == (batch,)

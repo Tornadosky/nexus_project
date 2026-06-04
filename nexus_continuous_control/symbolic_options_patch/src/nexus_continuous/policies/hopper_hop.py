@@ -13,7 +13,7 @@ from typing import Any
 
 import jax.numpy as jnp
 
-from nexus_continuous.policies.common import actor_obs, action_cost, info_value, safe_index
+from nexus_continuous.policies.common import actor_obs, info_value, safe_index
 
 SKILL_NAMES = ("stand_recover", "hop_forward", "stabilize_landing", "energy_efficient")
 NUM_SKILLS = len(SKILL_NAMES)
@@ -41,17 +41,16 @@ def skill_rewards(
     done: jnp.ndarray,
     info: Any | None = None,
 ) -> jnp.ndarray:
-    del prev_obs, env_reward
+    del prev_obs
     height, pitch, x_velocity, speed = _features(obs, info)
-    ctrl = action_cost(action, coeff=1e-3)
-    upright = 1.0 - jnp.abs(pitch)
-    height_reward = 1.0 - jnp.abs(height - 1.2)
-    hop_track = 1.0 - jnp.abs(x_velocity - TARGET_HOP_SPEED)
+    action_norm = jnp.linalg.norm(action, axis=-1)
+    upright = 1.0 - jnp.clip(jnp.abs(pitch), 0.0, 2.0)
+    healthy_height = jnp.clip((height - 0.6) / 0.6, 0.0, 1.0)
 
-    stand = height_reward + upright - ctrl
-    hop = x_velocity + 0.5 * hop_track - ctrl
-    stabilize = upright - 0.03 * speed - ctrl
-    efficient = 0.4 * x_velocity - 5.0 * ctrl
+    stand = 1.0 * upright + 1.0 * healthy_height - 0.2 * jnp.abs(pitch) - 0.01 * action_norm
+    hop = env_reward + 0.5 * x_velocity * upright - 0.01 * action_norm
+    stabilize = 0.5 * upright + 0.5 * healthy_height - 0.1 * speed - 0.1 * jnp.abs(pitch)
+    efficient = env_reward - 0.01 * action_norm
     rewards = jnp.stack([stand, hop, stabilize, efficient], axis=-1)
     return jnp.where(done[..., None].astype(bool), rewards - 1.0, rewards)
 
@@ -71,6 +70,25 @@ def skill_mask(obs: Any, info: Any | None = None) -> jnp.ndarray:
     stabilize = (jnp.abs(pitch) > 0.10) | (speed > 5.0)
     efficient = jnp.ones_like(stand, dtype=bool)
     return jnp.stack([stand, hop, stabilize, efficient], axis=-1)
+
+
+def diagnostics(
+    prev_obs: Any,
+    obs: Any,
+    action: jnp.ndarray,
+    env_reward: jnp.ndarray,
+    done: jnp.ndarray,
+    info: Any | None = None,
+) -> dict[str, jnp.ndarray]:
+    del prev_obs, action, env_reward
+    height, pitch, x_velocity, speed = _features(obs, info)
+    return {
+        "hopper/height": height,
+        "hopper/pitch": pitch,
+        "hopper/forward_velocity": x_velocity,
+        "hopper/joint_speed": speed,
+        "hopper/done_fraction": done.astype(jnp.float32),
+    }
 
 
 def explain_policy() -> str:

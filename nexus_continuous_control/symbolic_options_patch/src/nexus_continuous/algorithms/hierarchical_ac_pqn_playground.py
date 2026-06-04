@@ -30,12 +30,13 @@ from nexus_continuous.envs.playground_adapter import (
     build_playground_env,
     get_actor_obs,
     get_critic_obs,
+    get_policy_obs,
 )
 from nexus_continuous.networks import MetaQ, SkillActor, SkillCritic
 from nexus_continuous.policies.registry import load_policy_module
 from nexus_continuous.returns import q_lambda_returns, smooth_l1_loss
 from nexus_continuous.train_state import CounterTrainState, NexusTrainState
-from nexus_continuous.utils import flatten_time_env, make_minibatches
+from nexus_continuous.utils import flatten_time_env, global_norm, make_minibatches
 
 
 class Transition(NamedTuple):
@@ -43,13 +44,16 @@ class Transition(NamedTuple):
     action: jnp.ndarray
     original_action: jnp.ndarray
     skill: jnp.ndarray
-    meta_value: jnp.ndarray
-    skill_values: jnp.ndarray
+    meta_selected_value: jnp.ndarray
+    meta_bootstrap_value: jnp.ndarray
+    skill_bootstrap_values: jnp.ndarray
     env_reward: jnp.ndarray
     skill_rewards: jnp.ndarray
     obs: Any
     next_obs: Any
     info: Any
+    diagnostics: Any
+    mask: jnp.ndarray
 
 
 class NexusTrainOutput(NamedTuple):
@@ -89,6 +93,35 @@ def _select_rows(x: jnp.ndarray, indices: jnp.ndarray) -> jnp.ndarray:
     return x[jnp.arange(indices.shape[0]), indices]
 
 
+def masked_meta_bootstrap_value(q_values: jnp.ndarray, mask: jnp.ndarray | None = None) -> jnp.ndarray:
+    """Return max_i Q_meta(s, i), applying NeSy masks with -inf-style blocking."""
+
+    if mask is not None:
+        q_values = jnp.where(mask, q_values, -1.0e9)
+    return jnp.max(q_values, axis=-1)
+
+
+def skill_actor_bootstrap_values(
+    critic_params: Any,
+    actor_params: Any,
+    obs_actor: jnp.ndarray,
+    obs_critic: jnp.ndarray,
+    actor_apply: Callable[[Any, jnp.ndarray], jnp.ndarray],
+    critic_apply: Callable[[Any, jnp.ndarray, jnp.ndarray], jnp.ndarray],
+) -> jnp.ndarray:
+    """Return Q_i(s, actor_i(s)) averaged over critic ensembles as [batch, num_skills]."""
+
+    all_actions = actor_apply(actor_params, obs_actor)  # [num_skills, batch, action_dim]
+
+    def one_skill(skill_idx, action_i):
+        skill_critic_params = jax.tree_util.tree_map(lambda leaf: leaf[skill_idx], critic_params)
+        vals = jax.vmap(lambda p: critic_apply(p, obs_critic, action_i))(skill_critic_params)
+        return jnp.mean(vals, axis=0)
+
+    q_by_skill = jax.vmap(one_skill)(jnp.arange(all_actions.shape[0]), all_actions)
+    return jnp.swapaxes(q_by_skill, 0, 1)
+
+
 def _as_num_steps(config: dict[str, Any]) -> None:
     config["NUM_UPDATES"] = int(
         config["TOTAL_TIMESTEPS"] // config["NUM_STEPS"] // config["NUM_ENVS"]
@@ -115,8 +148,10 @@ def make_train(config: dict[str, Any]) -> Callable[[jax.Array], NexusTrainOutput
     num_skills = int(getattr(policy_module, "NUM_SKILLS"))
     skill_names = tuple(getattr(policy_module, "SKILL_NAMES"))
     meta_policy_type = config.get("META_POLICY_TYPE", "nesy").lower()
-    if meta_policy_type not in ("neural", "symbolic", "nesy"):
-        raise ValueError("META_POLICY_TYPE must be one of: neural, symbolic, nesy")
+    if meta_policy_type not in ("neural", "symbolic", "nesy", "flat"):
+        raise ValueError("META_POLICY_TYPE must be one of: neural, symbolic, nesy, flat")
+    if meta_policy_type == "flat" and num_skills != 1:
+        raise ValueError("META_POLICY_TYPE=flat requires a policy with exactly one skill")
 
     env_bundle = build_playground_env(config)
     env = env_bundle.env
@@ -205,32 +240,59 @@ def make_train(config: dict[str, Any]) -> Callable[[jax.Array], NexusTrainOutput
     def _meta_values(meta_params, obs_actor):
         return meta_q.apply({"params": meta_params}, obs_actor)
 
-    def _skill_mask(obs):
-        mask = policy_module.skill_mask(obs)
+    def _skill_mask(policy_obs):
+        mask = policy_module.skill_mask(policy_obs)
         return jnp.asarray(mask, dtype=bool)
 
-    def _symbolic_policy(obs):
-        return jnp.asarray(policy_module.symbolic_meta_policy(obs), dtype=jnp.int32)
+    def _symbolic_policy(policy_obs):
+        return jnp.asarray(policy_module.symbolic_meta_policy(policy_obs), dtype=jnp.int32)
+
+    def _critic_apply_one(params, obs_critic, action):
+        return critic.apply({"params": params}, obs_critic, action)
+
+    def _skill_actor_bootstrap_values(critic_params, actor_params, obs_actor, obs_critic):
+        return skill_actor_bootstrap_values(
+            critic_params,
+            actor_params,
+            obs_actor,
+            obs_critic,
+            actor_apply=_actor_apply,
+            critic_apply=_critic_apply_one,
+        )
+
+    def _meta_bootstrap_value(meta_params, obs_actor, policy_obs):
+        q = _meta_values(meta_params, obs_actor)
+        if meta_policy_type == "nesy":
+            return masked_meta_bootstrap_value(q, _skill_mask(policy_obs))
+        return masked_meta_bootstrap_value(q)
+
+    def _policy_diagnostics(prev_policy_obs, policy_obs, action, env_reward, done, info):
+        if hasattr(policy_module, "diagnostics"):
+            return policy_module.diagnostics(prev_policy_obs, policy_obs, action, env_reward, done, info)
+        return {}
 
     def _select_action(train_state: NexusTrainState, obs: Any, rng: jax.Array, update_idx: int):
         obs_actor = get_actor_obs(obs)
-        obs_critic = get_critic_obs(obs)
+        policy_obs = get_policy_obs(obs)
         all_actions = _actor_apply(train_state.actor.params, obs_actor)  # [N, E, A]
         all_actions_env_major = jnp.swapaxes(all_actions, 0, 1)  # [E, N, A]
 
-        if meta_policy_type == "symbolic":
-            greedy_skill = _symbolic_policy(obs)
-            mask = None
+        if meta_policy_type == "flat":
+            selected_skill = jnp.zeros((obs_actor.shape[0],), dtype=jnp.int32)
+            mask = jnp.ones((obs_actor.shape[0], num_skills), dtype=bool)
             meta_values = jnp.zeros((obs_actor.shape[0], num_skills), dtype=obs_actor.dtype)
-            selected_skill = greedy_skill
+        elif meta_policy_type == "symbolic":
+            selected_skill = _symbolic_policy(policy_obs)
+            mask = _skill_mask(policy_obs)
+            meta_values = jnp.zeros((obs_actor.shape[0], num_skills), dtype=obs_actor.dtype)
         else:
             meta_values = _meta_values(train_state.meta.params, obs_actor)
             if meta_policy_type == "nesy":
-                mask = _skill_mask(obs)
+                mask = _skill_mask(policy_obs)
                 masked_values = jnp.where(mask, meta_values, -1.0e9)
                 greedy_skill = jnp.argmax(masked_values, axis=-1).astype(jnp.int32)
             else:
-                mask = None
+                mask = jnp.ones_like(meta_values, dtype=bool)
                 greedy_skill = jnp.argmax(meta_values, axis=-1).astype(jnp.int32)
             epsilon = epsilon_schedule(update_idx)
             rng, rng_eps = jax.random.split(rng)
@@ -245,9 +307,8 @@ def make_train(config: dict[str, Any]) -> Callable[[jax.Array], NexusTrainOutput
             per_env_noise = noise_std
         noise = jax.random.normal(rng_noise, original_action.shape) * per_env_noise * action_scale
         action = jnp.clip(original_action + noise, action_low, action_high)
-        meta_value = _select_rows(meta_values, selected_skill)
-        skill_values = _critic_values_all_skills(train_state.critic.params, obs_critic, action)
-        return original_action, action, selected_skill, meta_value, skill_values, rng
+        meta_selected_value = _select_rows(meta_values, selected_skill)
+        return original_action, action, selected_skill, meta_selected_value, mask, rng
 
     def train(rng: jax.Array) -> NexusTrainOutput:
         # Initialize environment.
@@ -276,7 +337,7 @@ def make_train(config: dict[str, Any]) -> Callable[[jax.Array], NexusTrainOutput
         )(critic_rngs)
 
         meta_state = None
-        if meta_policy_type != "symbolic":
+        if meta_policy_type not in ("symbolic", "flat"):
             meta_params = meta_q.init(rng_meta, dummy_actor_obs)["params"]
             meta_state = CounterTrainState.create(apply_fn=meta_q.apply, params=meta_params, tx=tx)
 
@@ -289,27 +350,59 @@ def make_train(config: dict[str, Any]) -> Callable[[jax.Array], NexusTrainOutput
         def _env_step(carry, unused):
             train_state, env_state, last_obs, rng = carry
             update_idx = train_state.actor.n_updates
-            original_action, action, skill, meta_value, skill_values, rng = _select_action(
+            original_action, action, skill, meta_selected_value, mask, rng = _select_action(
                 train_state, last_obs, rng, update_idx
             )
+            obs_actor = get_actor_obs(last_obs)
+            obs_critic = get_critic_obs(last_obs)
+            policy_obs = get_policy_obs(last_obs)
+            skill_bootstrap = _skill_actor_bootstrap_values(
+                train_state.critic.params,
+                train_state.actor.params,
+                obs_actor,
+                obs_critic,
+            )
+            if train_state.meta is not None:
+                meta_bootstrap = _meta_bootstrap_value(train_state.meta.params, obs_actor, policy_obs)
+            else:
+                meta_bootstrap = jnp.zeros((obs_actor.shape[0],), dtype=obs_actor.dtype)
             rng, rng_step = jax.random.split(rng)
             step_rng = jax.random.split(rng_step, config["NUM_ENVS"])
             next_obs, next_env_state, env_reward, done, info = env.step(
                 step_rng, env_state, action, env_params
             )
-            skill_rewards = policy_module.skill_rewards(last_obs, next_obs, action, env_reward, done, info)
+            next_policy_obs = get_policy_obs(next_obs)
+            skill_rewards = policy_module.skill_rewards(
+                policy_obs,
+                next_policy_obs,
+                action,
+                env_reward,
+                done,
+                info,
+            )
+            diagnostics = _policy_diagnostics(
+                policy_obs,
+                next_policy_obs,
+                action,
+                env_reward,
+                done,
+                info,
+            )
             transition = Transition(
                 done=done,
                 action=action,
                 original_action=original_action,
                 skill=skill,
-                meta_value=meta_value,
-                skill_values=skill_values,
+                meta_selected_value=meta_selected_value,
+                meta_bootstrap_value=meta_bootstrap,
+                skill_bootstrap_values=skill_bootstrap,
                 env_reward=env_reward,
                 skill_rewards=skill_rewards,
                 obs=last_obs,
                 next_obs=next_obs,
                 info=info,
+                diagnostics=diagnostics,
+                mask=mask,
             )
             return (train_state, next_env_state, next_obs, rng), transition
 
@@ -324,26 +417,41 @@ def make_train(config: dict[str, Any]) -> Callable[[jax.Array], NexusTrainOutput
             )
 
             # Bootstrap values at the final observation.
-            rng, rng_boot = jax.random.split(rng)
-            _, last_action, last_skill, last_meta_value, last_skill_values, rng = _select_action(
-                train_state, last_obs, rng_boot, train_state.actor.n_updates
+            last_obs_actor = get_actor_obs(last_obs)
+            last_obs_critic = get_critic_obs(last_obs)
+            last_policy_obs = get_policy_obs(last_obs)
+            last_skill_bootstrap_values = _skill_actor_bootstrap_values(
+                train_state.critic.params,
+                train_state.actor.params,
+                last_obs_actor,
+                last_obs_critic,
             )
-            del last_action, last_skill
+            if train_state.meta is not None:
+                last_meta_bootstrap_value = _meta_bootstrap_value(
+                    train_state.meta.params,
+                    last_obs_actor,
+                    last_policy_obs,
+                )
+            else:
+                last_meta_bootstrap_value = jnp.zeros(
+                    (last_obs_actor.shape[0],),
+                    dtype=last_obs_actor.dtype,
+                )
 
             skill_targets = q_lambda_returns(
                 rewards=traj.skill_rewards,
                 dones=traj.done,
-                values=traj.skill_values,
-                last_value=last_skill_values,
+                values=traj.skill_bootstrap_values,
+                last_value=last_skill_bootstrap_values,
                 gamma=float(config.get("GAMMA", 0.99)),
                 lambda_=float(config.get("SKILL_LAMBDA", config.get("LAMBDA", 0.65))),
             )
-            if meta_policy_type != "symbolic":
+            if train_state.meta is not None:
                 meta_targets = q_lambda_returns(
                     rewards=traj.env_reward,
                     dones=traj.done,
-                    values=traj.meta_value,
-                    last_value=last_meta_value,
+                    values=traj.meta_bootstrap_value,
+                    last_value=last_meta_bootstrap_value,
                     gamma=float(config.get("GAMMA", 0.99)),
                     lambda_=float(config.get("META_LAMBDA", config.get("LAMBDA", 0.65))),
                 )
@@ -377,6 +485,7 @@ def make_train(config: dict[str, Any]) -> Callable[[jax.Array], NexusTrainOutput
                     (critic_loss, critic_info), critic_grads = jax.value_and_grad(
                         critic_loss_fn, has_aux=True
                     )(train_state.critic.params)
+                    critic_grad_norm = global_norm(critic_grads)
                     critic_state = train_state.critic.apply_gradients(grads=critic_grads).replace(
                         grad_steps=train_state.critic.grad_steps + 1
                     )
@@ -419,14 +528,16 @@ def make_train(config: dict[str, Any]) -> Callable[[jax.Array], NexusTrainOutput
                     (actor_loss, actor_info), actor_grads = jax.value_and_grad(
                         actor_loss_fn, has_aux=True
                     )(train_state.actor.params)
+                    actor_grad_norm = global_norm(actor_grads)
                     actor_state = train_state.actor.apply_gradients(grads=actor_grads).replace(
                         grad_steps=train_state.actor.grad_steps + 1
                     )
 
                     meta_loss = jnp.asarray(0.0)
                     meta_info = {"meta_q": jnp.asarray(0.0), "meta_abs_td": jnp.asarray(0.0)}
+                    meta_grad_norm = jnp.asarray(0.0)
                     meta_state = train_state.meta
-                    if meta_policy_type != "symbolic":
+                    if train_state.meta is not None:
 
                         def meta_loss_fn(meta_params):
                             q = _meta_values(meta_params, obs_actor_mb)  # [B, N]
@@ -440,6 +551,7 @@ def make_train(config: dict[str, Any]) -> Callable[[jax.Array], NexusTrainOutput
                         (meta_loss, meta_info), meta_grads = jax.value_and_grad(
                             meta_loss_fn, has_aux=True
                         )(train_state.meta.params)
+                        meta_grad_norm = global_norm(meta_grads)
                         meta_state = train_state.meta.apply_gradients(grads=meta_grads).replace(
                             grad_steps=train_state.meta.grad_steps + 1
                         )
@@ -449,6 +561,9 @@ def make_train(config: dict[str, Any]) -> Callable[[jax.Array], NexusTrainOutput
                         "loss/critic": critic_loss,
                         "loss/actor": actor_loss,
                         "loss/meta": meta_loss,
+                        "train/critic_loss": critic_loss,
+                        "train/actor_loss": actor_loss,
+                        "train/meta_loss": meta_loss,
                         "train/actor_q": actor_info["actor_q"],
                         "train/actor_penalty": actor_info["actor_penalty"],
                         "train/critic_value": critic_info["critic_value"],
@@ -456,6 +571,9 @@ def make_train(config: dict[str, Any]) -> Callable[[jax.Array], NexusTrainOutput
                         "train/critic_abs_td": critic_info["critic_abs_td"],
                         "train/meta_q": meta_info["meta_q"],
                         "train/meta_abs_td": meta_info["meta_abs_td"],
+                        "train/actor_grad_norm": actor_grad_norm,
+                        "train/critic_grad_norm": critic_grad_norm,
+                        "train/meta_grad_norm": meta_grad_norm,
                     }
                     return new_state, losses
 
@@ -477,15 +595,35 @@ def make_train(config: dict[str, Any]) -> Callable[[jax.Array], NexusTrainOutput
                 meta_state = None
             train_state = NexusTrainState(actor=actor_state, critic=train_state.critic, meta=meta_state)
 
-            skill_counts = jnp.mean(jax.nn.one_hot(traj.skill, num_skills), axis=(0, 1))
+            skill_one_hot = jax.nn.one_hot(traj.skill, num_skills)
+            skill_counts = jnp.mean(skill_one_hot, axis=(0, 1))
+            mask_float = traj.mask.astype(jnp.float32)
+            mask_available = jnp.mean(mask_float, axis=(0, 1))
+            mask_selected_when_available = jnp.mean(skill_one_hot * mask_float, axis=(0, 1))
+            mask_selected_given_available = mask_selected_when_available / jnp.maximum(
+                mask_available,
+                1e-6,
+            )
+            noise_norm = jnp.linalg.norm(traj.action - traj.original_action, axis=-1)
             metrics = {
                 "env_step": timesteps,
                 "update": train_state.actor.n_updates,
                 "noise": noise_schedule(train_state.actor.n_updates),
                 "meta_epsilon": epsilon_schedule(train_state.actor.n_updates),
+                "schedule/noise": noise_schedule(train_state.actor.n_updates),
+                "schedule/meta_epsilon": epsilon_schedule(train_state.actor.n_updates),
+                "schedule/skill_epsilon": epsilon_schedule(train_state.actor.n_updates),
                 "returns/env_reward_mean": jnp.mean(traj.env_reward),
                 "returns/skill_reward_mean": jnp.mean(traj.skill_rewards),
                 "episode/done_fraction": jnp.mean(traj.done.astype(jnp.float32)),
+                "rollout/done_fraction": jnp.mean(traj.done.astype(jnp.float32)),
+                "rollout/episode_return": jnp.mean(traj.env_reward),
+                "rollout/episode_length": jnp.asarray(config["NUM_STEPS"], dtype=jnp.float32),
+                "action/action_norm_mean": jnp.mean(jnp.linalg.norm(traj.action, axis=-1)),
+                "action/original_action_norm_mean": jnp.mean(
+                    jnp.linalg.norm(traj.original_action, axis=-1)
+                ),
+                "action/noise_norm_mean": jnp.mean(noise_norm),
             }
             # PureJAXQL LogVecWrapper exposes returned_episode_returns/lengths in info.
             if isinstance(traj.info, dict):
@@ -496,9 +634,27 @@ def make_train(config: dict[str, Any]) -> Callable[[jax.Array], NexusTrainOutput
                         "original_reward",
                     ):
                         metrics[f"env/{key}"] = jnp.mean(value)
+                if "returned_episode_returns" in traj.info:
+                    metrics["rollout/episode_return"] = jnp.mean(
+                        traj.info["returned_episode_returns"]
+                    )
+                if "returned_episode_lengths" in traj.info:
+                    metrics["rollout/episode_length"] = jnp.mean(
+                        traj.info["returned_episode_lengths"]
+                    )
             for idx, name in enumerate(skill_names):
                 metrics[f"skill_usage/{idx}_{name}"] = skill_counts[idx]
                 metrics[f"skill_reward/{idx}_{name}"] = jnp.mean(traj.skill_rewards[..., idx])
+                metrics[f"mask_available/{idx}_{name}"] = mask_available[idx]
+                metrics[f"mask_selected_when_available/{idx}_{name}"] = (
+                    mask_selected_when_available[idx]
+                )
+                metrics[f"mask_selected_given_available/{idx}_{name}"] = (
+                    mask_selected_given_available[idx]
+                )
+            if isinstance(traj.diagnostics, dict):
+                for key, value in traj.diagnostics.items():
+                    metrics[f"policy_diag/{key}"] = jnp.mean(value)
             metrics.update({k: jnp.mean(v) for k, v in losses.items()})
             metrics["debug/host_time_token"] = jnp.asarray(t0 - t0)  # stable scalar for pytree shape.
 

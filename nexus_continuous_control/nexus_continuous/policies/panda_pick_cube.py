@@ -14,6 +14,7 @@ from __future__ import annotations
 
 from typing import Any
 
+import jax
 import jax.numpy as jnp
 
 from nexus_continuous.policies.common import actor_obs, decrease, info_value, l2_norm, safe_index, safe_slice
@@ -72,25 +73,54 @@ def skill_rewards(
 
 def symbolic_meta_policy(obs: Any, info: Any | None = None) -> jnp.ndarray:
     _tcp, _cube, _target, _gripper, height, dist_tcp_cube, dist_cube_target, grasped = _features(obs, info)
-    far_from_cube = dist_tcp_cube > REACH_RADIUS
+    del dist_cube_target
+    far_from_cube = (dist_tcp_cube > REACH_RADIUS) & (~grasped)
     need_grasp = ~grasped
     need_lift = height < LIFT_HEIGHT
-    near_target = dist_cube_target < 0.05
     return jnp.where(
         far_from_cube,
         0,
-        jnp.where(need_grasp, 1, jnp.where(need_lift, 2, jnp.where(near_target, 3, 3))),
+        jnp.where(need_grasp, 1, jnp.where(need_lift, 2, 3)),
     ).astype(jnp.int32)
 
 
 def skill_mask(obs: Any, info: Any | None = None) -> jnp.ndarray:
-    _tcp, _cube, _target, _gripper, height, dist_tcp_cube, dist_cube_target, grasped = _features(obs, info)
-    reach = dist_tcp_cube > 0.03
+    _tcp, _cube, _target, _gripper, height, dist_tcp_cube, _dist_cube_target, grasped = _features(
+        obs,
+        info,
+    )
+    reach = (~grasped) & (dist_tcp_cube > 0.03)
     grasp = (dist_tcp_cube < 0.12) & (~grasped)
     lift = grasped & (height < LIFT_HEIGHT + 0.05)
     place = grasped & (height >= LIFT_HEIGHT * 0.7)
-    # Place is the safe fallback once the cube is grasped; reach is fallback before grasp.
-    return jnp.stack([reach, grasp, lift, place | (dist_cube_target > 0.0)], axis=-1)
+    mask = jnp.stack([reach, grasp, lift, place], axis=-1)
+    fallback = jax.nn.one_hot(
+        jnp.zeros(mask.shape[:-1], dtype=jnp.int32),
+        NUM_SKILLS,
+    ).astype(bool)
+    return jnp.where(jnp.any(mask, axis=-1, keepdims=True), mask, fallback)
+
+
+def diagnostics(
+    prev_obs: Any,
+    obs: Any,
+    action: jnp.ndarray,
+    env_reward: jnp.ndarray,
+    done: jnp.ndarray,
+    info: Any | None = None,
+) -> dict[str, jnp.ndarray]:
+    del prev_obs, action, env_reward, done
+    _tcp, _cube, _target, gripper, height, dist_tcp_cube, dist_cube_target, grasped = _features(
+        obs,
+        info,
+    )
+    return {
+        "panda/dist_tcp_cube": dist_tcp_cube,
+        "panda/dist_cube_target": dist_cube_target,
+        "panda/cube_height": height,
+        "panda/gripper": gripper,
+        "panda/grasped": grasped.astype(jnp.float32),
+    }
 
 
 def explain_policy() -> str:

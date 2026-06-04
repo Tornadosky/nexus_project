@@ -77,6 +77,25 @@ def skill_mask(obs: Any, info: Any | None = None) -> jnp.ndarray:
     return jnp.stack([stand, track, turn, recover], axis=-1)
 
 
+def diagnostics(
+    prev_obs: Any,
+    obs: Any,
+    action: jnp.ndarray,
+    env_reward: jnp.ndarray,
+    done: jnp.ndarray,
+    info: Any | None = None,
+) -> dict[str, jnp.ndarray]:
+    del prev_obs, action, env_reward, done
+    height, roll, pitch, _vx, _vy, _yaw_rate, cmd_x, cmd_y, cmd_yaw = _features(obs, info)
+    return {
+        "go1/base_height": height,
+        "go1/roll": roll,
+        "go1/pitch": pitch,
+        "go1/command_xy_norm": l2_norm(jnp.stack([cmd_x, cmd_y], axis=-1)),
+        "go1/command_yaw": cmd_yaw,
+    }
+
+
 def explain_policy() -> str:
     return (
         "Go1JoystickFlatTerrain: recover if body height/orientation is unsafe; turn for yaw "

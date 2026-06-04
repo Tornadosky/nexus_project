@@ -74,6 +74,24 @@ def skill_mask(obs: Any, info: Any | None = None) -> jnp.ndarray:
     return jnp.stack([recover, center, damp], axis=-1)
 
 
+def diagnostics(
+    prev_obs: Any,
+    obs: Any,
+    action: jnp.ndarray,
+    env_reward: jnp.ndarray,
+    done: jnp.ndarray,
+    info: Any | None = None,
+) -> dict[str, jnp.ndarray]:
+    del prev_obs, action, env_reward, done, info
+    cart, angle, cart_vel, ang_vel = _features(obs)
+    return {
+        "cartpole/cart_position": cart,
+        "cartpole/pole_angle": angle,
+        "cartpole/cart_velocity": cart_vel,
+        "cartpole/pole_angular_velocity": ang_vel,
+    }
+
+
 def explain_policy() -> str:
     return (
         "CartpoleBalance: recover_balance when pole angle/angular velocity is large; "

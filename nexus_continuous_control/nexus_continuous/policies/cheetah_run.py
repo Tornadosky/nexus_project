@@ -66,6 +66,24 @@ def skill_mask(obs: Any, info: Any | None = None) -> jnp.ndarray:
     return jnp.stack([accelerate, stabilize, efficient], axis=-1)
 
 
+def diagnostics(
+    prev_obs: Any,
+    obs: Any,
+    action: jnp.ndarray,
+    env_reward: jnp.ndarray,
+    done: jnp.ndarray,
+    info: Any | None = None,
+) -> dict[str, jnp.ndarray]:
+    del prev_obs, env_reward, done
+    x_velocity, torso_pitch, joint_speed = _features(obs, info)
+    return {
+        "cheetah/forward_velocity": x_velocity,
+        "cheetah/torso_pitch": torso_pitch,
+        "cheetah/joint_speed": joint_speed,
+        "cheetah/action_norm": jnp.linalg.norm(action, axis=-1),
+    }
+
+
 def explain_policy() -> str:
     return (
         "CheetahRun: accelerate_forward while below target speed; stabilize_posture "

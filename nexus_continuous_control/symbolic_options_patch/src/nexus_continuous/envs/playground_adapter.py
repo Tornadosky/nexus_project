@@ -77,8 +77,17 @@ class _PlaygroundVecWrapper(_EnvWrapper):
 
     def _get_obs(self, obs: Any) -> dict[str, Any]:
         if self.privileged_state:
-            return {"actor": obs["state"], "critic": obs["privileged_state"]}
-        return {"actor": obs, "critic": obs}
+            actor_obs = obs["state"]
+            critic_obs = obs["privileged_state"]
+        else:
+            actor_obs = obs
+            critic_obs = obs
+        return {
+            "actor": actor_obs,
+            "critic": critic_obs,
+            "raw_actor": actor_obs,
+            "raw_critic": critic_obs,
+        }
 
 
 @struct.dataclass
@@ -215,6 +224,8 @@ class _NormalizeVecObservation(_EnvWrapper):
         return {
             "actor": (obs["actor"] - state.actor_mean) / jnp.sqrt(state.actor_var + 1e-8),
             "critic": (obs["critic"] - state.critic_mean) / jnp.sqrt(state.critic_var + 1e-8),
+            "raw_actor": obs.get("raw_actor", obs["actor"]),
+            "raw_critic": obs.get("raw_critic", obs["critic"]),
         }
 
 
@@ -300,28 +311,34 @@ def build_playground_env(config: dict[str, Any]) -> PlaygroundEnvBundle:
 
 
 def get_actor_obs(obs: Any) -> Any:
-    """Return actor observation from a Playground observation pytree."""
+    """Return network actor observations. May be normalized."""
 
     if isinstance(obs, dict):
-        if "actor" in obs:
-            return obs["actor"]
-        if "state" in obs:
-            return obs["state"]
-        if "obs" in obs:
-            return obs["obs"]
+        return obs.get("actor", obs.get("raw_actor", obs.get("state", obs.get("obs"))))
     return obs
 
 
 def get_critic_obs(obs: Any) -> Any:
-    """Return critic observation from a Playground observation pytree."""
+    """Return network critic observations. May be normalized."""
 
     if isinstance(obs, dict):
-        if "critic" in obs:
-            return obs["critic"]
-        if "state" in obs:
-            return obs["state"]
-        if "actor" in obs:
-            return obs["actor"]
-        if "obs" in obs:
-            return obs["obs"]
+        return obs.get(
+            "critic",
+            obs.get("actor", obs.get("raw_critic", obs.get("raw_actor", obs.get("state", obs.get("obs"))))),
+        )
     return obs
+
+
+def get_policy_obs(obs: Any) -> dict[str, Any]:
+    """Return raw observations for symbolic rules, masks, rewards, and diagnostics."""
+
+    if not isinstance(obs, dict):
+        return {"actor": obs, "critic": obs, "raw_actor": obs, "raw_critic": obs}
+    raw_actor = obs.get("raw_actor", obs.get("actor"))
+    raw_critic = obs.get("raw_critic", obs.get("critic", raw_actor))
+    return {
+        "actor": raw_actor,
+        "critic": raw_critic,
+        "raw_actor": raw_actor,
+        "raw_critic": raw_critic,
+    }

@@ -53,6 +53,12 @@ POLICY_SPECS: dict[str, PolicySpec] = {
         recommended_env_name="Go1JoystickFlatTerrain",
         description="Unitree Go1 joystick flat-terrain with stand/track/turn/recover skills.",
     ),
+    "flat_baseline": PolicySpec(
+        env_aliases=("flat", "flat_baseline", "ac_pqn_flat"),
+        module="nexus_continuous.policies.flat_baseline",
+        recommended_env_name="Any supported Playground environment",
+        description="Single-skill flat AC-PQN baseline trained on environment reward.",
+    ),
 }
 
 

@@ -75,6 +75,24 @@ def skill_mask(obs: Any, info: Any | None = None) -> jnp.ndarray:
     return jnp.stack([stand, walk, stabilize, efficient], axis=-1)
 
 
+def diagnostics(
+    prev_obs: Any,
+    obs: Any,
+    action: jnp.ndarray,
+    env_reward: jnp.ndarray,
+    done: jnp.ndarray,
+    info: Any | None = None,
+) -> dict[str, jnp.ndarray]:
+    del prev_obs, action, env_reward, done
+    height, pitch, x_velocity, joint_speed = _features(obs, info)
+    return {
+        "walker/height": height,
+        "walker/pitch": pitch,
+        "walker/forward_velocity": x_velocity,
+        "walker/joint_speed": joint_speed,
+    }
+
+
 def explain_policy() -> str:
     return (
         "WalkerWalk: stand_recover for low/tilted torso; walk_forward below target speed; "

@@ -106,8 +106,17 @@ def _to_numpy(value: Any) -> np.ndarray:
 
 def _infer_stage(path: Path) -> str:
     parts = [p.lower() for p in path.parts]
-    for name in ("smoke", "one_seed", "main", "extension"):
-        if name in parts:
+    for name in (
+        "patch_smoke",
+        "finalization_one_seed",
+        "final_research_matrix",
+        "final_go1_matrix",
+        "smoke",
+        "one_seed",
+        "main",
+        "extension",
+    ):
+        if name in parts or any(name in part for part in parts):
             return name
     return "unknown"
 
@@ -336,7 +345,23 @@ def make_final_summary(wide_df: pd.DataFrame) -> pd.DataFrame:
     ]
     skill_usage = sorted([c for c in metric_cols if c.startswith("skill_usage/")])
     skill_reward = sorted([c for c in metric_cols if c.startswith("skill_reward/")])
-    selected_metrics = [m for m in preferred if m in metric_cols] + skill_usage + skill_reward
+    mask_metrics = sorted(
+        [
+            c
+            for c in metric_cols
+            if c.startswith("mask_available/")
+            or c.startswith("mask_selected_when_available/")
+            or c.startswith("mask_selected_given_available/")
+        ]
+    )
+    raw_diag_metrics = sorted([c for c in metric_cols if c.startswith("policy_diag/")])
+    selected_metrics = (
+        [m for m in preferred if m in metric_cols]
+        + skill_usage
+        + skill_reward
+        + mask_metrics
+        + raw_diag_metrics
+    )
 
     rows = []
     group_cols = ["run_id", "stage", "seed", "env_name", "policy", "meta_policy_type", "source_pickle"]
@@ -352,6 +377,173 @@ def make_final_summary(wide_df: pd.DataFrame) -> pd.DataFrame:
             if len(vals):
                 base[f"finite/{metric}"] = bool(np.isfinite(vals.to_numpy(dtype=float)).all())
         rows.append(base)
+    return pd.DataFrame(rows)
+
+
+def _preferred_return_metric(columns: Iterable[str]) -> str | None:
+    for candidate in (
+        "env/returned_episode_returns",
+        "returns/env_reward_mean",
+        "env/original_reward",
+    ):
+        if f"last10pct_mean/{candidate}" in columns:
+            return candidate
+    return None
+
+
+def make_learning_trends(summary_df: pd.DataFrame) -> pd.DataFrame:
+    if summary_df.empty:
+        return pd.DataFrame()
+    metric = _preferred_return_metric(summary_df.columns)
+    if metric is None:
+        return pd.DataFrame()
+    rows = []
+    for _, row in summary_df.iterrows():
+        first = pd.to_numeric(pd.Series([row[f"first10pct_mean/{metric}"]]), errors="coerce").iloc[0]
+        last = pd.to_numeric(pd.Series([row[f"last10pct_mean/{metric}"]]), errors="coerce").iloc[0]
+        delta = last - first if np.isfinite(first) and np.isfinite(last) else math.nan
+        rows.append(
+            {
+                "run_id": row["run_id"],
+                "seed": row["seed"],
+                "env_name": row["env_name"],
+                "meta_policy_type": row["meta_policy_type"],
+                "metric": metric,
+                "first10pct_mean": first,
+                "last10pct_mean": last,
+                "delta": delta,
+                "positive_learning_trend": bool(np.isfinite(delta) and delta > 0.0),
+            }
+        )
+    return pd.DataFrame(rows)
+
+
+def make_baseline_comparison(summary_df: pd.DataFrame) -> pd.DataFrame:
+    if summary_df.empty:
+        return pd.DataFrame()
+    metric = _preferred_return_metric(summary_df.columns)
+    if metric is None:
+        return pd.DataFrame()
+    metric_col = f"last10pct_mean/{metric}"
+    df = summary_df[["env_name", "meta_policy_type", "seed", metric_col]].copy()
+    df[metric_col] = pd.to_numeric(df[metric_col], errors="coerce")
+    agg = df.groupby(["env_name", "meta_policy_type"], dropna=False)[metric_col].agg(
+        ["mean", "std", "count"]
+    )
+    rows = []
+    for env, env_df in agg.reset_index().groupby("env_name", dropna=False):
+        flat = env_df.loc[env_df["meta_policy_type"] == "flat"]
+        flat_mean = float(flat["mean"].iloc[0]) if not flat.empty else math.nan
+        for item in env_df.itertuples(index=False):
+            ratio = item.mean / flat_mean if np.isfinite(flat_mean) and flat_mean != 0.0 else math.nan
+            rows.append(
+                {
+                    "env_name": env,
+                    "meta_policy_type": item.meta_policy_type,
+                    "metric": metric,
+                    "final_mean": item.mean,
+                    "final_std": item.std,
+                    "num_seeds": item.count,
+                    "flat_final_mean": flat_mean,
+                    "ratio_to_flat": ratio,
+                    "meets_neural_80pct": bool(
+                        item.meta_policy_type == "neural" and np.isfinite(ratio) and ratio >= 0.8
+                    ),
+                    "meets_nesy_70pct": bool(
+                        item.meta_policy_type == "nesy" and np.isfinite(ratio) and ratio >= 0.7
+                    ),
+                }
+            )
+    return pd.DataFrame(rows)
+
+
+def make_skill_disentanglement(summary_df: pd.DataFrame) -> pd.DataFrame:
+    if summary_df.empty:
+        return pd.DataFrame()
+    usage_cols = [c for c in summary_df.columns if c.startswith("last10pct_mean/skill_usage/")]
+    reward_cols = [c for c in summary_df.columns if c.startswith("last10pct_mean/skill_reward/")]
+    rows = []
+    for _, row in summary_df.iterrows():
+        usage = pd.to_numeric(row[usage_cols], errors="coerce").to_numpy(dtype=float) if usage_cols else np.array([])
+        rewards = (
+            pd.to_numeric(row[reward_cols], errors="coerce").to_numpy(dtype=float)
+            if reward_cols
+            else np.array([])
+        )
+        usage = usage[np.isfinite(usage)]
+        rewards = rewards[np.isfinite(rewards)]
+        entropy = math.nan
+        if usage.size:
+            probs = usage / max(float(usage.sum()), 1e-12)
+            entropy = float(-np.sum(probs * np.log(np.clip(probs, 1e-12, 1.0))))
+        rows.append(
+            {
+                "run_id": row["run_id"],
+                "seed": row["seed"],
+                "env_name": row["env_name"],
+                "meta_policy_type": row["meta_policy_type"],
+                "num_usage_skills": int((usage > 0.01).sum()) if usage.size else 0,
+                "usage_entropy": entropy,
+                "skill_reward_std": float(np.std(rewards)) if rewards.size else math.nan,
+                "skill_rewards_finite": bool(np.isfinite(rewards).all()) if rewards.size else False,
+                "skill_rewards_nonconstant": bool(np.std(rewards) > 1e-6) if rewards.size else False,
+            }
+        )
+    return pd.DataFrame(rows)
+
+
+def make_mask_diagnostics(summary_df: pd.DataFrame) -> pd.DataFrame:
+    if summary_df.empty:
+        return pd.DataFrame()
+    mask_cols = [
+        c
+        for c in summary_df.columns
+        if c.startswith("last10pct_mean/mask_available/")
+        or c.startswith("last10pct_mean/mask_selected_when_available/")
+        or c.startswith("last10pct_mean/mask_selected_given_available/")
+    ]
+    rows = []
+    for _, row in summary_df.iterrows():
+        for col in mask_cols:
+            kind, skill = col.split("/", 1)[1].split("/", 1)
+            value = pd.to_numeric(pd.Series([row[col]]), errors="coerce").iloc[0]
+            rows.append(
+                {
+                    "run_id": row["run_id"],
+                    "seed": row["seed"],
+                    "env_name": row["env_name"],
+                    "meta_policy_type": row["meta_policy_type"],
+                    "kind": kind,
+                    "skill": skill,
+                    "last10pct_mean": value,
+                }
+            )
+    return pd.DataFrame(rows)
+
+
+def make_raw_feature_diagnostics(wide_df: pd.DataFrame) -> pd.DataFrame:
+    if wide_df.empty:
+        return pd.DataFrame()
+    diag_cols = [c for c in wide_df.columns if c.startswith("policy_diag/")]
+    rows = []
+    group_cols = ["run_id", "seed", "env_name", "meta_policy_type"]
+    for keys, group in wide_df.groupby(group_cols, dropna=False):
+        base = dict(zip(group_cols, keys))
+        for col in diag_cols:
+            vals = pd.to_numeric(group[col], errors="coerce")
+            rows.append(
+                {
+                    **base,
+                    "feature": col.replace("policy_diag/", "", 1),
+                    "mean": float(vals.mean()) if vals.notna().any() else math.nan,
+                    "std": float(vals.std()) if vals.notna().any() else math.nan,
+                    "min": float(vals.min()) if vals.notna().any() else math.nan,
+                    "max": float(vals.max()) if vals.notna().any() else math.nan,
+                    "finite": bool(np.isfinite(vals.dropna().to_numpy(dtype=float)).all())
+                    if vals.notna().any()
+                    else False,
+                }
+            )
     return pd.DataFrame(rows)
 
 
@@ -714,23 +906,90 @@ def write_diagnostics(
     lines.append("## Required run coverage checklist")
     lines.append("")
     required_main = {
+        "flat_cartpole_balance",
+        "cartpole_balance_neural",
         "cartpole_balance_nesy",
         "cartpole_balance_symbolic",
-        "cartpole_balance_neural",
+        "flat_cheetah_run",
+        "cheetah_run_neural",
         "cheetah_run_nesy",
+        "flat_walker_walk",
+        "walker_walk_neural",
         "walker_walk_nesy",
+        "flat_hopper_hop",
+        "hopper_hop_neural",
         "hopper_hop_nesy",
+        "flat_panda_pick_cube",
+        "panda_pick_cube_neural",
         "panda_pick_cube_nesy",
         "panda_pick_cube_symbolic",
-        "panda_pick_cube_neural",
     }
     found = set(summary_df["run_id"].unique()) if not summary_df.empty and "run_id" in summary_df else set()
     for run_id in sorted(required_main):
         count = int((summary_df["run_id"] == run_id).sum()) if not summary_df.empty and "run_id" in summary_df else 0
         marker = "x" if run_id in found else " "
-        lines.append(f"- [{marker}] {run_id}: {count} seed rows")
+        status = "OK" if count >= 3 else "MISSING_OR_INCOMPLETE"
+        lines.append(f"- [{marker}] {run_id}: {count} seed rows ({status})")
     go1_count = int((summary_df["run_id"] == "go1_joystick_nesy").sum()) if not summary_df.empty and "run_id" in summary_df else 0
     lines.append(f"- [{'x' if go1_count else ' '}] go1_joystick_nesy extension: {go1_count} seed rows")
+
+    lines.append("")
+    lines.append("## Checklist failure flags")
+    lines.append("")
+    if not wide_df.empty:
+        flat_envs = set(
+            summary_df.loc[summary_df["meta_policy_type"] == "flat", "env_name"].astype(str)
+        )
+        final_envs = set(summary_df["env_name"].astype(str)) if not summary_df.empty else set()
+        missing_flat = sorted(final_envs - flat_envs)
+        if missing_flat:
+            lines.append("- FATAL: missing flat baseline for environments: " + ", ".join(missing_flat))
+        else:
+            lines.append("- OK: flat baseline present for every loaded environment.")
+
+        raw_diag_cols = [c for c in wide_df.columns if c.startswith("policy_diag/")]
+        if not raw_diag_cols:
+            lines.append("- FATAL: missing raw feature diagnostics.")
+        else:
+            lines.append(f"- OK: raw feature diagnostics found ({len(raw_diag_cols)} metric columns).")
+
+        if "train/critic_abs_td" in wide_df.columns:
+            td = pd.to_numeric(wide_df["train/critic_abs_td"], errors="coerce")
+            if td.notna().any() and float(td.max()) > 1e6:
+                lines.append(f"- FATAL: critic TD instability detected; max={float(td.max()):.4g}.")
+            else:
+                lines.append("- OK: no monotonic-scale critic TD explosion detected by threshold.")
+
+        usage_cols = [c for c in wide_df.columns if c.startswith("skill_usage/")]
+        if usage_cols:
+            tmp = wide_df.copy()
+            tmp["skill_usage_sum"] = tmp[usage_cols].apply(pd.to_numeric, errors="coerce").sum(axis=1)
+            bad_usage = tmp.loc[(tmp["skill_usage_sum"] - 1.0).abs() > 0.05]
+            if not bad_usage.empty:
+                lines.append("- FATAL: bad skill usage sums detected.")
+
+        panda_rows = summary_df[
+            summary_df["run_id"].astype(str).str.contains("panda_pick_cube", na=False)
+        ] if not summary_df.empty else pd.DataFrame()
+        if not panda_rows.empty:
+            for skill in ("1_grasp_cube", "2_lift_cube"):
+                col = f"last10pct_mean/skill_usage/{skill}"
+                if col not in panda_rows.columns:
+                    lines.append(f"- FATAL: Panda missing usage metric for {skill}.")
+                else:
+                    vals = pd.to_numeric(panda_rows[col], errors="coerce")
+                    if vals.fillna(0.0).max() <= 0.0:
+                        lines.append(f"- FATAL: Panda {skill} is never selected.")
+
+        hopper_rows = summary_df[
+            summary_df["run_id"].astype(str).str.contains("hopper_hop", na=False)
+        ] if not summary_df.empty else pd.DataFrame()
+        if not hopper_rows.empty:
+            metric = _preferred_return_metric(summary_df.columns)
+            if metric is not None:
+                vals = pd.to_numeric(hopper_rows[f"last10pct_mean/{metric}"], errors="coerce")
+                if vals.notna().any() and float(vals.max()) <= 1e-6:
+                    lines.append("- FATAL: Hopper final reward is near zero and cannot count as success.")
 
     (out_dir / "diagnostics.md").write_text("\n".join(lines) + "\n", encoding="utf-8")
 
@@ -786,11 +1045,21 @@ def main(argv: list[str] | None = None) -> int:
     records, load_failures = discover_runs(runs_root)
     long_df, wide_df, inventory_df, metric_errors = metrics_to_dataframes(records)
     summary_df = make_final_summary(wide_df)
+    learning_trends_df = make_learning_trends(summary_df)
+    baseline_comparison_df = make_baseline_comparison(summary_df)
+    skill_disentanglement_df = make_skill_disentanglement(summary_df)
+    mask_diagnostics_df = make_mask_diagnostics(summary_df)
+    raw_feature_diagnostics_df = make_raw_feature_diagnostics(wide_df)
 
     long_df.to_csv(out_dir / "metrics_long.csv", index=False)
     wide_df.to_csv(out_dir / "metrics_wide.csv", index=False)
     inventory_df.to_csv(out_dir / "run_inventory.csv", index=False)
     summary_df.to_csv(out_dir / "final_summary.csv", index=False)
+    learning_trends_df.to_csv(out_dir / "learning_trends.csv", index=False)
+    baseline_comparison_df.to_csv(out_dir / "baseline_comparison.csv", index=False)
+    skill_disentanglement_df.to_csv(out_dir / "skill_disentanglement.csv", index=False)
+    mask_diagnostics_df.to_csv(out_dir / "mask_diagnostics.csv", index=False)
+    raw_feature_diagnostics_df.to_csv(out_dir / "raw_feature_diagnostics.csv", index=False)
 
     if load_failures:
         (out_dir / "pickle_load_failures.json").write_text(json.dumps(load_failures, indent=2), encoding="utf-8")

@@ -16,7 +16,7 @@ import jax.numpy as jnp
 
 def actor_obs(obs: Any) -> jnp.ndarray:
     if isinstance(obs, Mapping):
-        for key in ("state", "actor", "obs", "observation", "critic"):
+        for key in ("raw_actor", "state", "actor", "obs", "observation", "raw_critic", "critic"):
             if key in obs:
                 return jnp.asarray(obs[key])
     return jnp.asarray(obs)
