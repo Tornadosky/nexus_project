@@ -20,11 +20,9 @@ agent for MuJoCo Playground. It implements the deliverables:
 - DDPG-style Actor-Critic PQN low-level skills;
 - neural, symbolic, and neuro-symbolic (`nesy`) meta-policy modes;
 - hand-written reward functions and meta-policy / mask functions;
-- configs for 6 MuJoCo Playground environments;
-- optional installer that drops the extension into `remunds/symbolic_options`.
+- configs for 6 MuJoCo Playground environments.
 
-The code is intentionally structured so it can run standalone, or be copied into
-the upstream `symbolic_options` repository.
+The code is intentionally structured as a standalone experiment package.
 
 ## Folder layout
 
@@ -38,8 +36,6 @@ nexus_continuous/
   scripts/train_nexus_playground.py              # CLI training entry point
   scripts/eval_policy.py                         # inspect rules on synthetic states
 configs/*.yaml                                   # env-specific training configs
-tools/install_into_symbolic_options.py           # copy into symbolic_options repo
-symbolic_options_patch/                          # thin patch files/configs
 ```
 
 ## Installation
@@ -128,26 +124,6 @@ Override `META_POLICY_TYPE=neural` to run the purely neural meta-policy version:
 python -m nexus_continuous.scripts.train_nexus_playground \
   --config configs/walker_walk_nesy.yaml \
   --override META_POLICY_TYPE=neural
-```
-
-## Install into `symbolic_options`
-
-From this folder:
-
-```bash
-python tools/install_into_symbolic_options.py /path/to/symbolic_options
-cd /path/to/symbolic_options
-uv run python src/symbolic_options/hierarchical_ac_pqn_playground.py \
-  --config src/symbolic_options/config/alg/nexus_playground_cartpole_balance_nesy.yaml
-```
-
-The installer copies this package to:
-
-```text
-src/nexus_continuous/
-src/symbolic_options/hierarchical_ac_pqn_playground.py
-src/symbolic_options/config/alg/nexus_playground_*.yaml
-src/symbolic_options/reward_functions/playground/*.py
 ```
 
 ## What the algorithm does

@@ -1,1 +1,0 @@
-"""LLM skill schema helpers."""
