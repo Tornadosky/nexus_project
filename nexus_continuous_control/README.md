@@ -126,6 +126,23 @@ python -m nexus_continuous.scripts.train_nexus_playground \
   --override META_POLICY_TYPE=neural
 ```
 
+## Experiment tracking (Weights & Biases, coexist)
+
+Live W&B tracking is on by default and logs one run per seed after training
+finishes (post-hoc replay of the stacked metrics history). It is a *coexist* layer:
+the offline `collect_nexus_results.py` -> CSV -> `phase2_validate_results.py`
+pipeline stays authoritative for all research gates. Disable per run with
+`--no-wandb`, or globally with `WANDB_MODE=disabled`. Sweeps run through
+`nexus_continuous.scripts.wandb_sweep_agent` (see `configs/sweeps/`). Full details
+in `docs/reports/wandb_tracking.md`.
+
+```bash
+# Tracked run (default)
+python -m nexus_continuous.scripts.train_nexus_playground --config configs/cheetah_run_nesy.yaml
+# Untracked (CI / smoke)
+python -m nexus_continuous.scripts.train_nexus_playground --config configs/cheetah_run_nesy.yaml --no-wandb
+```
+
 ## What the algorithm does
 
 At every environment step:

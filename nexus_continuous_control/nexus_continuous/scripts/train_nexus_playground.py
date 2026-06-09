@@ -14,6 +14,7 @@ from flax import serialization
 
 from nexus_continuous.algorithms.hierarchical_ac_pqn_playground import run_training
 from nexus_continuous.policies.registry import load_policy_module, list_policies
+from nexus_continuous.tracking import log_training_run
 from nexus_continuous.utils import load_config, save_pickle_checkpoint
 
 
@@ -50,6 +51,11 @@ def main(argv: list[str] | None = None) -> None:
     parser.add_argument("--override", action="append", default=[], help="Override config value, e.g. ENV_NAME=CartpoleBalance")
     parser.add_argument("--save", type=str, default=None, help="Optional pickle checkpoint path.")
     parser.add_argument("--list-policies", action="store_true")
+    parser.add_argument(
+        "--no-wandb",
+        action="store_true",
+        help="Disable Weights & Biases live tracking (the offline CSV pipeline is unaffected).",
+    )
     args = parser.parse_args(argv)
 
     if args.list_policies:
@@ -66,6 +72,18 @@ def main(argv: list[str] | None = None) -> None:
 
     output = run_training(cfg)
     print("Training finished.")
+
+    # Coexist: live W&B tracking is best-effort and never authoritative. The
+    # offline pickle -> collect_nexus_results.py -> validator path below/elsewhere
+    # remains the source of truth for research gates.
+    commit_hash = _commit_hash()
+    try:
+        run_ids = log_training_run(cfg, output, commit_hash=commit_hash, cli_disable=args.no_wandb)
+        if run_ids:
+            print(f"Logged {len(run_ids)} W&B run(s): {', '.join(run_ids)}")
+    except Exception as exc:  # never let tracking break a training job
+        print(f"[wandb] live logging failed but training is unaffected: {exc!r}")
+
     metrics = output.metrics if hasattr(output, "metrics") else None
     summary = _summarize_metrics(metrics)
     if summary:
@@ -87,7 +105,7 @@ def main(argv: list[str] | None = None) -> None:
             "eval_metrics": output.eval_metrics,
             "eval_episode_table": output.eval_episode_table,
             "normalization_stats": output.normalization_stats,
-            "commit_hash": _commit_hash(),
+            "commit_hash": commit_hash,
         }
         save_pickle_checkpoint(Path(save_path), payload)
         print(f"Saved checkpoint to {save_path}")

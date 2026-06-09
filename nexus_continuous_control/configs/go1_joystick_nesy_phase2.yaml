@@ -38,3 +38,13 @@ BEHAVIOR_PENALTY_COEFF: 0.001
 ACTOR_UPDATE_MODE: active_only
 PRINT_EVERY: 0
 SAVE_PATH: null
+
+# Optional live W&B tracking (coexist layer; the offline CSV pipeline stays
+# authoritative). All keys are optional -- omit the block for the defaults below.
+# WANDB:
+#   project: nexus-continuous-control   # default; or set $WANDB_PROJECT
+#   entity: my-team                     # default: account default / $WANDB_ENTITY
+#   mode: online                        # online | offline | disabled
+#   group: Go1JoystickFlatTerrain_nesy  # default: "<ENV_NAME>_<META_POLICY_TYPE>"
+#   tags: [phase2, robotics]            # default: [env, meta_type, alg]
+#   enabled: true                       # set false to turn tracking off via config
