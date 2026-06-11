@@ -54,7 +54,14 @@ def skill_rewards(
     speed_track = 1.0 - jnp.abs(x_velocity - TARGET_SPEED)
 
     stand = height_reward + upright - ctrl
-    walk = x_velocity + 0.5 * speed_track - ctrl
+    # Walk carries its own posture terms: without them the walk actor can
+    # maximize signed velocity by lunging/falling forward, the meta learns to
+    # avoid the skill, and the policy settles into the stand+sway exploit of
+    # the env's asymmetric move tolerance (runs/loop_fix/LOOP_NOTES.md,
+    # batch A-C: budget, K10 commitment, and sustained exploration all failed
+    # without this). Additive rather than multiplicative so the walk actor
+    # keeps a recovery gradient after a stumble.
+    walk = 0.5 * (height_reward + upright) + x_velocity + 0.5 * speed_track - ctrl
     stabilize = upright - 0.05 * joint_speed - ctrl
     efficient = 0.5 * x_velocity - 5.0 * ctrl
     rewards = jnp.stack([stand, walk, stabilize, efficient], axis=-1)
@@ -63,8 +70,12 @@ def skill_rewards(
 
 def symbolic_meta_policy(obs: Any, info: Any | None = None) -> jnp.ndarray:
     height, pitch, x_velocity, joint_speed = _features(obs, info)
-    fallen_or_tilted = (height < 0.85) | (jnp.abs(pitch) > 0.45)
-    unstable = (jnp.abs(pitch) > 0.25) | (joint_speed > 8.0)
+    # Wrap-safe uprightness (pitch is an unwrapped hinge angle from a uniform
+    # random reset orientation): cos thresholds match the old +/-0.45 and
+    # +/-0.25 rad bands without mis-scoring torsos that rotated past +/-pi.
+    upright_cos = jnp.cos(pitch)
+    fallen_or_tilted = (height < 0.85) | (upright_cos < 0.9)
+    unstable = (upright_cos < 0.97) | (joint_speed > 8.0)
     slow = x_velocity < TARGET_SPEED
     return jnp.where(fallen_or_tilted, 0, jnp.where(slow, 1, jnp.where(unstable, 2, 3))).astype(
         jnp.int32
@@ -108,7 +119,11 @@ def task_metrics(
 ) -> dict[str, jnp.ndarray]:
     del prev_obs, action, env_reward, done
     torso_height, torso_pitch, forward_velocity, _joint_speed = _features(obs, info)
-    stand_success = (torso_height > 0.85) & (jnp.abs(torso_pitch) < 0.5)
+    # Wrap-safe uprightness: pitch (qpos[2]) is an unwrapped hinge angle in
+    # [-pi, pi] at reset and can accumulate past it, so |pitch| mis-scores a
+    # torso that righted itself via rotation. cos(pitch) matches the env's own
+    # uprightness term (xmat[2,2], the torso "up" z-component).
+    stand_success = (torso_height > 0.85) & (jnp.cos(torso_pitch) > 0.7)
     walk_success = stand_success & (forward_velocity > 0.5)
     return {
         "walker/stand_success_rate": stand_success.astype(jnp.float32),

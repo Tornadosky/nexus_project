@@ -51,7 +51,16 @@ def skill_rewards(
     vel_error = jnp.abs(cart_vel) + 0.25 * jnp.abs(ang_vel)
     prev_vel_error = jnp.abs(prev_cart_vel) + 0.25 * jnp.abs(prev_ang_vel)
 
-    recover = 1.0 - angle_error + 0.5 * decrease(prev_angle_error, angle_error) - act_penalty
+    # Damping term: without it the recover actor minimizes |angle| but
+    # overshoots every swing, so |angle|/|ang_vel| never leave the symbolic
+    # rule's urgent band and the rule degenerates to 100% recover_balance.
+    recover = (
+        1.0
+        - angle_error
+        - 0.1 * jnp.abs(ang_vel)
+        + 0.5 * decrease(prev_angle_error, angle_error)
+        - act_penalty
+    )
     center = 1.0 - cart_error + 0.5 * decrease(prev_cart_error, cart_error) - act_penalty
     damp = 1.0 - vel_error + 0.25 * decrease(prev_vel_error, vel_error) - act_penalty
     rewards = jnp.stack([recover, center, damp], axis=-1)
@@ -59,13 +68,18 @@ def skill_rewards(
 
 
 def symbolic_meta_policy(obs: Any, info: Any | None = None) -> jnp.ndarray:
-    cart, angle, cart_vel, ang_vel = _features(obs, info)
+    cart, angle, _cart_vel, ang_vel = _features(obs, info)
+    # Urgent band kept at 0.20 rad / 1.5 rad/s: a widened band (0.35/2.5,
+    # motivated by the learned nesy meta preferring damp_motion in ~60% of
+    # "urgent" states) was A/B-tested at 150 updates x 3 seeds and LOST
+    # (success mean 0.070 vs 0.107) — the symbolic controller needs the
+    # earlier recover handoff even though the learned metas do not.
     urgent_angle = (jnp.abs(angle) > 0.20) | (jnp.abs(ang_vel) > 1.5)
     off_center = jnp.abs(cart) > 0.35
-    high_velocity = (jnp.abs(cart_vel) + jnp.abs(ang_vel)) > 1.0
-    return jnp.where(urgent_angle, 0, jnp.where(off_center, 1, jnp.where(high_velocity, 2, 0))).astype(
-        jnp.int32
-    )
+    # Rest branch is damp_motion (2), matching explain_policy; it previously
+    # fell back to recover_balance (0), which together with recover's
+    # overshoot made the rule fire skill 0 on every step.
+    return jnp.where(urgent_angle, 0, jnp.where(off_center, 1, 2)).astype(jnp.int32)
 
 
 def skill_mask(obs: Any, info: Any | None = None) -> jnp.ndarray:

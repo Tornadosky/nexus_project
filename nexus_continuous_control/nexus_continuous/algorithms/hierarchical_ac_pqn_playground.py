@@ -318,12 +318,15 @@ def make_train(config: dict[str, Any]) -> Callable[[jax.Array], NexusTrainOutput
             )
         return diagnostics
 
+    hold_interval = int(config.get("META_DECISION_INTERVAL", 1))
+
     def _select_action(
         train_state: NexusTrainState,
         obs: Any,
         rng: jax.Array,
         update_idx: int,
         explore: bool,
+        hold_state: tuple[jnp.ndarray, jnp.ndarray, jnp.ndarray] | None = None,
     ):
         obs_actor = get_actor_obs(obs)
         policy_obs = get_policy_obs(obs)
@@ -351,6 +354,17 @@ def make_train(config: dict[str, Any]) -> Callable[[jax.Array], NexusTrainOutput
             rng, rng_eps = jax.random.split(rng)
             selected_skill = _epsilon_greedy_skill(rng_eps, greedy_skill, epsilon, num_skills, mask)
 
+        new_hold_state = hold_state
+        if hold_interval > 1 and hold_state is not None and meta_policy_type != "flat":
+            held_skill, steps_held, prev_done = hold_state
+            # Re-decide when the commitment expires, the episode resets, or
+            # (nesy) the held skill is no longer allowed by the mask.
+            held_valid = jnp.take_along_axis(mask, held_skill[:, None], axis=-1)[:, 0]
+            redecide = (steps_held >= hold_interval) | prev_done | ~held_valid
+            selected_skill = jnp.where(redecide, selected_skill, held_skill).astype(jnp.int32)
+            steps_held = jnp.where(redecide, jnp.ones_like(steps_held), steps_held + 1)
+            new_hold_state = (selected_skill, steps_held, prev_done)
+
         original_action = _select_rows(all_actions_env_major, selected_skill)
         if explore:
             rng, rng_noise = jax.random.split(rng)
@@ -364,7 +378,7 @@ def make_train(config: dict[str, Any]) -> Callable[[jax.Array], NexusTrainOutput
         else:
             action = jnp.clip(original_action, action_low, action_high)
         meta_selected_value = _select_rows(meta_values, selected_skill)
-        return original_action, action, selected_skill, meta_selected_value, mask, rng
+        return original_action, action, selected_skill, meta_selected_value, mask, new_hold_state, rng
 
     def _normalization_stats_from_state(env_state: Any, obs: Any) -> dict[str, jnp.ndarray]:
         obs_actor = get_actor_obs(obs)
@@ -437,6 +451,24 @@ def make_train(config: dict[str, Any]) -> Callable[[jax.Array], NexusTrainOutput
         out["primary_success_rate"] = lift_success.astype(jnp.float32)
         return out
 
+    def _walker_episode_overrides(
+        mean_metrics: dict[str, jnp.ndarray],
+    ) -> dict[str, jnp.ndarray]:
+        if "walker/forward_velocity_mean" not in mean_metrics:
+            return mean_metrics
+        out = dict(mean_metrics)
+        # Episode-mean forward velocity equals net displacement / time, so this
+        # only fires for genuine locomotion. The per-step walk_success counts
+        # the forward half of every sway cycle and reads ~0.27 for policies
+        # with zero net progress; it is kept as-is for comparability while
+        # the primary gate metric switches to the honest episode-level one.
+        net_walk = (out["walker/forward_velocity_mean"] > 0.5) & (
+            out["walker/stand_success_rate"] > 0.5
+        )
+        out["walker/net_walk_success_rate"] = net_walk.astype(jnp.float32)
+        out["primary_success_rate"] = net_walk.astype(jnp.float32)
+        return out
+
     def _summarize_eval_table(table: dict[str, jnp.ndarray]) -> dict[str, jnp.ndarray]:
         summary = {
             "eval_seed": jnp.asarray(int(config.get("EVAL_SEED", 10000)), dtype=jnp.int32),
@@ -486,14 +518,27 @@ def make_train(config: dict[str, Any]) -> Callable[[jax.Array], NexusTrainOutput
             done_seen = jnp.zeros((eval_num_envs,), dtype=bool)
 
             def _eval_step(carry, unused):
-                eval_state, last_obs, rng, done_seen, returns, lengths, sum_metrics, max_metrics = carry
-                rng, rng_action = jax.random.split(rng)
-                _original_action, action, _skill, _value, _mask, rng_action = _select_action(
-                    train_state,
+                (
+                    eval_state,
                     last_obs,
-                    rng_action,
-                    train_state.actor.n_updates,
-                    explore=False,
+                    rng,
+                    done_seen,
+                    returns,
+                    lengths,
+                    sum_metrics,
+                    max_metrics,
+                    hold_state,
+                ) = carry
+                rng, rng_action = jax.random.split(rng)
+                _original_action, action, _skill, _value, _mask, hold_state, rng_action = (
+                    _select_action(
+                        train_state,
+                        last_obs,
+                        rng_action,
+                        train_state.actor.n_updates,
+                        explore=False,
+                        hold_state=hold_state,
+                    )
                 )
                 rng, rng_step = jax.random.split(rng)
                 step_rng = jax.random.split(rng_step, eval_num_envs)
@@ -527,6 +572,8 @@ def make_train(config: dict[str, Any]) -> Callable[[jax.Array], NexusTrainOutput
                     metrics,
                 )
                 done_seen = done_seen | done
+                if hold_state is not None:
+                    hold_state = (hold_state[0], hold_state[1], done.astype(bool))
                 return (
                     next_eval_state,
                     next_obs,
@@ -536,8 +583,17 @@ def make_train(config: dict[str, Any]) -> Callable[[jax.Array], NexusTrainOutput
                     lengths,
                     sum_metrics,
                     max_metrics,
+                    hold_state,
                 ), None
 
+            if hold_interval > 1 and meta_policy_type != "flat":
+                eval_init_hold_state = (
+                    jnp.zeros((eval_num_envs,), dtype=jnp.int32),
+                    jnp.full((eval_num_envs,), hold_interval, dtype=jnp.int32),
+                    jnp.ones((eval_num_envs,), dtype=bool),
+                )
+            else:
+                eval_init_hold_state = None
             init_carry = (
                 eval_state,
                 obs,
@@ -547,6 +603,7 @@ def make_train(config: dict[str, Any]) -> Callable[[jax.Array], NexusTrainOutput
                 lengths,
                 zeros_like_metrics,
                 neg_inf_metrics,
+                eval_init_hold_state,
             )
             final_carry, _ = jax.lax.scan(_eval_step, init_carry, None, eval_max_steps)
             (
@@ -558,10 +615,12 @@ def make_train(config: dict[str, Any]) -> Callable[[jax.Array], NexusTrainOutput
                 lengths,
                 sum_metrics,
                 max_metrics,
+                _eval_hold_state,
             ) = final_carry
             denom = jnp.maximum(lengths, 1.0)
             mean_metrics = jax.tree_util.tree_map(lambda value: value / denom, sum_metrics)
             episode_metrics = _panda_episode_overrides(mean_metrics, max_metrics, initial_metrics)
+            episode_metrics = _walker_episode_overrides(episode_metrics)
             table = {
                 "episode_return": returns,
                 "episode_length": lengths,
@@ -621,10 +680,12 @@ def make_train(config: dict[str, Any]) -> Callable[[jax.Array], NexusTrainOutput
         )
 
         def _env_step(carry, unused):
-            train_state, env_state, last_obs, rng = carry
+            train_state, env_state, last_obs, rng, hold_state = carry
             update_idx = train_state.actor.n_updates
-            original_action, action, skill, meta_selected_value, mask, rng = _select_action(
-                train_state, last_obs, rng, update_idx, explore=True
+            original_action, action, skill, meta_selected_value, mask, hold_state, rng = (
+                _select_action(
+                    train_state, last_obs, rng, update_idx, explore=True, hold_state=hold_state
+                )
             )
             obs_actor = get_actor_obs(last_obs)
             obs_critic = get_critic_obs(last_obs)
@@ -677,14 +738,16 @@ def make_train(config: dict[str, Any]) -> Callable[[jax.Array], NexusTrainOutput
                 diagnostics=diagnostics,
                 mask=mask,
             )
-            return (train_state, next_env_state, next_obs, rng), transition
+            if hold_state is not None:
+                hold_state = (hold_state[0], hold_state[1], done.astype(bool))
+            return (train_state, next_env_state, next_obs, rng, hold_state), transition
 
         def _update_step(carry, unused):
-            train_state, env_state, last_obs, rng = carry
+            train_state, env_state, last_obs, rng, hold_state = carry
             t0 = time.time()
-            (train_state, env_state, last_obs, rng), traj = jax.lax.scan(
+            (train_state, env_state, last_obs, rng, hold_state), traj = jax.lax.scan(
                 _env_step,
-                (train_state, env_state, last_obs, rng),
+                (train_state, env_state, last_obs, rng, hold_state),
                 None,
                 config["NUM_STEPS"],
             )
@@ -947,13 +1010,22 @@ def make_train(config: dict[str, Any]) -> Callable[[jax.Array], NexusTrainOutput
 
                 jax.debug.callback(_print_callback, metrics)
 
-            return (train_state, env_state, last_obs, rng), metrics
+            return (train_state, env_state, last_obs, rng, hold_state), metrics
 
-        runner_state = (train_state, env_state, obs, rng)
+        if hold_interval > 1 and meta_policy_type != "flat":
+            init_hold_state = (
+                jnp.zeros((config["NUM_ENVS"],), dtype=jnp.int32),
+                # steps_held starts at the interval so the first step re-decides.
+                jnp.full((config["NUM_ENVS"],), hold_interval, dtype=jnp.int32),
+                jnp.ones((config["NUM_ENVS"],), dtype=bool),
+            )
+        else:
+            init_hold_state = None
+        runner_state = (train_state, env_state, obs, rng, init_hold_state)
         runner_state, metrics = jax.lax.scan(
             _update_step, runner_state, None, config["NUM_UPDATES"]
         )
-        train_state, env_state, obs, _rng = runner_state
+        train_state, env_state, obs, _rng, _hold_state = runner_state
         normalization_stats = _normalization_stats_from_state(env_state, obs)
         eval_metrics, eval_episode_table = _run_deterministic_evaluation(
             train_state,

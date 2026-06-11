@@ -19,6 +19,16 @@ SKILL_NAMES = ("stand_recover", "hop_forward", "stabilize_landing", "energy_effi
 NUM_SKILLS = len(SKILL_NAMES)
 TARGET_HOP_SPEED = 1.5
 
+# Success-metric calibration aligned to the underlying Playground HopperHop env,
+# whose task reward is ``standing * hopping``: ``standing`` saturates once the
+# torso-over-foot height reaches ``_STAND_HEIGHT = 0.6`` and ``hopping`` earns
+# partial credit from ~1.0 m/s up to ``_HOP_SPEED = 2.0``. ``pitch`` is an
+# unwrapped hinge angle, so uprightness uses ``cos(pitch)`` (wrap-safe) instead
+# of ``|pitch|``.
+ENV_STAND_HEIGHT = 0.6
+UPRIGHT_COS = 0.7  # cos(pitch) above this counts as roughly upright (~45 deg).
+HOP_SUCCESS_SPEED = 1.0  # env grants partial hop credit from ~1.0 m/s upward.
+
 
 def _features(obs: Any, info: Any | None = None) -> tuple[jnp.ndarray, jnp.ndarray, jnp.ndarray, jnp.ndarray]:
     x = actor_obs(obs)
@@ -87,9 +97,14 @@ def skill_rewards(
 
 def symbolic_meta_policy(obs: Any, info: Any | None = None) -> jnp.ndarray:
     height, pitch, x_velocity, speed = _features(obs, info)
-    recover = (height < 0.9) | (jnp.abs(pitch) > 0.45)
+    upright_cos = jnp.cos(pitch)
+    # Env-aligned and wrap-safe: the env counts standing from height 0.6, and
+    # hop cycles dip below 0.9 every bounce, so the old `height < 0.9` plus
+    # wrap-unsafe `|pitch| > 0.45` kept the rule in stand_recover on nearly
+    # every step (one-skill degeneracy).
+    recover = (height < ENV_STAND_HEIGHT) | (upright_cos < UPRIGHT_COS)
     hop = x_velocity < TARGET_HOP_SPEED
-    stabilize = (jnp.abs(pitch) > 0.25) | (speed > 10.0)
+    stabilize = (upright_cos < 0.97) | (speed > 10.0)
     return jnp.where(recover, 0, jnp.where(hop, 1, jnp.where(stabilize, 2, 3))).astype(jnp.int32)
 
 
@@ -115,6 +130,7 @@ def diagnostics(
     return {
         "hopper/height": height,
         "hopper/pitch": pitch,
+        "hopper/upright_cos": jnp.cos(pitch),
         "hopper/forward_velocity": x_velocity,
         "hopper/joint_speed": speed,
         "hopper/done_fraction": done.astype(jnp.float32),
@@ -131,8 +147,9 @@ def task_metrics(
 ) -> dict[str, jnp.ndarray]:
     del prev_obs, action, env_reward, done
     height, pitch, x_velocity, _speed = _features(obs, info)
-    upright = (height > 0.9) & (jnp.abs(pitch) < 0.5)
-    hopping = upright & (x_velocity > TARGET_HOP_SPEED)
+    # Aligned to the env's own standing/hopping definition (wrap-safe uprightness).
+    upright = (height > ENV_STAND_HEIGHT) & (jnp.cos(pitch) > UPRIGHT_COS)
+    hopping = upright & (x_velocity > HOP_SUCCESS_SPEED)
     return {
         "hopper/upright_rate": upright.astype(jnp.float32),
         "hopper/hop_success_rate": hopping.astype(jnp.float32),

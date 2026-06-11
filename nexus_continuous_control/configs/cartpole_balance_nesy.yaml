@@ -3,7 +3,11 @@ ENV_NAME: CartpoleBalance
 PLAYGROUND_IMPL: jax
 POLICY: cartpole_balance
 META_POLICY_TYPE: nesy
-TOTAL_TIMESTEPS: 2000000
+# 150 updates at 1024 envs x 64 steps. At the old 2M-step budget (~30
+# updates) every variant dropped the pole early and idled fallen; 150up
+# was A/B-validated 2026-06-11 (runs/loop_fix/probes, 3 seeds): nesy
+# success 0.131->0.45, neural 0.083->0.38, symbolic 0.052->0.107.
+TOTAL_TIMESTEPS: 9830400
 NUM_ENVS: 1024
 NUM_STEPS: 64
 NUM_EPOCHS: 4

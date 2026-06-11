@@ -58,7 +58,8 @@ def test_policy_info_drives_symbolic_features_before_step_info_exists():
 
 
 def test_symbolic_policy_ignores_changed_normalized_actor_when_raw_fixed():
-    raw_actor = jnp.asarray([[0.0, 0.30, 0.0, 0.0]], dtype=jnp.float32)
+    # 0.50 rad is inside the symbolic rule's urgent-angle band (> 0.20).
+    raw_actor = jnp.asarray([[0.0, 0.50, 0.0, 0.0]], dtype=jnp.float32)
     obs_a = {"actor": jnp.zeros_like(raw_actor), "raw_actor": raw_actor}
     obs_b = {"actor": jnp.ones_like(raw_actor) * -999.0, "raw_actor": raw_actor}
     skill_a = cartpole_balance.symbolic_meta_policy(obs_a)

@@ -3,7 +3,15 @@ ENV_NAME: PandaPickCube
 PLAYGROUND_IMPL: jax
 POLICY: panda_pick_cube
 META_POLICY_TYPE: nesy
-TOTAL_TIMESTEPS: 10000000
+# 400 updates at 1024 envs x 64 steps. Holding the cube on the table pays a
+# steady env-reward income, so the meta can converge into a no-lift trap
+# (and MORE budget alone deepens it: stock 400up seeds gave lift {0.02,
+# 0.34}, bimodal). Validated 2026-06-11 (runs/loop_fix/batchC): with the
+# sustained meta-exploration below, lift success was {0.109, 0.172} on the
+# two probe seeds (incl. the previously-trapped seed 0) with nonzero place
+# success. Gate panda on lift_success/height delta, never on return (the
+# trap pays MORE return than lifting).
+TOTAL_TIMESTEPS: 26214400
 NUM_ENVS: 1024
 NUM_STEPS: 64
 NUM_EPOCHS: 4
@@ -29,9 +37,12 @@ ACTIVATION: relu
 NOISE_START: 0.25
 NOISE_FINISH: 0.02
 NOISE_DECAY: 0.80
+# Sustained meta-exploration (no decay, 5% floor): keeps re-sampling the
+# masked-allowed lift skill so the meta cannot fully deconverge into the
+# table-income trap. Part of the validated recipe above.
 META_EPS_START: 1.0
-META_EPS_FINISH: 0.02
-META_EPS_DECAY: 0.60
+META_EPS_FINISH: 0.05
+META_EPS_DECAY: 1.0
 NORMALIZE_OBS: true
 NORMALIZE_REWARD: false
 BEHAVIOR_PENALTY_COEFF: 0.001

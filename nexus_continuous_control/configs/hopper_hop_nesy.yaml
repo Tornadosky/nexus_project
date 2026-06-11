@@ -3,8 +3,13 @@ ENV_NAME: HopperHop
 PLAYGROUND_IMPL: jax
 POLICY: hopper_hop
 META_POLICY_TYPE: nesy
-TOTAL_TIMESTEPS: 5000000
-NUM_ENVS: 1024
+# 400 updates at 2048 envs x 64 steps. Hopper's standing*hopping reward is a
+# hard discovery problem: at the old 5M-step budget outcomes were bimodal
+# across seeds (1/3 learned). 400up + wide parallel reset discovery + slow
+# exploration decay (below) learned on 3/3 seeds (runs/loop_fix/batchA,
+# 2026-06-11: returns {141, 310, 130}, hop success {0.19, 0.39, 0.17}).
+TOTAL_TIMESTEPS: 52428800
+NUM_ENVS: 2048
 NUM_STEPS: 64
 NUM_EPOCHS: 4
 NUM_MINIBATCHES: 64
@@ -26,11 +31,14 @@ META_HIDDEN_SIZES: [128, 128]
 NUM_CRITICS: 2
 NORM_TYPE: layer_norm
 ACTIVATION: relu
+# Sustained exploration (no actor-noise decay, higher floors): part of the
+# 3/3-seed recipe above — early decay was what made seeds collapse into the
+# never-stands regime.
 NOISE_START: 0.35
-NOISE_FINISH: 0.03
-NOISE_DECAY: 0.80
+NOISE_FINISH: 0.05
+NOISE_DECAY: 1.0
 META_EPS_START: 1.0
-META_EPS_FINISH: 0.02
+META_EPS_FINISH: 0.05
 META_EPS_DECAY: 0.60
 NORMALIZE_OBS: true
 NORMALIZE_REWARD: false
