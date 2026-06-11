@@ -1,0 +1,155 @@
+{
+  "environment": "HopperHop",
+  "observation_schema": "torso_height (m, >=0.6 standing), torso_pitch (rad, 0=upright), forward_velocity (m/s), joint_speed",
+  "meta_policy_notes": "The meta-policy selects the active skill based on a prioritized evaluation of their activation rules. 'recover_upright' has the highest priority, followed by 'stabilize_standing', then 'initiate_hop', and finally 'execute_hop'. This ensures the agent first recovers from falls, then stabilizes, and only then attempts to initiate and sustain forward motion.",
+  "skills": [
+    {
+      "name": "recover_upright",
+      "description": "Bring the hopper's torso to an upright position from a fallen or highly tilted state.",
+      "activation_rule": "torso_height < 0.6 or abs(torso_pitch) > 0.8",
+      "reward_terms": [
+        {
+          "type": "target_height",
+          "weight": 1.0,
+          "lhs": "torso_height",
+          "rhs": null,
+          "threshold": 0.8,
+          "description": "Encourage reaching a stable standing height."
+        },
+        {
+          "type": "posture_penalty",
+          "weight": -2.0,
+          "lhs": "torso_pitch",
+          "rhs": 0,
+          "threshold": null,
+          "description": "Penalize large deviations of torso pitch from upright (0 radians)."
+        },
+        {
+          "type": "action_penalty",
+          "weight": -0.01,
+          "lhs": null,
+          "rhs": null,
+          "threshold": null,
+          "description": "Discourage excessive control effort."
+        }
+      ]
+    },
+    {
+      "name": "stabilize_standing",
+      "description": "Maintain a stable, upright standing posture with minimal forward movement.",
+      "activation_rule": "torso_height >= 0.6 and abs(torso_pitch) <= 0.8 and forward_velocity < 0.1",
+      "reward_terms": [
+        {
+          "type": "target_height",
+          "weight": 1.5,
+          "lhs": "torso_height",
+          "rhs": null,
+          "threshold": 0.8,
+          "description": "Reward maintaining the optimal standing height."
+        },
+        {
+          "type": "posture_penalty",
+          "weight": -3.0,
+          "lhs": "torso_pitch",
+          "rhs": 0,
+          "threshold": null,
+          "description": "Strongly penalize any deviation of torso pitch from upright."
+        },
+        {
+          "type": "negative_distance",
+          "weight": -0.1,
+          "lhs": "forward_velocity",
+          "rhs": 0,
+          "threshold": null,
+          "description": "Penalize unwanted forward or backward movement."
+        },
+        {
+          "type": "action_penalty",
+          "weight": -0.01,
+          "lhs": null,
+          "rhs": null,
+          "threshold": null,
+          "description": "Discourage excessive control effort."
+        }
+      ]
+    },
+    {
+      "name": "initiate_hop",
+      "description": "Transition from a stable standing position to starting a forward hopping motion.",
+      "activation_rule": "torso_height >= 0.7 and abs(torso_pitch) <= 0.3 and forward_velocity < 0.5",
+      "reward_terms": [
+        {
+          "type": "positive_velocity",
+          "weight": 2.0,
+          "lhs": "forward_velocity",
+          "rhs": null,
+          "threshold": null,
+          "description": "Reward increasing forward velocity to initiate the hop."
+        },
+        {
+          "type": "posture_penalty",
+          "weight": -1.0,
+          "lhs": "torso_pitch",
+          "rhs": 0,
+          "threshold": null,
+          "description": "Penalize pitch deviation, maintaining balance during initiation."
+        },
+        {
+          "type": "target_height",
+          "weight": 0.5,
+          "lhs": "torso_height",
+          "rhs": null,
+          "threshold": 0.8,
+          "description": "Encourage maintaining a good height during hop initiation."
+        },
+        {
+          "type": "action_penalty",
+          "weight": -0.01,
+          "lhs": null,
+          "rhs": null,
+          "threshold": null,
+          "description": "Discourage excessive control effort."
+        }
+      ]
+    },
+    {
+      "name": "execute_hop",
+      "description": "Sustain the hopping motion and maximize forward velocity while maintaining stability.",
+      "activation_rule": "forward_velocity >= 0.5 and torso_height >= 0.6",
+      "reward_terms": [
+        {
+          "type": "positive_velocity",
+          "weight": 3.0,
+          "lhs": "forward_velocity",
+          "rhs": null,
+          "threshold": null,
+          "description": "Strongly reward high forward velocity for continuous hopping."
+        },
+        {
+          "type": "posture_penalty",
+          "weight": -0.5,
+          "lhs": "torso_pitch",
+          "rhs": 0,
+          "threshold": null,
+          "description": "Slight penalty for pitch deviation, prioritizing forward motion."
+        },
+        {
+          "type": "target_height",
+          "weight": 0.2,
+          "lhs": "torso_height",
+          "rhs": null,
+          "threshold": 0.7,
+          "description": "Slight reward for maintaining a reasonable height during hopping."
+        },
+        {
+          "type": "action_penalty",
+          "weight": -0.01,
+          "lhs": null,
+          "rhs": null,
+          "threshold": null,
+          "description": "Discourage excessive control effort."
+        }
+      ]
+    }
+  ]
+}

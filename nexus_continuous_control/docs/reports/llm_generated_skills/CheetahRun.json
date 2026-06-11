@@ -1,0 +1,147 @@
+{
+  "environment": "MuJoCo Playground environment CheetahRun",
+  "observation_schema": "forward_velocity (m/s), torso_pitch (rad), joint_speed (mean |joint vel|)",
+  "meta_policy_notes": "The meta-policy should select skills based on the provided activation rules, which are designed to be mutually exclusive and cover the relevant state space. 'stand_up' takes precedence for critical recovery. 'maintain_balance' is for idle or stationary states. 'accelerate' is for building speed, and 'run_fast' for sustaining high speeds. The reward terms within each skill guide the agent towards the desired behavior for that specific context.",
+  "skills": [
+    {
+      "name": "stand_up",
+      "description": "Recovers from a fallen or very low-pitch state, aiming for an upright posture.",
+      "activation_rule": "torso_pitch < -0.1",
+      "reward_terms": [
+        {
+          "type": "target_height",
+          "weight": 5.0,
+          "lhs": "torso_pitch",
+          "rhs": null,
+          "threshold": 0.0,
+          "description": "Reward increasing torso pitch towards upright (0.0 rad)"
+        },
+        {
+          "type": "posture_penalty",
+          "weight": 0.05,
+          "lhs": "joint_speed",
+          "rhs": null,
+          "threshold": null,
+          "description": "Penalize high joint speeds during recovery"
+        },
+        {
+          "type": "action_penalty",
+          "weight": 0.01,
+          "lhs": null,
+          "rhs": null,
+          "threshold": null,
+          "description": "Minimize control effort"
+        }
+      ]
+    },
+    {
+      "name": "maintain_balance",
+      "description": "Keeps the cheetah stable and upright when it's not actively trying to run fast or recover from a fall. This is a fallback skill, aiming for low energy consumption.",
+      "activation_rule": "torso_pitch >= -0.1 and forward_velocity <= 0.0",
+      "reward_terms": [
+        {
+          "type": "posture_penalty",
+          "weight": 0.05,
+          "lhs": "joint_speed",
+          "rhs": null,
+          "threshold": null,
+          "description": "Penalize high joint speeds for stability and low energy"
+        },
+        {
+          "type": "action_penalty",
+          "weight": 0.01,
+          "lhs": null,
+          "rhs": null,
+          "threshold": null,
+          "description": "Minimize control effort"
+        },
+        {
+          "type": "target_height",
+          "weight": 0.5,
+          "lhs": "torso_pitch",
+          "rhs": null,
+          "threshold": 0.0,
+          "description": "Reward maintaining torso pitch near upright (0.0 rad)"
+        }
+      ]
+    },
+    {
+      "name": "accelerate",
+      "description": "Focuses on quickly increasing forward velocity from a low to medium speed.",
+      "activation_rule": "torso_pitch >= -0.1 and forward_velocity > 0.0 and forward_velocity <= 1.0",
+      "reward_terms": [
+        {
+          "type": "positive_velocity",
+          "weight": 3.0,
+          "lhs": "forward_velocity",
+          "rhs": null,
+          "threshold": null,
+          "description": "Strongly reward increasing forward speed"
+        },
+        {
+          "type": "posture_penalty",
+          "weight": 0.5,
+          "lhs": "torso_pitch",
+          "rhs": null,
+          "threshold": null,
+          "description": "Slightly penalize positive torso pitch to prevent falling forward"
+        },
+        {
+          "type": "posture_penalty",
+          "weight": 0.1,
+          "lhs": "joint_speed",
+          "rhs": null,
+          "threshold": null,
+          "description": "Penalize high joint speeds"
+        },
+        {
+          "type": "action_penalty",
+          "weight": 0.02,
+          "lhs": null,
+          "rhs": null,
+          "threshold": null,
+          "description": "Minimize control effort"
+        }
+      ]
+    },
+    {
+      "name": "run_fast",
+      "description": "Focuses on maintaining and maximizing high forward velocity.",
+      "activation_rule": "torso_pitch >= -0.1 and forward_velocity > 1.0",
+      "reward_terms": [
+        {
+          "type": "positive_velocity",
+          "weight": 2.0,
+          "lhs": "forward_velocity",
+          "rhs": null,
+          "threshold": null,
+          "description": "Maximize forward speed"
+        },
+        {
+          "type": "posture_penalty",
+          "weight": 1.0,
+          "lhs": "torso_pitch",
+          "rhs": null,
+          "threshold": null,
+          "description": "Penalize excessive positive torso pitch (leaning too far forward)"
+        },
+        {
+          "type": "posture_penalty",
+          "weight": 0.1,
+          "lhs": "joint_speed",
+          "rhs": null,
+          "threshold": null,
+          "description": "Penalize high joint speeds for efficiency and stability"
+        },
+        {
+          "type": "action_penalty",
+          "weight": 0.01,
+          "lhs": null,
+          "rhs": null,
+          "threshold": null,
+          "description": "Minimize control effort"
+        }
+      ]
+    }
+  ]
+}

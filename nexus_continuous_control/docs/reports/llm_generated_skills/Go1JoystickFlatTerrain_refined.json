@@ -1,0 +1,259 @@
+{
+  "environment": "Go1JoystickFlatTerrain",
+  "observation_schema": "base_height (m), roll (rad), pitch (rad), lin_vel_x, lin_vel_y, yaw_rate, command_x, command_y, command_yaw (commanded velocities)",
+  "meta_policy_notes": "The high-level controller selects among these skills based on the current state and commanded velocities. Activation rules are designed to be permissive and overlapping, allowing the meta-policy to choose the most appropriate skill when multiple are available. Reward terms prioritize the primary goal of the skill (e.g., matching velocity, standing up) while including secondary stabilizers and a small action penalty.",
+  "skills": [
+    {
+      "name": "maintain_posture",
+      "description": "Maintain a stable, upright standing posture when no significant movement commands are given, or when the robot is generally stable.",
+      "activation_rule": "(abs(command_x) < 0.1 AND abs(command_y) < 0.1 AND abs(command_yaw) < 0.2) OR (base_height > 0.25 AND abs(roll) < 0.4 AND abs(pitch) < 0.4)",
+      "reward_terms": [
+        {
+          "type": "target_height",
+          "weight": 5.0,
+          "lhs": "base_height",
+          "rhs": null,
+          "threshold": 0.3,
+          "description": "Reward for maintaining base height around 0.3m."
+        },
+        {
+          "type": "negative_distance",
+          "weight": 2.0,
+          "lhs": "abs(roll)",
+          "rhs": null,
+          "threshold": 0.0,
+          "description": "Penalize large roll angles."
+        },
+        {
+          "type": "negative_distance",
+          "weight": 2.0,
+          "lhs": "abs(pitch)",
+          "rhs": null,
+          "threshold": 0.0,
+          "description": "Penalize large pitch angles."
+        },
+        {
+          "type": "negative_distance",
+          "weight": 1.0,
+          "lhs": "abs(lin_vel_x)",
+          "rhs": null,
+          "threshold": 0.0,
+          "description": "Penalize unwanted forward/backward movement."
+        },
+        {
+          "type": "negative_distance",
+          "weight": 1.0,
+          "lhs": "abs(lin_vel_y)",
+          "rhs": null,
+          "threshold": 0.0,
+          "description": "Penalize unwanted sideways movement."
+        },
+        {
+          "type": "negative_distance",
+          "weight": 1.0,
+          "lhs": "abs(yaw_rate)",
+          "rhs": null,
+          "threshold": 0.0,
+          "description": "Penalize unwanted yaw rotation."
+        },
+        {
+          "type": "action_penalty",
+          "weight": 0.01,
+          "lhs": null,
+          "rhs": null,
+          "threshold": null,
+          "description": "Small penalty for taking actions."
+        }
+      ]
+    },
+    {
+      "name": "track_velocity",
+      "description": "Follow the commanded linear velocities (X, Y) and yaw rate, while maintaining an upright posture.",
+      "activation_rule": "(abs(command_x) > 0.05 OR abs(command_y) > 0.05 OR abs(command_yaw) > 0.1) AND base_height > 0.15",
+      "reward_terms": [
+        {
+          "type": "positive_velocity",
+          "weight": 10.0,
+          "lhs": "lin_vel_x",
+          "rhs": "command_x",
+          "threshold": null,
+          "description": "Reward for matching commanded forward/backward velocity."
+        },
+        {
+          "type": "positive_velocity",
+          "weight": 10.0,
+          "lhs": "lin_vel_y",
+          "rhs": "command_y",
+          "threshold": null,
+          "description": "Reward for matching commanded sideways velocity."
+        },
+        {
+          "type": "positive_velocity",
+          "weight": 8.0,
+          "lhs": "yaw_rate",
+          "rhs": "command_yaw",
+          "threshold": null,
+          "description": "Reward for matching commanded yaw rate."
+        },
+        {
+          "type": "target_height",
+          "weight": 2.0,
+          "lhs": "base_height",
+          "rhs": null,
+          "threshold": 0.3,
+          "description": "Reward for maintaining base height around 0.3m."
+        },
+        {
+          "type": "negative_distance",
+          "weight": 1.0,
+          "lhs": "abs(roll)",
+          "rhs": null,
+          "threshold": 0.0,
+          "description": "Penalize large roll angles."
+        },
+        {
+          "type": "negative_distance",
+          "weight": 1.0,
+          "lhs": "abs(pitch)",
+          "rhs": null,
+          "threshold": 0.0,
+          "description": "Penalize large pitch angles."
+        },
+        {
+          "type": "action_penalty",
+          "weight": 0.01,
+          "lhs": null,
+          "rhs": null,
+          "threshold": null,
+          "description": "Small penalty for taking actions."
+        }
+      ]
+    },
+    {
+      "name": "recover_upright",
+      "description": "Reorient the robot to an upright position if it is significantly tilted or has fallen, prioritizing stability over movement.",
+      "activation_rule": "abs(roll) > 0.4 OR abs(pitch) > 0.4 OR base_height < 0.25",
+      "reward_terms": [
+        {
+          "type": "negative_distance",
+          "weight": 10.0,
+          "lhs": "abs(roll)",
+          "rhs": null,
+          "threshold": 0.0,
+          "description": "Strongly penalize large roll angles to encourage uprighting."
+        },
+        {
+          "type": "negative_distance",
+          "weight": 10.0,
+          "lhs": "abs(pitch)",
+          "rhs": null,
+          "threshold": 0.0,
+          "description": "Strongly penalize large pitch angles to encourage uprighting."
+        },
+        {
+          "type": "target_height",
+          "weight": 5.0,
+          "lhs": "base_height",
+          "rhs": null,
+          "threshold": 0.3,
+          "description": "Reward for increasing base height towards 0.3m."
+        },
+        {
+          "type": "negative_distance",
+          "weight": 0.5,
+          "lhs": "abs(lin_vel_x)",
+          "rhs": null,
+          "threshold": 0.0,
+          "description": "Small penalty for unwanted linear movement during recovery."
+        },
+        {
+          "type": "negative_distance",
+          "weight": 0.5,
+          "lhs": "abs(lin_vel_y)",
+          "rhs": null,
+          "threshold": 0.0,
+          "description": "Small penalty for unwanted linear movement during recovery."
+        },
+        {
+          "type": "negative_distance",
+          "weight": 0.5,
+          "lhs": "abs(yaw_rate)",
+          "rhs": null,
+          "threshold": 0.0,
+          "description": "Small penalty for unwanted yaw rotation during recovery."
+        },
+        {
+          "type": "action_penalty",
+          "weight": 0.01,
+          "lhs": null,
+          "rhs": null,
+          "threshold": null,
+          "description": "Small penalty for taking actions."
+        }
+      ]
+    },
+    {
+      "name": "turn_in_place",
+      "description": "Rotate the robot to match the commanded yaw rate while minimizing linear movement, useful for precise turns.",
+      "activation_rule": "abs(command_yaw) > 0.2 AND abs(command_x) < 0.1 AND abs(command_y) < 0.1 AND base_height > 0.2",
+      "reward_terms": [
+        {
+          "type": "positive_velocity",
+          "weight": 10.0,
+          "lhs": "yaw_rate",
+          "rhs": "command_yaw",
+          "threshold": null,
+          "description": "Strong reward for matching commanded yaw rate."
+        },
+        {
+          "type": "negative_distance",
+          "weight": 2.0,
+          "lhs": "abs(lin_vel_x)",
+          "rhs": null,
+          "threshold": 0.0,
+          "description": "Penalize unwanted forward/backward movement."
+        },
+        {
+          "type": "negative_distance",
+          "weight": 2.0,
+          "lhs": "abs(lin_vel_y)",
+          "rhs": null,
+          "threshold": 0.0,
+          "description": "Penalize unwanted sideways movement."
+        },
+        {
+          "type": "target_height",
+          "weight": 2.0,
+          "lhs": "base_height",
+          "rhs": null,
+          "threshold": 0.3,
+          "description": "Reward for maintaining base height around 0.3m."
+        },
+        {
+          "type": "negative_distance",
+          "weight": 1.0,
+          "lhs": "abs(roll)",
+          "rhs": null,
+          "threshold": 0.0,
+          "description": "Penalize large roll angles."
+        },
+        {
+          "type": "negative_distance",
+          "weight": 1.0,
+          "lhs": "abs(pitch)",
+          "rhs": null,
+          "threshold": 0.0,
+          "description": "Penalize large pitch angles."
+        },
+        {
+          "type": "action_penalty",
+          "weight": 0.01,
+          "lhs": null,
+          "rhs": null,
+          "threshold": null,
+          "description": "Small penalty for taking actions."
+        }
+      ]
+    }
+  ]
+}

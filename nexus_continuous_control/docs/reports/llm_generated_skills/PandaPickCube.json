@@ -1,0 +1,115 @@
+{
+  "environment": "PandaPickCube",
+  "observation_schema": "tcp_pos (xyz of gripper), cube_pos (xyz), target_pos (xyz), gripper_open (0=closed..1=open), dist_tcp_cube, dist_cube_target, cube_height (z of cube; table~0.03)",
+  "meta_policy_notes": "The meta-policy should sequentially activate skills to achieve the overall task. It should prioritize 'reach_cube' first, then 'grasp_cube', followed by 'lift_cube', and finally 'move_cube_to_target'. The activation rules are designed to guide this progression, with transitions occurring as sub-goals are met.",
+  "skills": [
+    {
+      "name": "reach_cube",
+      "description": "Move the gripper's TCP close to the cube while keeping the gripper open.",
+      "activation_rule": "gripper_open > 0.5 and dist_tcp_cube > 0.05",
+      "reward_terms": [
+        {
+          "type": "negative_distance",
+          "weight": -1.0,
+          "lhs": "dist_tcp_cube",
+          "rhs": null,
+          "threshold": null,
+          "description": "Penalize distance between TCP and cube to encourage reaching it."
+        }
+      ]
+    },
+    {
+      "name": "grasp_cube",
+      "description": "Close the gripper to firmly grasp the cube once the TCP is close enough.",
+      "activation_rule": "dist_tcp_cube <= 0.05 and gripper_open > 0.1",
+      "reward_terms": [
+        {
+          "type": "negative_distance",
+          "weight": -1.0,
+          "lhs": "gripper_open",
+          "rhs": null,
+          "threshold": null,
+          "description": "Penalize gripper openness to encourage closing it."
+        },
+        {
+          "type": "binary_bonus",
+          "weight": 10.0,
+          "lhs": "gripper_open",
+          "rhs": null,
+          "threshold": 0.1,
+          "description": "Bonus for successfully closing the gripper around the cube."
+        },
+        {
+          "type": "negative_distance",
+          "weight": -0.1,
+          "lhs": "dist_tcp_cube",
+          "rhs": null,
+          "threshold": null,
+          "description": "Small penalty to maintain proximity to the cube during grasping."
+        }
+      ]
+    },
+    {
+      "name": "lift_cube",
+      "description": "Lift the grasped cube above the table surface.",
+      "activation_rule": "gripper_open <= 0.1 and cube_height <= 0.08",
+      "reward_terms": [
+        {
+          "type": "positive_velocity",
+          "weight": 1.0,
+          "lhs": "cube_height",
+          "rhs": null,
+          "threshold": null,
+          "description": "Reward for increasing the cube's height."
+        },
+        {
+          "type": "target_height",
+          "weight": 5.0,
+          "lhs": "cube_height",
+          "rhs": null,
+          "threshold": 0.1,
+          "description": "Bonus for reaching and maintaining a cube height above the table."
+        },
+        {
+          "type": "negative_distance",
+          "weight": -0.1,
+          "lhs": "dist_cube_target",
+          "rhs": null,
+          "threshold": null,
+          "description": "Small penalty to discourage moving away from the target while lifting."
+        }
+      ]
+    },
+    {
+      "name": "move_cube_to_target",
+      "description": "Move the lifted and grasped cube towards the target location.",
+      "activation_rule": "gripper_open <= 0.1 and cube_height > 0.08 and dist_cube_target > 0.05",
+      "reward_terms": [
+        {
+          "type": "negative_distance",
+          "weight": -1.0,
+          "lhs": "dist_cube_target",
+          "rhs": null,
+          "threshold": null,
+          "description": "Penalize distance between the cube and the target."
+        },
+        {
+          "type": "binary_bonus",
+          "weight": 10.0,
+          "lhs": "dist_cube_target",
+          "rhs": null,
+          "threshold": 0.05,
+          "description": "Bonus for bringing the cube within the target proximity."
+        },
+        {
+          "type": "target_height",
+          "weight": 1.0,
+          "lhs": "cube_height",
+          "rhs": null,
+          "threshold": 0.1,
+          "description": "Reward for maintaining the cube above the table while moving."
+        }
+      ]
+    }
+  ]
+}

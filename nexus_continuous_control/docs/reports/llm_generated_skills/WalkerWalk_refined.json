@@ -1,0 +1,132 @@
+{
+  "environment": "WalkerWalk",
+  "observation_schema": "torso_height (m, ~1.2 standing), torso_pitch (rad, 0=upright), forward_velocity (m/s), joint_speed",
+  "meta_policy_notes": "The hierarchical NEXUS agent for WalkerWalk employs a meta-policy to choose among specialized skills. Each skill is defined with permissive and overlapping activation rules, ensuring that the high-level controller always has multiple plausible options. Reward functions are designed to provide dense gradients, with a clear emphasis on the primary progress term for each skill, balanced by secondary stabilization terms and a consistent action penalty. This setup encourages the agent to learn robust and adaptable behaviors for standing and walking.",
+  "skills": [
+    {
+      "name": "get_up",
+      "description": "Focuses on getting the walker from a fallen or low-height state to a standing posture.",
+      "activation_rule": "torso_height < 1.0 OR abs(torso_pitch) > 0.7",
+      "reward_terms": [
+        {
+          "type": "target_height",
+          "weight": 5.0,
+          "lhs": "torso_height",
+          "rhs": null,
+          "threshold": 1.2,
+          "description": "Strongly encourage reaching and maintaining the target torso height."
+        },
+        {
+          "type": "posture_penalty",
+          "weight": -2.0,
+          "lhs": "torso_pitch",
+          "rhs": null,
+          "threshold": null,
+          "description": "Penalize deviation from an upright torso posture."
+        },
+        {
+          "type": "posture_penalty",
+          "weight": -0.5,
+          "lhs": "joint_speed",
+          "rhs": null,
+          "threshold": null,
+          "description": "Penalize high joint speeds to prevent flailing."
+        },
+        {
+          "type": "action_penalty",
+          "weight": -0.1,
+          "lhs": null,
+          "rhs": null,
+          "threshold": null,
+          "description": "Small penalty for control effort."
+        }
+      ]
+    },
+    {
+      "name": "walk_steady",
+      "description": "Aims to achieve and maintain a modest forward velocity while keeping a stable, upright posture. This is the primary goal-oriented skill.",
+      "activation_rule": "torso_height > 0.7 AND abs(torso_pitch) < 0.9",
+      "reward_terms": [
+        {
+          "type": "positive_velocity",
+          "weight": 7.0,
+          "lhs": "forward_velocity",
+          "rhs": null,
+          "threshold": null,
+          "description": "Primary reward for moving forward at a positive velocity."
+        },
+        {
+          "type": "target_height",
+          "weight": 2.0,
+          "lhs": "torso_height",
+          "rhs": null,
+          "threshold": 1.2,
+          "description": "Encourage maintaining a good torso height while walking."
+        },
+        {
+          "type": "posture_penalty",
+          "weight": -1.5,
+          "lhs": "torso_pitch",
+          "rhs": null,
+          "threshold": null,
+          "description": "Penalize deviation from an upright torso posture to maintain balance."
+        },
+        {
+          "type": "posture_penalty",
+          "weight": -0.3,
+          "lhs": "joint_speed",
+          "rhs": null,
+          "threshold": null,
+          "description": "Penalize high joint speeds to encourage smooth movement."
+        },
+        {
+          "type": "action_penalty",
+          "weight": -0.1,
+          "lhs": null,
+          "rhs": null,
+          "threshold": null,
+          "description": "Small penalty for control effort."
+        }
+      ]
+    },
+    {
+      "name": "maintain_posture",
+      "description": "Focuses purely on maintaining an upright and stable posture, especially when the walker is already standing or slightly off-balance, without a strong emphasis on forward motion.",
+      "activation_rule": "torso_height > 0.9 AND abs(torso_pitch) < 0.5",
+      "reward_terms": [
+        {
+          "type": "target_height",
+          "weight": 3.0,
+          "lhs": "torso_height",
+          "rhs": null,
+          "threshold": 1.2,
+          "description": "Strong reward for maintaining the target torso height."
+        },
+        {
+          "type": "posture_penalty",
+          "weight": -3.0,
+          "lhs": "torso_pitch",
+          "rhs": null,
+          "threshold": null,
+          "description": "Strong penalty for any deviation from an upright torso posture."
+        },
+        {
+          "type": "posture_penalty",
+          "weight": -0.5,
+          "lhs": "joint_speed",
+          "rhs": null,
+          "threshold": null,
+          "description": "Penalize high joint speeds to encourage stillness and stability."
+        },
+        {
+          "type": "action_penalty",
+          "weight": -0.1,
+          "lhs": null,
+          "rhs": null,
+          "threshold": null,
+          "description": "Small penalty for control effort."
+        }
+      ]
+    }
+  ]
+}

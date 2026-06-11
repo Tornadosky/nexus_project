@@ -1,0 +1,99 @@
+{
+  "environment": "MuJoCo Playground environment CartpoleBalance",
+  "observation_schema": "cart_position (m), pole_angle (rad, 0=upright), cart_velocity (m/s), pole_angular_velocity (rad/s)",
+  "meta_policy_notes": "The meta-policy will select a skill based on the current state, prioritizing recovery skills when the pole is significantly off-balance, and then switching between centering the cart and fine-tuning pole balance. It should learn to smoothly transition between these sub-goals, potentially combining skills or using a hierarchical approach where one skill is active while another is being prepared.",
+  "skills": [
+    {
+      "name": "balance_pole_upright",
+      "description": "Focuses on keeping the pole perfectly upright and minimizing its angular velocity, serving as the primary balancing skill.",
+      "activation_rule": "True",
+      "reward_terms": [
+        {
+          "type": "negative_distance",
+          "weight": 10.0,
+          "lhs": "pole_angle",
+          "rhs": null,
+          "threshold": 0.0,
+          "description": "Penalize deviation from the upright pole position (0 radians)."
+        },
+        {
+          "type": "negative_distance",
+          "weight": 1.0,
+          "lhs": "pole_angular_velocity",
+          "rhs": null,
+          "threshold": 0.0,
+          "description": "Penalize pole angular velocity to stop oscillation."
+        }
+      ]
+    },
+    {
+      "name": "return_cart_to_center",
+      "description": "Moves the cart back towards the track center when it's significantly off-center, prioritizing repositioning over fine-tuning.",
+      "activation_rule": "abs(cart_position) > 0.2",
+      "reward_terms": [
+        {
+          "type": "negative_distance",
+          "weight": 5.0,
+          "lhs": "cart_position",
+          "rhs": null,
+          "threshold": 0.0,
+          "description": "Penalize cart distance from the center (0 meters)."
+        },
+        {
+          "type": "negative_distance",
+          "weight": 0.5,
+          "lhs": "cart_velocity",
+          "rhs": null,
+          "threshold": 0.0,
+          "description": "Penalize cart velocity to encourage slowing down as it approaches the center."
+        }
+      ]
+    },
+    {
+      "name": "stabilize_cart_at_center",
+      "description": "Keeps the cart stationary and precisely at the center of the track once it's within an acceptable range, focusing on minimal movement.",
+      "activation_rule": "abs(cart_position) <= 0.2",
+      "reward_terms": [
+        {
+          "type": "negative_distance",
+          "weight": 8.0,
+          "lhs": "cart_position",
+          "rhs": null,
+          "threshold": 0.0,
+          "description": "Strongly penalize cart distance from center for precise positioning."
+        },
+        {
+          "type": "negative_distance",
+          "weight": 2.0,
+          "lhs": "cart_velocity",
+          "rhs": null,
+          "threshold": 0.0,
+          "description": "Strongly penalize cart velocity to keep it stationary."
+        }
+      ]
+    },
+    {
+      "name": "recover_from_large_pole_angle",
+      "description": "Prioritizes quickly bringing the pole back towards upright when it's at a large, potentially critical angle, to prevent it from falling.",
+      "activation_rule": "abs(pole_angle) > 0.3",
+      "reward_terms": [
+        {
+          "type": "negative_distance",
+          "weight": 20.0,
+          "lhs": "pole_angle",
+          "rhs": null,
+          "threshold": 0.0,
+          "description": "Heavily penalize large pole angle to force rapid correction towards upright."
+        },
+        {
+          "type": "negative_distance",
+          "weight": 2.0,
+          "lhs": "pole_angular_velocity",
+          "rhs": null,
+          "threshold": 0.0,
+          "description": "Penalize pole angular velocity to stop the fall and reverse its direction."
+        }
+      ]
+    }
+  ]
+}

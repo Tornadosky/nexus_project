@@ -1,0 +1,131 @@
+{
+  "environment": "PandaPickCube",
+  "observation_schema": "tcp_pos (xyz of gripper), cube_pos (xyz), target_pos (xyz), gripper_open (0=closed..1=open), dist_tcp_cube, dist_cube_target, cube_height (z of cube; table~0.03)",
+  "meta_policy_notes": "Hierarchical NEXUS agent for PandaPickCube. Skills are designed to be permissive and overlapping, allowing the high-level policy to choose among multiple plausible options. Reward functions provide dense gradients, prioritizing primary progress terms. Thresholds are generous to ensure broad availability.",
+  "skills": [
+    {
+      "name": "reach_cube",
+      "description": "Move the gripper towards the cube to prepare for grasping.",
+      "activation_rule": "dist_tcp_cube > 0.02 and gripper_open > 0.1 and cube_height < 0.1",
+      "reward_terms": [
+        {
+          "type": "negative_distance",
+          "weight": 5.0,
+          "lhs": "dist_tcp_cube",
+          "rhs": null,
+          "threshold": 0.0,
+          "description": "Encourage gripper to get close to the cube."
+        },
+        {
+          "type": "action_penalty",
+          "weight": 0.1,
+          "lhs": null,
+          "rhs": null,
+          "threshold": null,
+          "description": "Penalize large actions."
+        }
+      ]
+    },
+    {
+      "name": "grasp_cube",
+      "description": "Close the gripper to grasp the cube.",
+      "activation_rule": "dist_tcp_cube < 0.15 and gripper_open > 0.05",
+      "reward_terms": [
+        {
+          "type": "negative_distance",
+          "weight": 7.0,
+          "lhs": "gripper_open",
+          "rhs": null,
+          "threshold": 0.0,
+          "description": "Strongly encourage closing the gripper."
+        },
+        {
+          "type": "negative_distance",
+          "weight": 1.0,
+          "lhs": "dist_tcp_cube",
+          "rhs": null,
+          "threshold": 0.0,
+          "description": "Encourage staying close to the cube while grasping."
+        },
+        {
+          "type": "action_penalty",
+          "weight": 0.1,
+          "lhs": null,
+          "rhs": null,
+          "threshold": null,
+          "description": "Penalize large actions."
+        }
+      ]
+    },
+    {
+      "name": "lift_cube",
+      "description": "Lift the grasped cube above the table.",
+      "activation_rule": "gripper_open < 0.2 and cube_height < 0.2",
+      "reward_terms": [
+        {
+          "type": "target_height",
+          "weight": 5.0,
+          "lhs": "cube_height",
+          "rhs": null,
+          "threshold": 0.15,
+          "description": "Encourage lifting the cube to a target height."
+        },
+        {
+          "type": "negative_distance",
+          "weight": 1.0,
+          "lhs": "gripper_open",
+          "rhs": null,
+          "threshold": 0.0,
+          "description": "Encourage maintaining a closed gripper (strong grasp)."
+        },
+        {
+          "type": "action_penalty",
+          "weight": 0.1,
+          "lhs": null,
+          "rhs": null,
+          "threshold": null,
+          "description": "Penalize large actions."
+        }
+      ]
+    },
+    {
+      "name": "move_cube_to_target",
+      "description": "Move the grasped and lifted cube towards the target location.",
+      "activation_rule": "gripper_open < 0.2 and cube_height > 0.05 and dist_cube_target > 0.01",
+      "reward_terms": [
+        {
+          "type": "negative_distance",
+          "weight": 5.0,
+          "lhs": "dist_cube_target",
+          "rhs": null,
+          "threshold": 0.0,
+          "description": "Encourage moving the cube closer to the target."
+        },
+        {
+          "type": "target_height",
+          "weight": 1.0,
+          "lhs": "cube_height",
+          "rhs": null,
+          "threshold": 0.15,
+          "description": "Encourage maintaining the cube's height while moving."
+        },
+        {
+          "type": "negative_distance",
+          "weight": 0.5,
+          "lhs": "gripper_open",
+          "rhs": null,
+          "threshold": 0.0,
+          "description": "Encourage maintaining a closed gripper (grasp) while moving."
+        },
+        {
+          "type": "action_penalty",
+          "weight": 0.1,
+          "lhs": null,
+          "rhs": null,
+          "threshold": null,
+          "description": "Penalize large actions."
+        }
+      ]
+    }
+  ]
+}

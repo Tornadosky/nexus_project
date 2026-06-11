@@ -1,0 +1,147 @@
+{
+  "environment": "MuJoCo Playground WalkerWalk",
+  "observation_schema": "torso_height (m, ~1.2 standing), torso_pitch (rad, 0=upright), forward_velocity (m/s), joint_speed",
+  "meta_policy_notes": "The high-level controller selects skills based on the current state to achieve standing and forward walking. Skills are prioritized to address immediate issues like falling/imbalance before focusing on speed, and then maintaining speed and balance.",
+  "skills": [
+    {
+      "name": "stand_up",
+      "description": "Encourage the walker to stand upright from a fallen or severely crouched/tilted position.",
+      "activation_rule": "torso_height < 1.0 or abs(torso_pitch) > 0.6",
+      "reward_terms": [
+        {
+          "type": "target_height",
+          "weight": 5.0,
+          "lhs": "torso_height",
+          "rhs": null,
+          "threshold": 1.2,
+          "description": "Reward for reaching target torso height."
+        },
+        {
+          "type": "posture_penalty",
+          "weight": -4.0,
+          "lhs": "torso_pitch",
+          "rhs": null,
+          "threshold": null,
+          "description": "Penalize deviation from upright posture (0 pitch)."
+        },
+        {
+          "type": "action_penalty",
+          "weight": -0.05,
+          "lhs": null,
+          "rhs": null,
+          "threshold": null,
+          "description": "Penalize large joint torques."
+        }
+      ]
+    },
+    {
+      "name": "recover_balance",
+      "description": "Focus on quickly restoring balance when the walker is leaning significantly but not yet fallen.",
+      "activation_rule": "torso_height >= 1.0 and abs(torso_pitch) > 0.3 and abs(torso_pitch) <= 0.6",
+      "reward_terms": [
+        {
+          "type": "posture_penalty",
+          "weight": -7.0,
+          "lhs": "torso_pitch",
+          "rhs": null,
+          "threshold": null,
+          "description": "Strongly penalize deviation from upright posture."
+        },
+        {
+          "type": "target_height",
+          "weight": 2.0,
+          "lhs": "torso_height",
+          "rhs": null,
+          "threshold": 1.2,
+          "description": "Maintain target torso height."
+        },
+        {
+          "type": "action_penalty",
+          "weight": -0.05,
+          "lhs": null,
+          "rhs": null,
+          "threshold": null,
+          "description": "Penalize large joint torques."
+        }
+      ]
+    },
+    {
+      "name": "initiate_walk",
+      "description": "Encourage the walker to start moving forward from a standing, balanced position.",
+      "activation_rule": "torso_height >= 1.0 and abs(torso_pitch) <= 0.3 and forward_velocity < 0.8",
+      "reward_terms": [
+        {
+          "type": "positive_velocity",
+          "weight": 10.0,
+          "lhs": "forward_velocity",
+          "rhs": null,
+          "threshold": null,
+          "description": "Reward for increasing forward velocity."
+        },
+        {
+          "type": "target_height",
+          "weight": 1.0,
+          "lhs": "torso_height",
+          "rhs": null,
+          "threshold": 1.2,
+          "description": "Maintain target torso height."
+        },
+        {
+          "type": "posture_penalty",
+          "weight": -1.0,
+          "lhs": "torso_pitch",
+          "rhs": null,
+          "threshold": null,
+          "description": "Penalize deviation from upright posture."
+        },
+        {
+          "type": "action_penalty",
+          "weight": -0.05,
+          "lhs": null,
+          "rhs": null,
+          "threshold": null,
+          "description": "Penalize large joint torques."
+        }
+      ]
+    },
+    {
+      "name": "maintain_walk_speed",
+      "description": "Maintain a modest forward speed (e.g., 0.8 to 2.0 m/s) while keeping balance.",
+      "activation_rule": "torso_height >= 1.0 and abs(torso_pitch) <= 0.3 and forward_velocity >= 0.8 and forward_velocity <= 2.0",
+      "reward_terms": [
+        {
+          "type": "positive_velocity",
+          "weight": 15.0,
+          "lhs": "forward_velocity",
+          "rhs": null,
+          "threshold": null,
+          "description": "Reward for maintaining forward velocity within the target range."
+        },
+        {
+          "type": "target_height",
+          "weight": 2.0,
+          "lhs": "torso_height",
+          "rhs": null,
+          "threshold": 1.2,
+          "description": "Maintain target torso height."
+        },
+        {
+          "type": "posture_penalty",
+          "weight": -2.0,
+          "lhs": "torso_pitch",
+          "rhs": null,
+          "threshold": null,
+          "description": "Penalize deviation from upright posture."
+        },
+        {
+          "type": "action_penalty",
+          "weight": -0.05,
+          "lhs": null,
+          "rhs": null,
+          "threshold": null,
+          "description": "Penalize large joint torques."
+        }
+      ]
+    }
+  ]
+}

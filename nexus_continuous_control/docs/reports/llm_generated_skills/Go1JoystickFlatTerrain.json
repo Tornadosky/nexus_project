@@ -1,0 +1,196 @@
+{
+  "environment": "Go1JoystickFlatTerrain",
+  "observation_schema": "base_height (m), roll (rad), pitch (rad), lin_vel_x, lin_vel_y, yaw_rate, command_x, command_y, command_yaw (commanded velocities)",
+  "meta_policy_notes": "The meta-policy should prioritize the 'recover_stability' skill if its activation rule is met. Otherwise, it should select 'maintain_posture' when all command velocities are zero, and 'follow_velocity_commands' when any command velocity is non-zero.",
+  "skills": [
+    {
+      "name": "maintain_posture",
+      "description": "Keep the robot upright and stationary when no movement commands are given.",
+      "activation_rule": "command_x == 0 and command_y == 0 and command_yaw == 0",
+      "reward_terms": [
+        {
+          "type": "target_height",
+          "weight": 1.0,
+          "lhs": "base_height",
+          "rhs": null,
+          "threshold": 0.3,
+          "description": "Maintain desired standing height (e.g., 0.3m)"
+        },
+        {
+          "type": "negative_distance",
+          "weight": -5.0,
+          "lhs": "roll",
+          "rhs": null,
+          "threshold": 0.0,
+          "description": "Penalize roll deviation from upright"
+        },
+        {
+          "type": "negative_distance",
+          "weight": -5.0,
+          "lhs": "pitch",
+          "rhs": null,
+          "threshold": 0.0,
+          "description": "Penalize pitch deviation from upright"
+        },
+        {
+          "type": "negative_distance",
+          "weight": -1.0,
+          "lhs": "lin_vel_x",
+          "rhs": null,
+          "threshold": 0.0,
+          "description": "Penalize unwanted forward/backward movement"
+        },
+        {
+          "type": "negative_distance",
+          "weight": -1.0,
+          "lhs": "lin_vel_y",
+          "rhs": null,
+          "threshold": 0.0,
+          "description": "Penalize unwanted sideways movement"
+        },
+        {
+          "type": "negative_distance",
+          "weight": -1.0,
+          "lhs": "yaw_rate",
+          "rhs": null,
+          "threshold": 0.0,
+          "description": "Penalize unwanted turning"
+        },
+        {
+          "type": "action_penalty",
+          "weight": -0.01,
+          "lhs": null,
+          "rhs": null,
+          "threshold": null,
+          "description": "Minimize control effort for stability"
+        }
+      ]
+    },
+    {
+      "name": "follow_velocity_commands",
+      "description": "Match the commanded linear and angular velocities while maintaining balance.",
+      "activation_rule": "command_x != 0 or command_y != 0 or command_yaw != 0",
+      "reward_terms": [
+        {
+          "type": "positive_velocity",
+          "weight": 2.0,
+          "lhs": "lin_vel_x",
+          "rhs": "command_x",
+          "threshold": null,
+          "description": "Reward matching commanded forward/backward velocity"
+        },
+        {
+          "type": "positive_velocity",
+          "weight": 2.0,
+          "lhs": "lin_vel_y",
+          "rhs": "command_y",
+          "threshold": null,
+          "description": "Reward matching commanded sideways velocity"
+        },
+        {
+          "type": "positive_velocity",
+          "weight": 1.5,
+          "lhs": "yaw_rate",
+          "rhs": "command_yaw",
+          "threshold": null,
+          "description": "Reward matching commanded yaw rate"
+        },
+        {
+          "type": "target_height",
+          "weight": 0.5,
+          "lhs": "base_height",
+          "rhs": null,
+          "threshold": 0.3,
+          "description": "Maintain desired locomotion height (e.g., 0.3m)"
+        },
+        {
+          "type": "posture_penalty",
+          "weight": -2.0,
+          "lhs": "roll",
+          "rhs": null,
+          "threshold": 0.0,
+          "description": "Penalize roll deviation during locomotion"
+        },
+        {
+          "type": "posture_penalty",
+          "weight": -2.0,
+          "lhs": "pitch",
+          "rhs": null,
+          "threshold": 0.0,
+          "description": "Penalize pitch deviation during locomotion"
+        },
+        {
+          "type": "action_penalty",
+          "weight": -0.005,
+          "lhs": null,
+          "rhs": null,
+          "threshold": null,
+          "description": "Minimize control effort during locomotion"
+        }
+      ]
+    },
+    {
+      "name": "recover_stability",
+      "description": "Actively work to restore a stable, upright posture when the robot is significantly off-balance.",
+      "activation_rule": "abs(roll) > 0.4 or abs(pitch) > 0.4",
+      "reward_terms": [
+        {
+          "type": "negative_distance",
+          "weight": -10.0,
+          "lhs": "roll",
+          "rhs": null,
+          "threshold": 0.0,
+          "description": "Strongly penalize large roll deviations"
+        },
+        {
+          "type": "negative_distance",
+          "weight": -10.0,
+          "lhs": "pitch",
+          "rhs": null,
+          "threshold": 0.0,
+          "description": "Strongly penalize large pitch deviations"
+        },
+        {
+          "type": "target_height",
+          "weight": 1.0,
+          "lhs": "base_height",
+          "rhs": null,
+          "threshold": 0.3,
+          "description": "Encourage return to a stable height (e.g., 0.3m)"
+        },
+        {
+          "type": "negative_distance",
+          "weight": -0.5,
+          "lhs": "lin_vel_x",
+          "rhs": null,
+          "threshold": 0.0,
+          "description": "Discourage unwanted forward/backward movement during recovery"
+        },
+        {
+          "type": "negative_distance",
+          "weight": -0.5,
+          "lhs": "lin_vel_y",
+          "rhs": null,
+          "threshold": 0.0,
+          "description": "Discourage unwanted sideways movement during recovery"
+        },
+        {
+          "type": "negative_distance",
+          "weight": -0.5,
+          "lhs": "yaw_rate",
+          "rhs": null,
+          "threshold": 0.0,
+          "description": "Discourage unwanted rotation during recovery"
+        },
+        {
+          "type": "action_penalty",
+          "weight": -0.02,
+          "lhs": null,
+          "rhs": null,
+          "threshold": null,
+          "description": "Penalize excessive actions, but allow necessary ones for recovery"
+        }
+      ]
+    }
+  ]
+}
