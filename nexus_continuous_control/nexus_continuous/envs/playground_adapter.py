@@ -479,6 +479,14 @@ def build_playground_env(config: dict[str, Any]) -> PlaygroundEnvBundle:
 
     env_config = registry.get_default_config(config["ENV_NAME"])
     env_config.impl = config.get("PLAYGROUND_IMPL", "jax")
+    # Optional dynamics / task overrides for distribution-shift (robustness) eval.
+    # Empty by default => identical to the unmodified environment.
+    for _key, _value in (config.get("ENV_CONFIG_OVERRIDES") or {}).items():
+        _parts = str(_key).split(".")
+        _target = env_config
+        for _part in _parts[:-1]:
+            _target = getattr(_target, _part)
+        setattr(_target, _parts[-1], _value)
     env = registry.load(config["ENV_NAME"], env_config)
     env = wrap_for_brax_training(
         env,

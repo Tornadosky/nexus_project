@@ -125,15 +125,23 @@ def skill_actor_bootstrap_values(
     obs_critic: jnp.ndarray,
     actor_apply: Callable[[Any, jnp.ndarray], jnp.ndarray],
     critic_apply: Callable[[Any, jnp.ndarray, jnp.ndarray], jnp.ndarray],
+    reduce_fn: Callable[[jnp.ndarray], jnp.ndarray] | None = None,
 ) -> jnp.ndarray:
-    """Return Q_i(s, actor_i(s)) averaged over critic ensembles as [batch, num_skills]."""
+    """Return Q_i(s, actor_i(s)) aggregated over critic ensembles as [batch, num_skills].
 
+    ``reduce_fn`` reduces the leading critic-ensemble axis. It defaults to the mean
+    (variance reduction). Passing a min-reducer gives TD3-style clipped-double-Q
+    pessimism, which curbs value overestimation (config ``CRITIC_AGG: min``).
+    """
+
+    if reduce_fn is None:
+        reduce_fn = lambda v: jnp.mean(v, axis=0)
     all_actions = actor_apply(actor_params, obs_actor)  # [num_skills, batch, action_dim]
 
     def one_skill(skill_idx, action_i):
         skill_critic_params = jax.tree_util.tree_map(lambda leaf: leaf[skill_idx], critic_params)
         vals = jax.vmap(lambda p: critic_apply(p, obs_critic, action_i))(skill_critic_params)
-        return jnp.mean(vals, axis=0)
+        return reduce_fn(vals)
 
     q_by_skill = jax.vmap(one_skill)(jnp.arange(all_actions.shape[0]), all_actions)
     return jnp.swapaxes(q_by_skill, 0, 1)
@@ -250,6 +258,15 @@ def make_train(config: dict[str, Any]) -> Callable[[jax.Array], NexusTrainOutput
         optax.radam(learning_rate=lr),
     )
 
+    # Critic-ensemble aggregation. "mean" (default) reduces variance; "min" gives
+    # TD3-style clipped-double-Q pessimism to curb value overestimation.
+    critic_agg = str(config.get("CRITIC_AGG", "mean")).lower()
+    if critic_agg not in ("mean", "min"):
+        raise ValueError("CRITIC_AGG must be 'mean' or 'min'")
+
+    def _reduce_critics(vals):  # vals: [num_critics, ...] -> [...]
+        return jnp.min(vals, axis=0) if critic_agg == "min" else jnp.mean(vals, axis=0)
+
     def _actor_apply(actor_params, obs_actor):
         return jax.vmap(lambda p: actor.apply({"params": p}, obs_actor))(actor_params)
 
@@ -291,6 +308,7 @@ def make_train(config: dict[str, Any]) -> Callable[[jax.Array], NexusTrainOutput
             obs_critic,
             actor_apply=_actor_apply,
             critic_apply=_critic_apply_one,
+            reduce_fn=_reduce_critics,
         )
 
     def _meta_bootstrap_value(meta_params, obs_actor, policy_obs):
@@ -836,7 +854,7 @@ def make_train(config: dict[str, Any]) -> Callable[[jax.Array], NexusTrainOutput
                             vals = jax.vmap(
                                 lambda p: critic.apply({"params": p}, obs_critic_mb, action_i)
                             )(skill_params)
-                            return jnp.mean(vals, axis=0)
+                            return _reduce_critics(vals)
 
                         q_by_skill = jax.vmap(one_skill_q)(
                             jnp.arange(num_skills), all_actions
