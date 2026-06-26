@@ -29,10 +29,12 @@ import optax
 from nexus_continuous.envs.playground_adapter import (
     build_playground_env,
     get_actor_obs,
+    get_actor_pixels,
     get_critic_obs,
     get_policy_obs,
 )
 from nexus_continuous.networks import MetaQ, SkillActor, SkillCritic
+from nexus_continuous.vision import VisionSkillActor
 from nexus_continuous.policies.registry import load_policy_module
 from nexus_continuous.returns import q_lambda_returns, smooth_l1_loss
 from nexus_continuous.train_state import CounterTrainState, NexusTrainState
@@ -94,6 +96,23 @@ def _epsilon_greedy_skill(
 
 def _select_rows(x: jnp.ndarray, indices: jnp.ndarray) -> jnp.ndarray:
     return x[jnp.arange(indices.shape[0]), indices]
+
+
+def _drop_actor_pixels(obs: Any) -> Any:
+    """Strip the heavy pixel tensor from an observation dict.
+
+    ``Transition.next_obs`` is never read by target computation, the update loss,
+    or metrics — skill/meta bootstrap values are precomputed online at rollout
+    time. In RGB mode keeping its ``actor_pixels`` would store a SECOND full
+    [T, E, H, W, C] image buffer per rollout for no functional benefit (a likely
+    OOM). We therefore drop pixels from the stored ``next_obs`` while keeping the
+    rest of the dict intact. In state mode there is no ``actor_pixels`` key, so
+    this is a no-op and the state path is byte-identical.
+    """
+
+    if isinstance(obs, dict) and "actor_pixels" in obs:
+        return {k: v for k, v in obs.items() if k != "actor_pixels"}
+    return obs
 
 
 def masked_meta_bootstrap_value(q_values: jnp.ndarray, mask: jnp.ndarray | None = None) -> jnp.ndarray:
@@ -191,6 +210,8 @@ def make_train(config: dict[str, Any]) -> Callable[[jax.Array], NexusTrainOutput
         eval_config = dict(config)
         eval_config["NORMALIZE_OBS"] = False
         eval_config["NORMALIZE_REWARD"] = False
+        # RGB: the eval render context batch must match the eval env count, not NUM_ENVS.
+        eval_config["RENDER_NWORLD"] = eval_num_envs
         eval_bundle = build_playground_env(eval_config)
         eval_env = eval_bundle.env
         eval_env_params = eval_bundle.env_params
@@ -230,15 +251,61 @@ def make_train(config: dict[str, Any]) -> Callable[[jax.Array], NexusTrainOutput
         config["NUM_UPDATES"],
     )
 
-    actor = SkillActor(
-        action_dim=action_dim,
-        action_scale=action_scale,
-        action_bias=action_bias,
-        hidden_sizes=tuple(config.get("ACTOR_HIDDEN_SIZES", (256, 256))),
-        activation=config.get("ACTIVATION", "relu"),
-        norm_type=config.get("NORM_TYPE", "layer_norm"),
-        init_scale=float(config.get("ACTOR_INIT_SCALE", 0.01)),
-    )
+    # RGB extension: when USE_RGB is set, the skill actors take pixels (+ a
+    # proprioception vector) instead of the state vector. Critics, meta-Q, and
+    # the symbolic layer stay state-based (privileged-critic design).
+    use_rgb = bool(config.get("USE_RGB", False))
+    # What the PIXEL actor sees besides the image. Critics/meta always keep the
+    # full privileged state; this only restricts the actor's side input.
+    #   "none"    -> pixels only (default; the honest "skills from pixels" claim,
+    #                matching DrQ / DM-control-from-pixels where the actor gets no
+    #                state. The vision env's frame stack already encodes velocity).
+    #   "indices" -> only RGB_PROPRIO_INDICES of the state (e.g. robot self-sensing,
+    #                NOT privileged world state the camera should infer).
+    #   "full"    -> the whole state (discouraged: makes pixels largely redundant).
+    rgb_proprio_mode = str(config.get("RGB_PROPRIO", "none")).lower()
+    rgb_proprio_indices = config.get("RGB_PROPRIO_INDICES")
+    # DrQ-style random-shift image augmentation during the actor update — the
+    # single biggest sample-efficiency lever for pixel RL on DM-control.
+    rgb_augment = use_rgb and bool(config.get("RGB_AUGMENT", True))
+    rgb_aug_pad = int(config.get("RGB_AUG_PAD", 4))
+
+    def _actor_proprio(obs_actor):
+        """Restrict the privileged state to what the pixel actor is allowed to see."""
+        if rgb_proprio_mode == "full":
+            return obs_actor
+        if rgb_proprio_mode == "indices" and rgb_proprio_indices is not None:
+            idx = jnp.asarray(list(rgb_proprio_indices), dtype=jnp.int32)
+            return obs_actor[..., idx]
+        return obs_actor[..., :0]  # pixels-only
+
+    def _augment_pixels(pixels, rng):
+        """DrQ random shift: replicate-pad by rgb_aug_pad then random-crop back."""
+        b, h, w, c = pixels.shape
+        padded = jnp.pad(
+            pixels, ((0, 0), (rgb_aug_pad, rgb_aug_pad), (rgb_aug_pad, rgb_aug_pad), (0, 0)), mode="edge"
+        )
+        offsets = jax.random.randint(rng, (b, 2), 0, 2 * rgb_aug_pad + 1)
+        crop = lambda img, off: jax.lax.dynamic_slice(img, (off[0], off[1], 0), (h, w, c))
+        return jax.vmap(crop)(padded, offsets)
+    if use_rgb:
+        actor = VisionSkillActor(
+            action_dim=action_dim,
+            action_scale=action_scale,
+            action_bias=action_bias,
+            hidden_sizes=tuple(config.get("ACTOR_HIDDEN_SIZES", (256, 256))),
+            embedding_dim=int(config.get("RGB_EMBED_DIM", 128)),
+        )
+    else:
+        actor = SkillActor(
+            action_dim=action_dim,
+            action_scale=action_scale,
+            action_bias=action_bias,
+            hidden_sizes=tuple(config.get("ACTOR_HIDDEN_SIZES", (256, 256))),
+            activation=config.get("ACTIVATION", "relu"),
+            norm_type=config.get("NORM_TYPE", "layer_norm"),
+            init_scale=float(config.get("ACTOR_INIT_SCALE", 0.01)),
+        )
     critic = SkillCritic(
         hidden_sizes=tuple(config.get("CRITIC_HIDDEN_SIZES", (256, 256))),
         activation=config.get("ACTIVATION", "relu"),
@@ -267,7 +334,15 @@ def make_train(config: dict[str, Any]) -> Callable[[jax.Array], NexusTrainOutput
     def _reduce_critics(vals):  # vals: [num_critics, ...] -> [...]
         return jnp.min(vals, axis=0) if critic_agg == "min" else jnp.mean(vals, axis=0)
 
-    def _actor_apply(actor_params, obs_actor):
+    def _actor_apply(actor_params, obs_actor, obs_pixels=None):
+        if use_rgb:
+            if obs_pixels is None:
+                raise ValueError(
+                    "USE_RGB is set but the vision actor was called without pixels. "
+                    "Every RGB-mode actor call must pass obs_pixels=get_actor_pixels(obs)."
+                )
+            proprio = _actor_proprio(obs_actor)
+            return jax.vmap(lambda p: actor.apply({"params": p}, obs_pixels, proprio))(actor_params)
         return jax.vmap(lambda p: actor.apply({"params": p}, obs_actor))(actor_params)
 
     def _critic_values_all_skills(critic_params, obs_critic, action):
@@ -300,13 +375,18 @@ def make_train(config: dict[str, Any]) -> Callable[[jax.Array], NexusTrainOutput
     def _critic_apply_one(params, obs_critic, action):
         return critic.apply({"params": params}, obs_critic, action)
 
-    def _skill_actor_bootstrap_values(critic_params, actor_params, obs_actor, obs_critic):
+    def _skill_actor_bootstrap_values(
+        critic_params, actor_params, obs_actor, obs_critic, obs_pixels=None
+    ):
+        # Bind pixels into the actor_apply closure so the bootstrap helper's
+        # (params, obs) call signature is unchanged in both modes.
+        actor_apply = (lambda ap, oa: _actor_apply(ap, oa, obs_pixels)) if use_rgb else _actor_apply
         return skill_actor_bootstrap_values(
             critic_params,
             actor_params,
             obs_actor,
             obs_critic,
-            actor_apply=_actor_apply,
+            actor_apply=actor_apply,
             critic_apply=_critic_apply_one,
             reduce_fn=_reduce_critics,
         )
@@ -347,8 +427,9 @@ def make_train(config: dict[str, Any]) -> Callable[[jax.Array], NexusTrainOutput
         hold_state: tuple[jnp.ndarray, jnp.ndarray, jnp.ndarray] | None = None,
     ):
         obs_actor = get_actor_obs(obs)
+        obs_pixels = get_actor_pixels(obs)
         policy_obs = get_policy_obs(obs)
-        all_actions = _actor_apply(train_state.actor.params, obs_actor)  # [N, E, A]
+        all_actions = _actor_apply(train_state.actor.params, obs_actor, obs_pixels)  # [N, E, A]
         all_actions_env_major = jnp.swapaxes(all_actions, 0, 1)  # [E, N, A]
 
         if meta_policy_type == "flat":
@@ -432,6 +513,8 @@ def make_train(config: dict[str, Any]) -> Callable[[jax.Array], NexusTrainOutput
         }
         if isinstance(raw_obs, dict) and "policy_info" in raw_obs:
             obs["policy_info"] = raw_obs["policy_info"]
+        if isinstance(raw_obs, dict) and "actor_pixels" in raw_obs:
+            obs["actor_pixels"] = raw_obs["actor_pixels"]
         return obs
 
     def _task_metrics(prev_policy_obs, policy_obs, action, env_reward, done, info):
@@ -674,7 +757,18 @@ def make_train(config: dict[str, Any]) -> Callable[[jax.Array], NexusTrainOutput
         # Initialize one actor per skill and one critic ensemble per skill.
         rng, rng_actor, rng_critic, rng_meta = jax.random.split(rng, 4)
         actor_rngs = jax.random.split(rng_actor, num_skills)
-        actor_params = jax.vmap(lambda k: actor.init(k, dummy_actor_obs)["params"])(actor_rngs)
+        if use_rgb:
+            # The CNN encoder requires a leading batch axis; init with batch=1.
+            # The actor's proprio width is the restricted one (e.g. 0 for pixels-only).
+            obs_pixels = get_actor_pixels(obs)
+            proprio_dim = int(_actor_proprio(obs_actor).shape[-1])
+            dummy_pixels = jnp.zeros((1,) + obs_pixels.shape[1:], dtype=obs_pixels.dtype)
+            dummy_proprio = jnp.zeros((1, proprio_dim), dtype=obs_actor.dtype)
+            actor_params = jax.vmap(
+                lambda k: actor.init(k, dummy_pixels, dummy_proprio)["params"]
+            )(actor_rngs)
+        else:
+            actor_params = jax.vmap(lambda k: actor.init(k, dummy_actor_obs)["params"])(actor_rngs)
 
         num_critics = int(config.get("NUM_CRITICS", 2))
         critic_rngs = jax.random.split(rng_critic, num_skills * num_critics).reshape(
@@ -713,6 +807,7 @@ def make_train(config: dict[str, Any]) -> Callable[[jax.Array], NexusTrainOutput
                 train_state.actor.params,
                 obs_actor,
                 obs_critic,
+                get_actor_pixels(last_obs),
             )
             if train_state.meta is not None:
                 meta_bootstrap = _meta_bootstrap_value(train_state.meta.params, obs_actor, policy_obs)
@@ -751,7 +846,9 @@ def make_train(config: dict[str, Any]) -> Callable[[jax.Array], NexusTrainOutput
                 env_reward=env_reward,
                 skill_rewards=skill_rewards,
                 obs=last_obs,
-                next_obs=next_obs,
+                # Drop pixels from next_obs: it is never read downstream, and in
+                # RGB mode storing it would duplicate the full image buffer.
+                next_obs=_drop_actor_pixels(next_obs),
                 info=info,
                 diagnostics=diagnostics,
                 mask=mask,
@@ -779,6 +876,7 @@ def make_train(config: dict[str, Any]) -> Callable[[jax.Array], NexusTrainOutput
                 train_state.actor.params,
                 last_obs_actor,
                 last_obs_critic,
+                get_actor_pixels(last_obs),
             )
             if train_state.meta is not None:
                 last_meta_bootstrap_value = _meta_bootstrap_value(
@@ -819,10 +917,15 @@ def make_train(config: dict[str, Any]) -> Callable[[jax.Array], NexusTrainOutput
                 rng, rng_perm = jax.random.split(rng)
                 minibatches = make_minibatches(batch, rng_perm, config["NUM_MINIBATCHES"])
 
-                def _update_minibatch(train_state: NexusTrainState, mbatch):
+                def _update_minibatch(mb_carry, mbatch):
+                    train_state, rng = mb_carry
                     traj_mb, skill_targets_mb, meta_targets_mb = mbatch
                     obs_actor_mb = get_actor_obs(traj_mb.obs)
                     obs_critic_mb = get_critic_obs(traj_mb.obs)
+                    obs_pixels_mb = get_actor_pixels(traj_mb.obs)
+                    if rgb_augment:
+                        rng, rng_aug = jax.random.split(rng)
+                        obs_pixels_mb = _augment_pixels(obs_pixels_mb, rng_aug)
 
                     def critic_loss_fn(critic_params):
                         values = _critic_values_all_critics(
@@ -845,7 +948,7 @@ def make_train(config: dict[str, Any]) -> Callable[[jax.Array], NexusTrainOutput
                     )
 
                     def actor_loss_fn(actor_params):
-                        all_actions = _actor_apply(actor_params, obs_actor_mb)  # [N, B, A]
+                        all_actions = _actor_apply(actor_params, obs_actor_mb, obs_pixels_mb)  # [N, B, A]
 
                         def one_skill_q(skill_idx, action_i):
                             skill_params = jax.tree_util.tree_map(
@@ -929,9 +1032,11 @@ def make_train(config: dict[str, Any]) -> Callable[[jax.Array], NexusTrainOutput
                         "train/critic_grad_norm": critic_grad_norm,
                         "train/meta_grad_norm": meta_grad_norm,
                     }
-                    return new_state, losses
+                    return (new_state, rng), losses
 
-                train_state, losses = jax.lax.scan(_update_minibatch, train_state, minibatches)
+                (train_state, rng), losses = jax.lax.scan(
+                    _update_minibatch, (train_state, rng), minibatches
+                )
                 return (train_state, rng), losses
 
             (train_state, rng), losses = jax.lax.scan(

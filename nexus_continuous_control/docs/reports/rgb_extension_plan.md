@@ -1,83 +1,138 @@
 # RGB skill-agent extension — status & implementation plan
 
-**Status: vision modules validated; in-loop training wiring is a GPU-iteration task (not done blind).**
+**Status: vision modules + the integrated `USE_RGB` trainer path are CPU-smoke-tested
+with a fake pixel env (`tests/test_vision_rgb_smoke.py`); the real in-loop MJWarp
+render path has NOT been executed end-to-end (GPU + warp-lang dependency, see
+below). Treat any result at the shipped 200-update budget as a feasibility/
+"does-anything-move" check, not evidence of learning.**
 
-The mentor's optional extension is "use RGB inputs for the skill agents." The
-building block exists and is shape-verified, but full integration into the
-training loop must be done and tuned on a GPU. This doc explains exactly what is
-ready, what is missing, and the precise integration points — so it can be
-finished without re-deriving the design.
+The mentor's optional extension is "use RGB inputs for the skill agents." This doc
+reflects what the *vendored framework actually provides* (verified June 2026), the
+privileged-critic design, and the precise integration points.
+
+## ⚠️ Correction to the previous plan
+The earlier version of this doc claimed the blocker was that "in-loop vectorized
+MJX rendering is expensive and not currently emitted" and proposed hand-rolling a
+render call into `_PlaygroundVecWrapper`. **That premise was wrong.** MuJoCo
+Playground renders pixels **in-loop, in pure MJX via the MJWarp batch renderer,
+with no Madrona dependency.** You enable it with a config flag, not custom code.
+
+The real constraint is the opposite: rendering is easy, **availability is the
+limit**. Among our envs, only **`CartpoleBalance`** implements the vision pipeline
+(`default_vision_config` + `mjx.create_render_context` in
+`vendor/.../dm_control_suite/cartpole.py`). `CheetahRun`/`WalkerWalk` have cameras
+in their XML but **no render context** — supporting them means porting cartpole's
+vision code (`default_vision_config`, the `_rc` render context, and a
+`_dense_vision_reward`) into `cheetah.py` / `walker.py`.
 
 ## What is ready
 - `nexus_continuous/vision.py`: `RGBEncoder` (3-conv CNN) and
-  `VisionSkillActor(pixels, proprioception) -> action`.
-- `tests/test_vision_shapes.py`: confirms the encoder/actor produce correctly
-  shaped, in-range actions **and vmap over the skill axis** exactly like the
-  state-based `SkillActor` (the property the trainer relies on).
+  `VisionSkillActor(pixels, proprioception) -> action`. Shape- and vmap-verified
+  (`tests/test_vision_shapes.py`). Normalization is now **dtype-driven** (DrQ-v2
+  convention): integer frames → `/255 - 0.5`, float frames pass through unchanged
+  (Playground already emits float grayscale ~[-0.5, 0.5]). The encoder ends in a
+  `LayerNorm → tanh` bounded trunk and uses orthogonal conv init.
+- `tests/test_vision_rgb_smoke.py`: drives the real `make_train`/`run_training`
+  `USE_RGB` path on a fake pixel env (no renderer needed) for 2 updates + eval,
+  asserting finite losses/returns. Covers the actor-apply pixel branch, the RGB
+  init path, augmentation, the `(train_state, rng)` minibatch carry, the
+  `_drop_actor_pixels` next_obs handling, and the eval pixel path.
 
-## Why it is not wired into the trainer yet (the honest blocker)
-The actor is the easy half. The hard half is the **pixel source**: the training
-loop runs ~1–2k MJX environments in parallel and the actor needs a rendered
-`pixels` field in the observation **every step**. In-loop, vectorized MJX
-rendering at that scale is expensive and not currently emitted by
-`_PlaygroundVecWrapper`. Wiring a half-working pixel path into the hot loop
-blind would risk the validated state-based trainer for no gain, so it is left as
-a guarded, opt-in task with the design below.
+## Implementation grounding (best-practice review, June 2026)
+Reviewed against DrQ (arXiv:2004.13649), DrQ-v2 (2107.09645), Asymmetric
+Actor-Critic (Pinto et al. 2018, 1710.06542), SAC+AE (1910.01741), and the
+MuJoCo Playground vision recipe. Key conclusions:
+- **The privileged-critic + actor-only-encoder design is a published, working
+  pattern** (Pinto 2018; RSS-2024 "Agile Flight from Pixels"), not a
+  misconfiguration. DrQ/DrQ-v2/SAC+AE *stop* the actor→encoder gradient, but that
+  rule assumes a SHARED encoder feeding a pixel critic — it does not transfer
+  here: our critic is state-only and has no encoder, so the actor's policy
+  gradient is the only (and correct) source for the CNN.
+- **DrQ random-shift augmentation is load-bearing** in this regime (it stands in
+  for the encoder regularization the absent critic-loss would otherwise give).
+  Keep it on the actor pixels only (the state critic has no pixels to augment).
+- **Staged fallback if pixels-only stalls:** add an L2 pixel→state regression
+  head (predict qpos/qvel from the encoder latent), NOT image reconstruction —
+  it is dense, low-dimensional, and task-aligned (Pinto's "bottleneck" aux loss;
+  SAC+AE deterministic-regressor recipe). Try WITHOUT it first.
+- LR set to 1e-4 (DrQ-v2 scale) for the RGB config; a deterministic-policy-gradient
+  actor that also trains the CNN is steadier at 1e-4 than the state task's 3e-4.
+
+## How the framework emits pixels (verified)
+- `cfg = registry.get_default_config("CartpoleBalance"); cfg.vision = True;
+  cfg.vision_config.nworld = NUM_ENVS` → obs becomes `{"pixels/view_0": [N,64,64,3]}`
+  float32, a 3-frame grayscale stack (so velocity is encoded in the image).
+- `vision=True` also forces **`episode_length=250`**, `ctrl_dt=0.02`, and
+  `_dense_vision_reward`. Vision-cartpole returns are on a **~0–30 scale**, not the
+  state task's ~1000 — never compare the two return numbers directly.
+- `nworld` is the render-context batch size and **must equal `NUM_ENVS`**.
+- Our trainer already wraps envs with the *same* `wrap_for_brax_training`
+  (`playground_adapter.py:491`) that the framework's own `vision.ipynb` uses for
+  vision training — so the batch plumbing is already compatible. The pixel batch
+  flows through `reset`/`step` as `state.obs["pixels/view_0"]` with a leading
+  `[N, ...]` axis; `step` is **not** separately vmapped (the render context owns
+  the batch).
 
 ## Recommended design (privileged critic)
-Keep the symbolic/meta layer and the **critics state-based** (privileged), only
-the **skill actors** see pixels. This preserves interpretability and the working
-critic/meta machinery:
+Only the **skill actors** see pixels. The **critics, meta-Q, symbolic rules, and
+skill rewards stay state-based** (privileged) — preserving interpretability and the
+validated training machinery:
 
 ```
-actor_i(pixels, proprioception) -> action      # VisionSkillActor (pixels)
-critic_i(state, action)         -> Q_i         # unchanged SkillCritic (state)
-meta-policy(state / symbols)    -> skill        # unchanged
+actor_i(pixels, proprio) -> action     # VisionSkillActor (pixels)
+critic_i(state, action)  -> Q_i        # unchanged SkillCritic (state)
+meta(state) -> skill ; skill_rewards(state) ; skill_mask(state)   # unchanged
 ```
 
-Only the actor's *input* changes; targets, meta-Q, and the loss structure stay.
+Only the actor's *input* changes; targets, meta-Q, loss structure are unchanged.
 
-## Exact integration points (all behind a `USE_RGB` flag, default off)
-File: `nexus_continuous/algorithms/hierarchical_ac_pqn_playground.py`
+## Step 0 — feasibility spike (DO THIS FIRST)
+`nexus_rgb_feasibility_colab.ipynb` (project root) measures RGB env-steps/sec vs
+`NUM_ENVS` and the render overhead factor, and confirms the pixel shape/range. The
+numbers decide the feasible `NUM_ENVS` and whether to commit to in-loop training or
+the distillation fallback. **Do not write integration code before this passes.**
 
-1. **Env obs must carry pixels.** In `envs/playground_adapter.py`
-   `_PlaygroundVecWrapper`, add a `pixels` key to the obs dict (render the MJX
-   state to a small frame, e.g. 64×64). This is the expensive, must-validate
-   piece. Add `get_actor_pixels(obs)` next to `get_actor_obs`.
-2. **Actor construction.** Where `actor = SkillActor(...)` is built (~L225),
-   branch on `config.get("USE_RGB", False)` to build `VisionSkillActor` instead.
-3. **`_actor_apply`.** Change to pass pixels + proprio when `USE_RGB`:
-   `actor.apply({"params": p}, pixels, proprio)`. Proprio = `get_actor_obs`,
-   pixels = `get_actor_pixels`.
-4. **`skill_actor_bootstrap_values`** (module fn) and the **actor loss**
-   `one_skill_q` both call the actor — thread pixels through the same way (they
-   already receive `obs_actor`; add an `obs_pixels` arg).
-5. **`_select_action`** — pass pixels to the actor apply.
+## Integration points (all behind `USE_RGB`, default off)
+
+1. **Enable vision in the env build** — `envs/playground_adapter.py` (~L480-496):
+   when `config.get("USE_RGB")`, set `env_config.vision = True` and
+   `env_config.vision_config.nworld = config["NUM_ENVS"]` before `registry.load`.
+   Note the forced `episode_length=250`.
+2. **`_PlaygroundVecWrapper._get_obs`** (L79-93): add a vision branch.
+   `obs["pixels/view_0"]` has no state vector, so **reconstruct the proprio/state
+   vector from `state.data`** (cart pos, pole cos/sin, qvel — the same quantities
+   the non-vision `_get_obs` returns; `_semantic_state_info` already reads them).
+   Emit: `{"actor_pixels": pixels, "actor": proprio, "critic": proprio,
+   "raw_actor": proprio, "raw_critic": proprio, "policy_info": semantic}`.
+3. **`get_actor_pixels(obs)`** — new helper next to `get_actor_obs`.
+4. **Actor construction** (~L225): branch `SkillActor` → `VisionSkillActor` on
+   `USE_RGB` (vmap over the skill axis exactly as today).
+5. **`_actor_apply` / `one_skill_q` / `skill_actor_bootstrap_values` /
+   `_select_action`**: when `USE_RGB`, call `actor.apply({"params": p}, pixels,
+   proprio)` with `proprio = get_actor_obs(obs)`, `pixels = get_actor_pixels(obs)`.
 6. **`init`** the vision actor with a dummy `(pixels, proprio)` pair.
-
-Everything else (critics, meta-Q, Q(λ) targets, normalization of the *proprio*
-vector, eval) is unchanged. Normalize proprioception as today; do **not**
-normalize pixels (the encoder handles 0..255).
+7. **Normalization:** normalize the *proprio* vector as today; do **not** normalize
+   pixels (the encoder handles their range).
 
 ## Suggested config
 ```yaml
 USE_RGB: true
-RGB_HEIGHT: 64
-RGB_WIDTH: 64
+ENV_NAME: CartpoleBalance
+NUM_ENVS: 256          # set from the spike; nworld is tied to this
+ACTOR_HIDDEN_SIZES: [256, 256]
 RGB_EMBED_DIM: 128
-# start from a single env that renders cleanly (e.g. CheetahRun) and a SMALL
-# NUM_ENVS until the render cost is measured.
+# episode_length is forced to 250 by vision=True; budget in updates accordingly.
 ```
 
-## Validation order (on GPU / Colab)
-1. Confirm the wrapper can emit a `pixels` batch and measure the per-step render
-   cost (this decides whether in-loop RGB is feasible at the current NUM_ENVS).
-2. Overfit one env (CheetahRun) with `USE_RGB=true`, tiny NUM_ENVS; check the
-   vision actor learns *anything* (return rises) vs the state-based actor.
-3. Compare RGB vs state skills on return/success; expect slower, not better —
-   the paper frames RGB as feasibility, not a performance win.
+## Validation order (on GPU)
+1. Spike (`nexus_rgb_feasibility_colab.ipynb`) — render cost + obs sanity.
+2. Overfit `CartpoleBalance` `USE_RGB=true` at small `NUM_ENVS`; confirm the vision
+   actor learns *anything* (vision-scale return rises off the floor).
+3. Compare RGB vs state skills on the same task. Expect slower convergence, not
+   higher return — the paper frames RGB as a *feasibility* result, not a win.
 
-## Fallback if in-loop rendering is too slow
-Pretrain skills state-based, then **distill** into vision actors offline
-(behavioral cloning on rendered rollouts): cheaper and avoids in-loop rendering.
-This still demonstrates "skills from pixels" for the report.
+## Fallback if in-loop rendering is too slow (or to cover cheetah/walker)
+Train skills state-based (already working), then **distill** into `VisionSkillActor`
+via behavioral cloning on rendered rollouts (offline, no in-loop render cost). This
+still demonstrates "skills from pixels" and works on any env, including the
+now-working CheetahRun.
