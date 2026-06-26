@@ -511,6 +511,40 @@ class _NormalizeVecReward(_EnvWrapper):
         return obs, next_state, reward / jnp.sqrt(next_state.var + 1e-8), done, info
 
 
+def ensure_mjwarp_graphmode() -> None:
+    """Work around a MuJoCo-Warp Beta version desync (mujoco issue #2894).
+
+    When warp-lang drifts ahead of the version mujoco-mjx was built against,
+    ``mujoco.mjx.warp.types.GraphMode`` resolves to the builtin ``int`` instead of
+    the real enum, and the in-loop renderer dies with
+    ``AttributeError: type object 'int' has no attribute 'WARP'``. This restores
+    the real ``GraphMode`` enum from warp's JAX-FFI module. It is a no-op on a
+    correct install (warp-lang 1.13.0) and silently returns if warp/vision is not
+    present, so it is safe to call unconditionally before loading a vision env.
+    """
+
+    try:
+        import mujoco.mjx.warp.types as _mjxw_types  # type: ignore
+    except Exception:
+        return
+    gm = getattr(_mjxw_types, "GraphMode", None)
+    if gm is not None and gm is not int and hasattr(gm, "WARP"):
+        return  # already correct
+    for path in (
+        "warp._src.jax_experimental.ffi",
+        "warp._src.jax.ffi",
+        "warp.jax_experimental.ffi",
+    ):
+        try:
+            mod = __import__(path, fromlist=["GraphMode"])
+            real = getattr(mod, "GraphMode", None)
+            if real is not None and hasattr(real, "WARP"):
+                _mjxw_types.GraphMode = real
+                return
+        except Exception:
+            continue
+
+
 def build_playground_env(config: dict[str, Any]) -> PlaygroundEnvBundle:
     """Create a vectorized MuJoCo Playground environment."""
 
@@ -537,6 +571,8 @@ def build_playground_env(config: dict[str, Any]) -> PlaygroundEnvBundle:
     # context batch (nworld) must equal the number of parallel envs, which is
     # NUM_ENVS for training and EVAL_NUM_ENVS for eval (passed via RENDER_NWORLD).
     if config.get("USE_RGB", False):
+        # Guard against the MuJoCo-Warp GraphMode desync before the renderer loads.
+        ensure_mjwarp_graphmode()
         env_config.vision = True
         env_config.vision_config.nworld = int(config.get("RENDER_NWORLD", config["NUM_ENVS"]))
         # vision=True forces a shorter horizon (e.g. CartpoleBalance -> 250); make
