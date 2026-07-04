@@ -1,0 +1,3 @@
+ENV_NAME: Ant
+POLICY: ant_walk
+META_POLICY_TYPE: nesy

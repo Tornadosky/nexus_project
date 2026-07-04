@@ -277,6 +277,39 @@ class _PlaygroundVecWrapper(_EnvWrapper):
                         "cmd_yaw": command[..., 2],
                     }
                 )
+        
+        if "ant" in env_name and qpos is not None and qvel is not None:
+            info.update({
+                "base_height": qpos[..., 2],
+                "height": qpos[..., 2],
+                "x_velocity": qvel[..., 0],
+                "y_velocity": qvel[..., 1],
+                "roll": 0.0,
+                "pitch": 0.0,
+                "joint_speed": self._tail_abs_mean(qvel, 3),
+                "qpos": qpos,
+                "qvel": qvel
+            })
+            
+        if "humanoid" in env_name and qpos is not None and qvel is not None:
+            info.update(
+                {
+                    "base_height": qpos[..., 2],
+                    "height": qpos[..., 2],
+                    "x_velocity": qvel[..., 0],
+                    "y_velocity": qvel[..., 1],
+                    "forward_velocity": qvel[..., 0],
+                    "joint_speed": self._tail_abs_mean(qvel, 3),
+                }
+            )
+            if qpos.shape[-1] > 6:
+                info.update(
+                    {
+                        "roll": qpos[..., 3],
+                        "pitch": qpos[..., 4],
+                        "yaw": qpos[..., 5]
+                    }
+                )
 
         return info
 

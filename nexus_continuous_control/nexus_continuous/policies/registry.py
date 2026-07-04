@@ -59,6 +59,18 @@ POLICY_SPECS: dict[str, PolicySpec] = {
         recommended_env_name="Any supported Playground environment",
         description="Single-skill flat AC-PQN baseline trained on environment reward.",
     ),
+    "ant_walk": PolicySpec(
+        env_aliases = ("AntWalk", "ant_walk", "ant-walk"),
+        module = "nexus_continuous.policies.ant_walk",
+        recommended_env_name = "Ant",
+        description = "Ant locomotion with stand/walk/bound/turn/recover skills.",
+    ),
+    "humanoid_walk": PolicySpec(
+        env_aliases = ("HumanoidWalk", "humanoid_walk", "humanoid-walk"),
+        module = "nexus_continuous.policies.humanoid_walk",
+        recommended_env_name = "Humanoid",
+        description = "Humanoid locomotion with stand/walk/bound/turn/recover skills.",
+    ),
 }
 
 
