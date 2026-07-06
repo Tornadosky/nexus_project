@@ -47,17 +47,31 @@ def main():
     cfg = load_config(args.config)
     llm_skillset = load_llm_skillset(args.llm_skills)
     cfg = patch_config_with_llm(cfg, llm_skillset)
+    skill_json = load_llm_skillset(args.llm_skills)
     
-    print("\n=== Running LLM Skill Experiment ===")
-    print(f"Env: {cfg['ENV_NAME']}")
-    print(f"Skills file: {args.llm_skills}")
-    print(f"Seed: {args.seed}")
+    print("\n=== Loading LLM Skills ===")
+    print(json.dumps(skill_json, indent = 2))
+    llm_policy = make_policy_module(skill_json)
     
-    rng = jax.random.PRNGKey(args.seed)
+    cfg = dict(cfg)
+    cfg["POLICY_MODULE"] = llm_policy
+    cfg["USE_LLM_SKILLS"] = True
+    
+    print("\n=== Running LLM NEXUS Training ===")
     output = run_training(cfg)
-    print("\n=== Training Finished ===")
+    Path(args.save).parent.mkdir(exist_ok = True, parents = True)
     
-    Path(args.save).parent.mkdir(parents = True, exist_ok = True)
+    
+    # print("\n=== Running LLM Skill Experiment ===")
+    # print(f"Env: {cfg['ENV_NAME']}")
+    # print(f"Skills file: {args.llm_skills}")
+    # print(f"Seed: {args.seed}")
+    
+    # rng = jax.random.PRNGKey(args.seed)
+    # output = run_training(cfg)
+    # print("\n=== Training Finished ===")
+    
+    # Path(args.save).parent.mkdir(parents = True, exist_ok = True)
     
     import pickle
     with open(args.save, "wb") as f:
@@ -66,7 +80,6 @@ def main():
                 "config": cfg,
                 "metrics": output.metrics,
                 "eval_metrics": output.eval_metrics,
-                "eval_table": output.eval_episode_table
             },
             f,
         )

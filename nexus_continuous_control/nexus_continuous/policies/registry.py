@@ -98,3 +98,25 @@ def list_policies() -> dict[str, dict[str, Any]]:
         }
         for name, spec in POLICY_SPECS.items()
     }
+
+
+from nexus_continuous.llm.interpreter import make_policy_module
+
+def load_policy_module(name_or_cfg) -> ModuleType:
+    """ 
+    Loads either:
+    - LLM-generated policy
+    - Handwritten policy from registry
+    """
+    if isinstance(name_or_cfg, dict):
+        cfg = name_or_cfg
+        
+        if cfg.get("USE_LLM_SKILLS", False):
+            return make_policy_module(cfg["LLM_SKILLSET"])
+        
+        name = cfg["POLICY"]
+    else:
+        name = name_or_cfg
+    
+    canonical = canonicalize_policy_name(name)
+    return importlib.import_module(POLICY_SPECS[canonical].module)

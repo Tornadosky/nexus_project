@@ -10,6 +10,7 @@ from __future__ import annotations
 
 import json
 from typing import Any, Dict, Optional
+from dataclasses import asdict
 from nexus_continuous.llm.client import LLMClient
 from nexus_continuous.llm.schema import NexusSkillSet, SkillSpec, RewardTerm
 
@@ -150,3 +151,13 @@ def generate_skillset(
         observation_schema = observation_schema,
         task_description = task_description
     )
+    
+def save_skillset(skillset, path):
+    import json 
+    
+    with open(path, "w") as f:
+        json.dump(
+            asdict(skillset),
+            f,
+            indent = 2
+        )
