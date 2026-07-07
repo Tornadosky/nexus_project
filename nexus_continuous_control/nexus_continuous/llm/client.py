@@ -13,7 +13,7 @@ from dataclasses import dataclass
 import transformers
 import accelerate
 import torch
-import sentencepiese
+import sentencepiece
 
 @dataclass
 class LLMConfig:
