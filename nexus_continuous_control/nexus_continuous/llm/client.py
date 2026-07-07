@@ -10,10 +10,6 @@ import json
 import os
 from typing import Any, Dict
 from dataclasses import dataclass
-import transformers
-import accelerate
-import torch
-import sentencepiece
 
 @dataclass
 class LLMConfig:
@@ -60,32 +56,44 @@ class LLMClient:
             text = response.choices[0].message.content
         
         elif self.backend == "hf":
-            prompt = f""" 
-            {system_prompt}
-            {user_prompt}
-            Return only JSON.
-            """
+            messages = [
+                {"role": "system", "content": system_prompt},
+                {"role": "user", "content": user_prompt}
+            ]
+            
+            prompt = self.generator.tokenizer.apply_chat_template(
+                messages, 
+                tokenize = False,
+                add_generation_prompt = True
+            )
             
             output = self.generator(
                 prompt,
                 max_new_tokens = self.config.max_tokens,
-                temperature = self.config.temperature,
                 do_sample = False,
-                eos_token_id = self.generator.tokenizer.eos_token_id
+                eos_token_id = self.generator.tokenizer.eos_token_id,
             )
             
             text = output[0]["generated_text"][len(prompt):]
             
+            print("=" * 80)
+            print(text)
+            print("=" * 80)
+            
         return self.extract_json(text)
     
     def extract_json(self, text):
+        
+        from json import JSONDecoder 
+        
         start = text.find("{")
-        end = text.rfind("}")
+        if start == -1:
+            raise RuntimeError("No JSON found:\n" + text)
         
-        if start != -1 and end != -1:
-            return json.loads(text[start:end+1])
+        decoder = JSONDecoder()
+        obj, _ = decoder.raw_decode(text[start:])
         
-        raise RuntimeError("No JSON found: \n" + text)
+        return obj
     
     def _mock_response(self) -> Dict[str, Any]:
         """ Safe fallback when no API key present """
