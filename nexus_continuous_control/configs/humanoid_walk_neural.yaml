@@ -1,3 +1,0 @@
-ENV_NAME: Humanoid
-POLICY: humanoid_walk
-META_POLICY_TYPE: neural
