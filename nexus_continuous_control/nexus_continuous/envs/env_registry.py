@@ -21,7 +21,7 @@ ENV_REGISTRY = {
             "forward_velocity",
             "torso_pitch",
             "pitch",
-            "x_velocity"
+            "x_velocity",
             "joint_speed",
         ),
         "task": (
@@ -66,7 +66,7 @@ ENV_REGISTRY = {
             "goal_pos"
         ),
         "task": (
-            "!!!!!!!!!!!!Keep the pole upright and centered while minimizing oscillations."
+            "Reach the cube, grasp it, lift it, and move it to the target position."
         ),
     },
     "Go1":{
@@ -77,11 +77,11 @@ ENV_REGISTRY = {
             "lin_vel_y",
             "x_velocity",
             "y_velocity",
-            "yaw_rate"
+            "yaw_rate",
             "ang_vel_yaw"
         ),
         "task": (
-            "!!!!!!!!!!!!!Keep the pole upright and centered while minimizing oscillations."
+            "Follow joystick commands while maintaining stable quadruped locomotion."
         ),
     },
     "HumanoidWalk":{

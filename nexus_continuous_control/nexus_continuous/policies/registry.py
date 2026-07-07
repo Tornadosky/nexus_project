@@ -84,9 +84,9 @@ def canonicalize_policy_name(name: str) -> str:
     )
 
 
-def load_policy_module(name: str) -> ModuleType:
-    canonical = canonicalize_policy_name(name)
-    return importlib.import_module(POLICY_SPECS[canonical].module)
+# def load_policy_module(name: str) -> ModuleType:
+#     canonical = canonicalize_policy_name(name)
+#     return importlib.import_module(POLICY_SPECS[canonical].module)
 
 
 def list_policies() -> dict[str, dict[str, Any]]:
@@ -112,7 +112,7 @@ def load_policy_module(name_or_cfg) -> ModuleType:
         cfg = name_or_cfg
         
         if cfg.get("USE_LLM_SKILLS", False):
-            return make_policy_module(cfg["LLM_SKILLSET"])
+            return make_policy_module(skillset = cfg["LLM_SKILLSET"], field_names = tuple(cfg["OBS_FIELDS"]))
         
         name = cfg["POLICY"]
     else:

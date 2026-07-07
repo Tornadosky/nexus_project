@@ -16,7 +16,7 @@ class LLMConfig:
     backend: str = "hf"
     model: str = "Qwen/Qwen2.5-1.5B-Instruct"
     temperature: float = 0.1
-    max_tokens: int = 500
+    max_tokens: int = 1000
     
 class LLMClient:
     def __init__(self, config = None):
@@ -74,7 +74,7 @@ class LLMClient:
                 eos_token_id = self.generator.tokenizer.eos_token_id,
             )
             
-            text = output[0]["generated_text"][len(prompt):]
+            text = output[0]["generated_text"]
             
             print("=" * 80)
             print(text)

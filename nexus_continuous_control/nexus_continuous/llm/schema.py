@@ -11,16 +11,6 @@ from dataclasses import dataclass, field
 from typing import Optional
 
 
-# RewardTermType = Literal[
-#     "negative_distance",
-#     "positive_velocity",
-#     "target_height",
-#     "binary_bonus",
-#     "action_penalty",
-#     "posture_penalty",
-# ]
-
-
 @dataclass(frozen=True)
 class RewardTerm:
     type: str

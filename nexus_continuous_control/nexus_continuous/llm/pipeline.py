@@ -59,6 +59,9 @@ def build_skill_prompt(
     - Skills should form a progression (safe -> locomotion -> optimal performance)
     - activation_rule must be a boolean expression (and/or/not, comparisons)
     - reward must be stable and dense (avoid sparse-only rewards)
+    - Do not include markdown fences.
+    - Do not explain anything.
+    - Output only the JSON.
     
     """
     return system_prompt, user_prompt
@@ -154,10 +157,9 @@ def generate_skillset(
     
 def save_skillset(skillset, path):
     import json 
+    import os
+    
+    os.makedirs(os.path.dirname(path), exist_ok = True)
     
     with open(path, "w") as f:
-        json.dump(
-            asdict(skillset),
-            f,
-            indent = 2
-        )
+        json.dump(asdict(skillset), f, indent = 2)
