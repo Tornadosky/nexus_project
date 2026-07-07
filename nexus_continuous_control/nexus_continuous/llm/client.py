@@ -18,9 +18,9 @@ import sentencepiece
 @dataclass
 class LLMConfig:
     backend: str = "hf"
-    model: str = "Qwen/Qwen2.5-7B-Instruct"
-    temperature: float = 0.7
-    max_tokens: int = 1000
+    model: str = "Qwen/Qwen2.5-1.5B-Instruct"
+    temperature: float = 0.1
+    max_tokens: int = 500
     
 class LLMClient:
     def __init__(self, config = None):
@@ -29,7 +29,7 @@ class LLMClient:
         
         if self.backend == "openai":
             from openai import OpenAI 
-            self.cliet = OpenAI(api_key = os.environ["OPENAI_API_KEY"])
+            self.client = OpenAI(api_key = os.environ["OPENAI_API_KEY"])
             
         elif self.backend == "hf":
             from transformers import pipeline
@@ -69,10 +69,12 @@ class LLMClient:
             output = self.generator(
                 prompt,
                 max_new_tokens = self.config.max_tokens,
-                temperature = self.config.temperature
+                temperature = self.config.temperature,
+                do_sample = False,
+                eos_token_id = self.generator.tokenizer.eos_token_id
             )
             
-            text = output[0]["generated_text"]
+            text = output[0]["generated_text"][len(prompt):]
             
         return self.extract_json(text)
     
