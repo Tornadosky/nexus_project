@@ -102,13 +102,13 @@ Generate and train an LLM policy:
 ```bash
 python scripts/run_llm_experiment.py \
     --env WalkerWalk \
-    --config configs/walker.yaml
+    --config configs/walker_walk_nesy.yaml
 ```
 Compare against the hand-designed policy.
 ```bash
 python scripts/run_llm_comparison.py \
     --env WalkerWalk \
-    --config configs/walker.yaml \
+    --config configs/walker_walk_nesy.yaml \
     --seeds 3
 ```
 Generate a single skillset.
@@ -118,6 +118,7 @@ python test_llm.py
 
 ## Currently
 Still ongoing work, but a prototype of the original idea. 
+- Passed local testing
 - Refinement loop implemented but not yet tested.
 - Full testing not completed.
 - Errors may still exist and require debugging
