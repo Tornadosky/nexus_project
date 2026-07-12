@@ -46,7 +46,10 @@ class _PlaygroundVecWrapper(_EnvWrapper):
         self.action_repeat = env_config.action_repeat
         self.action_size = env.action_size
         self.observation_size = (env.observation_size,)
-        self.privileged_state = isinstance(env.observation_size, dict)
+        # RGB extension: when the env is loaded with vision=True it emits a
+        # {"pixels/view_0": [B,H,W,C]} observation instead of a state vector.
+        self.vision = bool(getattr(env_config, "vision", False))
+        self.privileged_state = (not self.vision) and isinstance(env.observation_size, dict)
 
     @partial(jax.jit, static_argnums=(0,))
     def reset(self, key: jax.Array, params: Any = None) -> tuple[Any, Any]:
@@ -76,8 +79,47 @@ class _PlaygroundVecWrapper(_EnvWrapper):
             shape=(self.action_size,),
         )
 
+    def _proprio_from_state(self, state: Any) -> Any:
+        """Privileged proprioceptive state vector reconstructed from sim data.
+
+        In vision mode the env observation is pixels-only, but the privileged
+        critic/meta and the actor's proprioception branch still need a compact
+        state vector. qpos+qvel is the env-agnostic privileged state (it is
+        exactly what the non-vision DM-suite observations are built from).
+        """
+
+        data = getattr(state, "data", None)
+        parts = [p for p in (getattr(data, "qpos", None), getattr(data, "qvel", None)) if p is not None]
+        if not parts:
+            raise ValueError(
+                "vision mode needs a privileged state but state.data has no "
+                "qpos/qvel; cannot reconstruct proprio for the critic/meta."
+            )
+        return jnp.concatenate(parts, axis=-1)
+
     def _get_obs(self, state: Any) -> dict[str, Any]:
         obs = state.obs
+        if self.vision:
+            # Skill actors see pixels; critic/meta/symbolic rules see privileged state.
+            if isinstance(obs, dict):
+                if "pixels/view_0" not in obs:
+                    raise KeyError(
+                        "vision=True but the env observation has no 'pixels/view_0' "
+                        f"key; available keys: {sorted(obs)}. Check the env's "
+                        "vision_config / camera name."
+                    )
+                pixels = obs["pixels/view_0"]
+            else:
+                pixels = obs
+            proprio = self._proprio_from_state(state)
+            return {
+                "actor": proprio,
+                "critic": proprio,
+                "raw_actor": proprio,
+                "raw_critic": proprio,
+                "actor_pixels": pixels,
+                "policy_info": self._state_info(state),
+            }
         if self.privileged_state:
             actor_obs = obs["state"]
             critic_obs = obs["privileged_state"]
@@ -448,13 +490,17 @@ class _NormalizeVecObservation(_EnvWrapper):
 
     @staticmethod
     def _normalized(obs: dict[str, Any], state: _NormalizeObsState) -> dict[str, Any]:
-        return {
+        out = {
             "actor": (obs["actor"] - state.actor_mean) / jnp.sqrt(state.actor_var + 1e-8),
             "critic": (obs["critic"] - state.critic_mean) / jnp.sqrt(state.critic_var + 1e-8),
             "raw_actor": obs.get("raw_actor", obs["actor"]),
             "raw_critic": obs.get("raw_critic", obs["critic"]),
             "policy_info": obs.get("policy_info", {}),
         }
+        # Pixels are normalized inside the encoder, not here — pass them through.
+        if "actor_pixels" in obs:
+            out["actor_pixels"] = obs["actor_pixels"]
+        return out
 
 
 @struct.dataclass
@@ -498,6 +544,40 @@ class _NormalizeVecReward(_EnvWrapper):
         return obs, next_state, reward / jnp.sqrt(next_state.var + 1e-8), done, info
 
 
+def ensure_mjwarp_graphmode() -> None:
+    """Work around a MuJoCo-Warp Beta version desync (mujoco issue #2894).
+
+    When warp-lang drifts ahead of the version mujoco-mjx was built against,
+    ``mujoco.mjx.warp.types.GraphMode`` resolves to the builtin ``int`` instead of
+    the real enum, and the in-loop renderer dies with
+    ``AttributeError: type object 'int' has no attribute 'WARP'``. This restores
+    the real ``GraphMode`` enum from warp's JAX-FFI module. It is a no-op on a
+    correct install (warp-lang 1.13.0) and silently returns if warp/vision is not
+    present, so it is safe to call unconditionally before loading a vision env.
+    """
+
+    try:
+        import mujoco.mjx.warp.types as _mjxw_types  # type: ignore
+    except Exception:
+        return
+    gm = getattr(_mjxw_types, "GraphMode", None)
+    if gm is not None and gm is not int and hasattr(gm, "WARP"):
+        return  # already correct
+    for path in (
+        "warp._src.jax_experimental.ffi",
+        "warp._src.jax.ffi",
+        "warp.jax_experimental.ffi",
+    ):
+        try:
+            mod = __import__(path, fromlist=["GraphMode"])
+            real = getattr(mod, "GraphMode", None)
+            if real is not None and hasattr(real, "WARP"):
+                _mjxw_types.GraphMode = real
+                return
+        except Exception:
+            continue
+
+
 def build_playground_env(config: dict[str, Any]) -> PlaygroundEnvBundle:
     """Create a vectorized MuJoCo Playground environment."""
 
@@ -512,6 +592,25 @@ def build_playground_env(config: dict[str, Any]) -> PlaygroundEnvBundle:
 
     env_config = registry.get_default_config(config["ENV_NAME"])
     env_config.impl = config.get("PLAYGROUND_IMPL", "jax")
+    # Optional dynamics / task overrides for distribution-shift (robustness) eval.
+    # Empty by default => identical to the unmodified environment.
+    for _key, _value in (config.get("ENV_CONFIG_OVERRIDES") or {}).items():
+        _parts = str(_key).split(".")
+        _target = env_config
+        for _part in _parts[:-1]:
+            _target = getattr(_target, _part)
+        setattr(_target, _parts[-1], _value)
+    # RGB extension: enable the framework's in-loop MJWarp renderer. The render
+    # context batch (nworld) must equal the number of parallel envs, which is
+    # NUM_ENVS for training and EVAL_NUM_ENVS for eval (passed via RENDER_NWORLD).
+    if config.get("USE_RGB", False):
+        # Guard against the MuJoCo-Warp GraphMode desync before the renderer loads.
+        ensure_mjwarp_graphmode()
+        env_config.vision = True
+        env_config.vision_config.nworld = int(config.get("RENDER_NWORLD", config["NUM_ENVS"]))
+        # vision=True forces a shorter horizon (e.g. CartpoleBalance -> 250); make
+        # the brax episode wrapper and eval agree with it.
+        env_config.episode_length = int(config.get("RGB_EPISODE_LENGTH", 250))
     env = registry.load(config["ENV_NAME"], env_config)
     env = wrap_for_brax_training(
         env,
@@ -544,6 +643,18 @@ def get_actor_obs(obs: Any) -> Any:
     if isinstance(obs, dict):
         return obs.get("actor", obs.get("raw_actor", obs.get("state", obs.get("obs"))))
     return obs
+
+
+def get_actor_pixels(obs: Any) -> Any:
+    """Return the actor's pixel observation in RGB mode, else None.
+
+    Used by the trainer to feed the VisionSkillActor its image input. Returns
+    None for state-based runs so the same call sites work in both modes.
+    """
+
+    if isinstance(obs, dict):
+        return obs.get("actor_pixels")
+    return None
 
 
 def get_critic_obs(obs: Any) -> Any:

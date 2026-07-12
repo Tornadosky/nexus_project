@@ -21,16 +21,39 @@ class RGBEncoder(nn.Module):
 
     @nn.compact
     def __call__(self, pixels: jnp.ndarray) -> jnp.ndarray:
-        # Accept uint8 [B,H,W,C] or float. Normalize only when values look like 0..255.
-        x = pixels.astype(jnp.float32)
-        x = jnp.where(jnp.max(x) > 2.0, x / 255.0, x)
+        # Deterministic, dtype-driven normalization (DrQ-v2 convention,
+        # arXiv:2107.09645): integer frames in [0, 255] are mapped to [-0.5, 0.5];
+        # float frames are assumed already normalized (MuJoCo Playground emits
+        # float grayscale ~[-0.5, 0.5]) and pass through unchanged. The branch is
+        # on the *static* dtype, never on the data, so every minibatch — augmented
+        # or not — is scaled identically. (The previous `jnp.max(x) > 2` heuristic
+        # was a per-batch global reduction: one stray pixel rescaled the whole
+        # batch, silently injecting a moving input scale.)
+        if jnp.issubdtype(pixels.dtype, jnp.integer):
+            x = pixels.astype(jnp.float32) / 255.0 - 0.5
+        else:
+            x = pixels.astype(jnp.float32)
+        # Orthogonal init with sqrt(2) gain is the ReLU-matched default used by
+        # DrQ-v2 / CleanRL pixel encoders.
+        conv_init = nn.initializers.orthogonal(jnp.sqrt(2.0))
         for channels, stride in [(32, 2), (64, 2), (64, 2)]:
-            x = nn.Conv(channels, kernel_size=(3, 3), strides=(stride, stride), padding="SAME")(x)
+            x = nn.Conv(
+                channels,
+                kernel_size=(3, 3),
+                strides=(stride, stride),
+                padding="SAME",
+                kernel_init=conv_init,
+            )(x)
             x = nn.relu(x)
         x = x.reshape((x.shape[0], -1))
-        x = nn.Dense(self.embedding_dim)(x)
+        # Bounded LayerNorm->tanh trunk (DrQ-v2 / SAC+AE convention). In this
+        # asymmetric design the CNN is trained ONLY by the deterministic policy
+        # gradient through the privileged state-critic's Q (Pinto et al. 2018,
+        # arXiv:1710.06542); the tanh-bounded [-1, 1] features keep that lone,
+        # comparatively brittle gradient well-conditioned.
+        x = nn.Dense(self.embedding_dim, kernel_init=conv_init)(x)
         x = nn.LayerNorm()(x)
-        return nn.relu(x)
+        return nn.tanh(x)
 
 
 class VisionSkillActor(nn.Module):

@@ -54,6 +54,8 @@ mujoco_menagerie/
 # Jupyter
 .ipynb_checkpoints/
 *.ipynb
+# ...but keep the deliverable Colab notebooks under version control
+!nexus_continuous_control/notebooks/*.ipynb
 
 # Environment and secrets
 .env

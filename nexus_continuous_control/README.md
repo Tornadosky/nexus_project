@@ -273,20 +273,73 @@ elif norm(command_xy) > 0.10: track_velocity
 else: stand
 ```
 
-## RGB skill-agent extension
+## RGB skill-agent extension (implemented)
 
-The current implementation is state-based. To use RGB for skill actors, keep the
-symbolic/meta layer state-based and replace `SkillActor` with an image encoder +
-proprioception MLP. The safest first version is a privileged critic setup:
+The RGB extension is implemented behind a single `USE_RGB` config flag (default
+`false`). It is an **asymmetric / privileged-critic** design (Pinto et al. 2017):
+the skill **actors** read camera pixels, while the critics, meta-Q, symbolic
+rules, and skill rewards stay on privileged state — so the interpretable
+high-level layer is unchanged and only low-level execution becomes pixel-based.
 
 ```text
-actor_i(rgb, proprioception) -> action
-critic_i(state, action) -> Q_i
-meta-policy(state/symbols) -> skill
+actor_i(pixels, proprioception) -> action     # VisionSkillActor (CNN, nexus_continuous/vision.py)
+critic_i(state, action) -> Q_i                 # unchanged SkillCritic (privileged state)
+meta-policy(state/symbols) -> skill            # unchanged symbolic/nesy layer
 ```
 
-This preserves interpretable high-level rules while allowing the skill agents to
-learn from pixels.
+- **Switch:** `USE_RGB: true` (config `configs/cartpole_balance_nesy_rgb.yaml`) or
+  `--override USE_RGB=true`. When off, the state path is byte-identical.
+- **Encoder:** dtype-driven normalization, orthogonal conv init, LayerNorm→tanh
+  trunk (DrQ-v2 / SAC+AE conventions).
+- **Env coverage:** only `CartpoleBalance` has a vision pipeline in Playground.
+- **Status:** the code is verified (`pytest tests/test_vision_rgb_smoke.py` drives
+  the full `USE_RGB` training path on a fake pixel env). The **in-loop pixel RL**
+  path additionally needs the MuJoCo-Warp renderer, which is currently unstable on
+  Colab (Beta CUDA/FFI bug) — so the demonstrated result is obtained via
+  **distillation** (see below), not in-loop RL.
+
+### Distillation (the runnable pixel-skill result)
+
+`notebooks/rgb_distillation_colab.ipynb` renders frames **offline** with the
+standard MuJoCo EGL renderer (no MJWarp), then behavior-clones the real
+`VisionSkillActor` to control CartpoleBalance from 64×64 pixels. It produces:
+training-loss curve, held-out pred-vs-teacher scatter/trace, a **teacher rollout
+video**, and a **closed-loop video + balance metric** of the learned pixel policy.
+
+## Reproducing results for the report (graphs + videos)
+
+```bash
+# 1. Code-correctness gate (no GPU): the RGB training path + vision modules.
+JAX_PLATFORMS=cpu pytest tests/test_vision_rgb_smoke.py tests/test_vision_shapes.py
+
+# 2. State-based NEXUS training (the main deliverable) — saves metrics to plot.
+python -m nexus_continuous.scripts.train_nexus_playground \
+  --config configs/cartpole_balance_nesy.yaml --save runs/cartpole_state.pkl
+# metrics live in the checkpoint: load runs/cartpole_state.pkl -> ['metrics'] and plot
+# 'rollout/episode_return', and ['eval_metrics'] for the deterministic eval summary.
+
+# 3. RGB pixel-skill result (graphs + videos): open notebooks/rgb_distillation_colab.ipynb
+#    in Colab (T4 GPU) and Run All. Produces the loss curve, scatter, teacher video,
+#    and the closed-loop pixel-policy video + "balanced N/250 steps" number.
+```
+
+## Colab notebooks (`notebooks/`)
+
+| Notebook | Purpose |
+|---|---|
+| `run_environments_colab.ipynb` | Train the NEXUS suite — select 1 env or all 6; per-env curves + eval table. |
+| `rgb_distillation_colab.ipynb` | RGB extension result: pixel skills via distillation + graphs + videos (CartpoleBalance). |
+| `rgb_validation_colab.ipynb`   | RGB code-correctness gate (the `USE_RGB` smoke test + vision shape tests). |
+
+Open them in Colab (GPU runtime); each clones this repo and runs end-to-end.
+
+- **Graphs:** distillation loss curve + scatter/trace (notebook Steps 3–4); state
+  training curves (plot from the `.pkl` `metrics`).
+- **Videos:** teacher rollout + learned closed-loop pixel policy (notebook Steps 1 & 5).
+- **Honest scope for the writeup:** frame the RGB result as a *feasibility result
+  for pixel-based skill actors (asymmetric AC), validated by distillation +
+  closed-loop control on CartpoleBalance*. Note that in-loop pixel RL is
+  environment-blocked, and that the interpretable meta-policy remains state-based.
 
 ## Notes on observation features
 
