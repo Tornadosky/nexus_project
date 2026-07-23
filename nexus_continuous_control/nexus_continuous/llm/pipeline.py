@@ -8,11 +8,15 @@ for compilation by interpreter.py
 
 from __future__ import annotations
 
-import json
+import warnings
 from typing import Any, Dict, Optional
 from dataclasses import asdict
 from nexus_continuous.llm.client import LLMClient
 from nexus_continuous.llm.schema import NexusSkillSet, SkillSpec, RewardTerm
+
+def skillset_to_dict(skillset: NexusSkillSet) -> Dict[str, Any]:
+    """ Deeply convert a NexusSkillSet to a plain JSON-safe dict. """
+    return asdict(skillset)
 
 def build_skill_prompt(
     env_name: str,
@@ -89,13 +93,33 @@ def _parse_skill(spec: dict) -> SkillSpec:
         reward_terms = _parse_reward_terms(spec.get("reward_terms", []))
     )
     
-def validate_and_build(raw: Dict[str, Any]) -> NexusSkillSet:
+def _check_fields(skills: list[SkillSpec], allowed_fields: Optional[set[str]]) -> None:
+    if not allowed_fields:
+        return
+    for s in skills:
+        for term in s.reward_terms:
+            for side_name, side_val in (("lhs", term.lhs), ("rhs", term.rhs)):
+                if side_val is not None and side_val not in allowed_fields:
+                    warnings.warn(
+                        f"Skill '{s.name}' reward term references unknown field "
+                        f"{side_name}={side_val!r}; not in observation schema "
+                        f"{sorted(allowed_fields)}. This term will contribute 0 "
+                        "reward at runtime (interpreter falls back to a default "
+                        "of 0 for unknown fields).",
+                        stacklevel=3,
+                    )
+    
+def validate_and_build(raw: Dict[str, Any], allowed_fields: Optional[set[str]] = None) -> NexusSkillSet:
     """ Converts raw LLM JSON -> typed schema. Raises Value Error if invalid. """
     
     if "skills" not in raw:
         raise ValueError("missing 'skills' in LLM output")
     
+    if not raw["skills"]:
+        raise ValueError("LLM output has an empty 'skills' list")
+    
     skills = [_parse_skill(s) for s in raw["skills"]]
+    _check_fields(skills, allowed_fields)
     
     return NexusSkillSet(
         environment = raw.get("environment", "unknown"),
@@ -103,7 +127,6 @@ def validate_and_build(raw: Dict[str, Any]) -> NexusSkillSet:
         skills = skills,
         meta_policy_notes = raw.get("meta_policy_notes", ""),
     )
-    
     
     
 class LLMSkillPipeline:
@@ -116,6 +139,7 @@ class LLMSkillPipeline:
         observation_schema: str,
         task_description: str,
         max_retries: int = 2,
+        allowed_fields: Optional[set[str]] = None,
     ) -> NexusSkillSet:
         """ Main entrypoint: LLM -> JSON -> validated NexusSkillSet """
         
@@ -126,10 +150,9 @@ class LLMSkillPipeline:
         for _ in range(max_retries + 1):
             try:
                 raw = self.client.generate_json(system_prompt, user_prompt)
-                return validate_and_build(raw)
+                return validate_and_build(raw, allowed_fields=allowed_fields)
             except Exception as e:
                 last_error = str(e)
-                
                 # strengthen prompt on retry
                 user_prompt += f"\n\nIMPORTANT: Previous output was invalid JSON: {last_error}\nReturn STRICT JSON ONLY."
         
@@ -142,7 +165,8 @@ def generate_skillset(
     env_name: str,
     observation_schema: str,
     task_description: str,
-    client: LLMClient | None = None
+    client: LLMClient | None = None,
+    allowed_fields: Optional[set[str]] = None
 ) -> NexusSkillSet:
     """ Simple functional API """
     
@@ -152,14 +176,17 @@ def generate_skillset(
     return pipeline.generate_skillset(
         env_name = env_name,
         observation_schema = observation_schema,
-        task_description = task_description
+        task_description = task_description,
+        allowed_fields = allowed_fields
     )
     
 def save_skillset(skillset, path):
     import json 
     import os
     
-    os.makedirs(os.path.dirname(path), exist_ok = True)
+    dirname = os.path.dirname(path)
+    if dirname:
+        os.makedirs(dirname, exist_ok=True)
     
     with open(path, "w") as f:
         json.dump(asdict(skillset), f, indent = 2)

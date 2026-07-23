@@ -22,7 +22,15 @@ from typing import Any
 
 import jax.numpy as jnp
 
-from nexus_continuous.policies.common import actor_obs, feature_info, info_value, safe_index
+from nexus_continuous.llm.jax_bootstrap import ensure_jax 
+
+ensure_jax()
+
+try:
+    from nexus_continuous.policies.common import actor_obs, feature_info, info_value, safe_index
+except Exception: 
+    from nexus_continuous.llm.common_fallback import actor_obs, feature_info, info_value, safe_index
+
 
 # Default obs-index fallbacks per env field (used only if the semantic key is
 # absent). Indices follow the hand-written policies' conventions.
@@ -198,6 +206,8 @@ def make_policy_module(skillset: dict, field_names: tuple[str, ...],
     skills = skillset.get("skills", [])
     skill_names = tuple(s.get("name", f"skill_{i}") for i, s in enumerate(skills))
     num_skills = len(skills)
+    if num_skills == 0:
+        raise ValueError()
     build = field_fn if field_fn is not None else (lambda obs, info: _build_fields(field_names, obs, info))
 
     def skill_rewards(prev_obs, obs, action, env_reward, done, info=None):

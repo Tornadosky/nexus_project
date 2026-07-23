@@ -9,10 +9,10 @@ and multi-seed evaluation loops (paper setting)
 from __future__ import annotations
 
 import json
-from typing import Any, Dict
-from dataclasses import dataclass
+from typing import Any, Dict, Callable, NamedTuple, Optional
+from dataclasses import dataclass, field
 
-from nexus_continuous.llm.pipeline import LLMSkillPipeline, validate_and_build
+from nexus_continuous.llm.pipeline import LLMSkillPipeline, validate_and_build, skillset_to_dict
 from nexus_continuous.llm.client import LLMClient
 
 def summarize_metrics(metrics: Dict[str, Any]) -> str:
@@ -79,8 +79,28 @@ def build_feedback_prompt(
 class RefinementConfig: 
     env_name: str
     observation_schema: str
-    task_decription: str
+    task_decription: str = ""
     num_iterations: int = 3
+    max_retries: int = 2 
+    allowed_fields: Optional[set[str]] = None
+    task_description: Optional[str] = field(default = None, repr = False)
+    
+    def __post_init__(self):
+        if self.task_decription is not None and not self.task_description:
+            self.task_description = self.task_decription
+        self.task_decription = self.task_description 
+        
+class IterationRecord(NamedTuple):
+    iteration: int
+    metrics: Dict[str, Any]
+    skillset: Any
+    refinement_ok: bool
+    refinement_error: Optional[str] 
+
+class RefinementResult(NamedTuple):
+    final_skillset: Any
+    history: list[IterationRecord]
+    stopped_early: bool
     
 class LLMRefinementLoop:
     def __init__(self, pipeline: LLMSkillPipeline, client: LLMClient):
@@ -92,7 +112,9 @@ class LLMRefinementLoop:
         return self.pipeline.generate_skillset(
             env_name = cfg.env_name,
             observation_schema = cfg.observation_schema,
-            task_description = cfg.task_decription
+            task_description = cfg.task_decription,
+            max_retires = cfg.max_retries,
+            allowed_fields = cfg.allowed_fields
         )
         
     def refine_once(
@@ -104,14 +126,31 @@ class LLMRefinementLoop:
         """ Refinement step """
         metrics_summary = summarize_metrics(metrics)
         
-        system_prompt, user_prompt = build_feedback_prompt(
-            cfg.env_name,
-            previous_skillset.__dict__ if hasattr(previous_skillset, "__dict__") else previous_skillset,
-            metrics_summary
+        prev_dict = (
+            skillset_to_dict(previous_skillset)
+            if hasattr(previous_skillset, "__dataclass_fields__")
+            else previous_skillset
         )
         
-        return self.client.generate_json(system_prompt, user_prompt)
-    
+        system_prompt, user_prompt = build_feedback_prompt(
+            cfg.env_name,
+            prev_dict,
+            metrics_summary,
+        )
+        
+        last_error = None
+        for _ in range(cfg.max_retries + 1):
+            try:
+                raw = self.client.generate_json(system_prompt, user_prompt)
+                return validate_and_build(raw, allowed_fields=cfg.allowed_fields)
+            except Exception as e:
+                last_error = str(e)
+                user_prompt += (
+                    f"\n\nIMPORTANT: Previous output was invalid: {last_error}\n"
+                    "Return STRICT JSON ONLY, matching the schema exactly."
+                )
+        raise RuntimeError(f"refine_once: failed after retries. Last error: {last_error}")
+            
     def run(self, cfg:RefinementConfig, train_fn, eval_fn = None):
         """ 
         Full loop
@@ -120,7 +159,8 @@ class LLMRefinementLoop:
         """
         
         skillset = self.propose_initial(cfg)
-        history = []
+        history: list[IterationRecord] = []
+        stopped_early = False
         
         for i in range(cfg.num_iterations):
             print(f"\n[LLM LOOP] iteration {i}")
@@ -129,21 +169,34 @@ class LLMRefinementLoop:
             if eval_fn is not None:
                 metrics = {**metrics, **eval_fn(skillset)}
             
-            history.append(
-                {
-                    "iteration": i,
-                    "metrics": metrics,
-                    "skillset": skillset
-                }
-            )
             print("Metrics:")
             print(summarize_metrics(metrics))
             
-            try:
-                raw = self.refine_once(cfg, skillset, metrics)
-                skillset = validate_and_build(raw)
-            except Exception as e:
-                print(f"[LLM LOOP] refinement failed: {e}")
+            refinement_ok = True
+            refinement_error = None
+            next_skillset = skillset
+            if i < cfg.num_iterations - 1:
+                try:
+                    next_skillset = self.refine_once(cfg, skillset, metrics)
+                except Exception as e:
+                    refinement_ok = False
+                    refinement_error = str(e)
+                    print(f"[LLM LOOP] refinement failed: {e}")
+            
+            history.append(
+                IterationRecord(
+                    iteration=i,
+                    metrics=metrics,
+                    skillset=skillset,
+                    refinement_ok=refinement_ok,
+                    refinement_error=refinement_error,
+                )
+            )
+            
+            if not refinement_ok:
+                stopped_early = True
                 break
+
+            skillset = next_skillset
         
-        return skillset, history
+        return RefinementResult(final_skillset=skillset, history=history, stopped_early=stopped_early)
