@@ -47,7 +47,7 @@ def build_feedback_prompt(
     """ Ask LLM to improve previous skillset based on performance """
     
     system_prompt = (
-        "You are an expert reinforcement learning rresearcher improving hierarchicaal skills "
+        "You are an expert reinforcement learning researcher improving hierarchical skills "
         "for continuous control agents."
     )
     
@@ -66,7 +66,7 @@ def build_feedback_prompt(
        
     Rules:
     - Keep 3-5 skills
-    - Make skills more disctinct and non-overlapping
+    - Make skills more distinct and non-overlapping
     - Improve weakest-performing skills
     - Avoid overly strict activation rules
     - Ensure reward signals are dense and learnable
@@ -86,6 +86,13 @@ class RefinementConfig:
     task_description: Optional[str] = field(default = None, repr = False)
     
     def __post_init__(self):
+        """ This reconciliation only runs once, at construction. 
+            'task_description' is the canonical field from here on. 
+            All read sites in this module use it, never 'task_decription'. 
+            Mutating 'cfg.task_description' after construction is safe. 
+            Mutating 'cfg.task_decription' after construction is not (nothing
+            re-syncs it), so don't rely on the legacy alias past __init__. 
+        """
         if self.task_decription is not None and not self.task_description:
             self.task_description = self.task_decription
         self.task_decription = self.task_description 
@@ -113,7 +120,7 @@ class LLMRefinementLoop:
             env_name = cfg.env_name,
             observation_schema = cfg.observation_schema,
             task_description = cfg.task_decription,
-            max_retires = cfg.max_retries,
+            max_retries = cfg.max_retries,
             allowed_fields = cfg.allowed_fields
         )
         

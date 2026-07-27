@@ -54,7 +54,7 @@ ENV_REGISTRY = {
             "Hop forward efficiently while staying upright."
         ),
     },
-    "Panda":{
+    "PandaPickCube":{
         "fields": (
             "tcp_pos",
             "gripper_pos",
@@ -69,7 +69,7 @@ ENV_REGISTRY = {
             "Reach the cube, grasp it, lift it, and move it to the target position."
         ),
     },
-    "Go1":{
+    "Go1JoystickFlatTerrain":{
         "fields": (
             "base_height",
             "height",

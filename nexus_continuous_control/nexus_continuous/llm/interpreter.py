@@ -21,6 +21,7 @@ from types import ModuleType
 from typing import Any
 
 import jax.numpy as jnp
+from dataclasses import asdict, is_dataclass
 
 from nexus_continuous.llm.jax_bootstrap import ensure_jax 
 
@@ -188,7 +189,7 @@ def _term_reward(term: dict, fields: dict[str, jnp.ndarray], action: jnp.ndarray
     return zero
 
 
-def make_policy_module(skillset: dict, field_names: tuple[str, ...],
+def make_policy_module(skillset, field_names: tuple[str, ...],
                        task_metrics_fn=None, name: str = "llm_generated",
                        field_fn=None, mask_mode: str = "strict") -> ModuleType:
     """Return a policy-module-like object the trainer can load.
@@ -203,6 +204,14 @@ def make_policy_module(skillset: dict, field_names: tuple[str, ...],
                        also allow every skill up to (highest active index + 1),
                        so the meta can try the next step instead of being stuck.
     """
+    if is_dataclass(skillset):
+        skillset = asdict(skillset)
+    if not isinstance(skillset, dict):
+        raise TypeError(
+            "Skillset must be a dict or dataclass instance,"
+            f"got {type(skillset).__name__}"
+        )
+        
     skills = skillset.get("skills", [])
     skill_names = tuple(s.get("name", f"skill_{i}") for i, s in enumerate(skills))
     num_skills = len(skills)

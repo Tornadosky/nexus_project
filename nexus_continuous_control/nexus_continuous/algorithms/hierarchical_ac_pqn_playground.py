@@ -187,9 +187,14 @@ def make_train(config: dict[str, Any]) -> Callable[[jax.Array], NexusTrainOutput
 
     config = dict(config)
     _as_num_steps(config)
+    
+    def _resolve_policy_arg(cfg: dict[str, Any], key: str) -> Any:
+        if key == "POLICY" and cfg.get("USE_LLM_SKILLS", False):
+            return cfg
+        return cfg.get(key, cfg["ENV_NAME"])
 
-    policy_module = load_policy_module(config.get("POLICY", config["ENV_NAME"]))
-    task_policy_module = load_policy_module(config.get("TASK_POLICY", config["ENV_NAME"]))
+    policy_module = load_policy_module(_resolve_policy_arg(config, "POLICY"))
+    task_policy_module = load_policy_module(_resolve_policy_arg(config, "TASK_POLICY"))
     num_skills = int(getattr(policy_module, "NUM_SKILLS"))
     skill_names = tuple(getattr(policy_module, "SKILL_NAMES"))
     meta_policy_type = config.get("META_POLICY_TYPE", "nesy").lower()

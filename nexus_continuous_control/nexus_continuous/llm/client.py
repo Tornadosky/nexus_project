@@ -9,7 +9,7 @@ from __future__ import annotations
 import json
 import os
 import random
-from typing import Any, Dict
+from typing import Any, Dict, Optional
 from dataclasses import dataclass
 
 @dataclass
