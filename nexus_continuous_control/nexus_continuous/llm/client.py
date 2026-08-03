@@ -9,6 +9,10 @@ from __future__ import annotations
 import json
 import os
 import random
+import shutil
+import subprocess
+import urllib.error
+import urllib.request 
 from typing import Any, Dict, Optional
 from dataclasses import dataclass
 
@@ -19,6 +23,65 @@ class LLMConfig:
     temperature: float = 0.1
     max_tokens: int = 1000
     seed: int = 0
+    
+    # Vertex AI (Gemini) only
+    region: str = "us-central1"
+    project:Optional[str] = None
+    
+    
+def _vertex_gcloud() -> str:
+    path = shutil.which("gcloud") or shutil.which("gcloud.cmd")
+    if not path:
+        raise RuntimeError(
+            "gcloud CLI needed on PATH and authenticated"
+        )
+    return path 
+
+def _vetex_get_token() -> str:
+    out = subprocess.run([_vertex_gcloud(), "auth", "print-access-token"],
+                         capture_output = True, text = True)
+    lines = [l for l in (out.stdout or "").splitlines() if l.strip()]
+    if not lines:
+        raise RuntimeError(
+            "No gcloud access token. Check authentication."
+            "stderr =" + (out.stderr or "")[:200]
+        )
+    return lines[-1].strip()
+
+def _vertex_get_project() -> str:
+    out = subprocess.run([_vertex_gcloud(), "config", "get-value", "project"],
+                         capture_output = True, text = True)
+    lines = [l for l in (out.stdout or "").splitlines() if l.strip() and "(unset)" not in l]
+    return lines[-1].strip() if lines else ""
+
+def _call_vertex_gemini(
+    system_prompt: str,
+    user_prompt: str,
+    token: str,
+    project: str,
+    model: str,
+    region: str,
+    temperature: float,
+) -> str:
+    """Call Gemini on Vertex AI in JSON mode and return the raw text response.
+    """
+    uri = (f"https://{region}-aiplatform.googleapis.com/v1/projects/{project}"
+           f"/locations/{region}/publishers/google/models/{model}:generateContent")
+    body = {
+        "contents": [{"role": "user", "parts": [{"text": user_prompt}]}],
+        "systemInstruction": {"parts": [{"text": system_prompt}]},
+        "generationConfig": {"temperature": temperature, "responseMimeType": "application/json"},
+    }
+    req = urllib.request.Request(
+        uri, data=json.dumps(body).encode(),
+        headers={"Authorization": f"Bearer {token}", "Content-Type": "application/json"},
+    )
+    try:
+        with urllib.request.urlopen(req, timeout=180) as r:
+            resp = json.loads(r.read())
+    except urllib.error.HTTPError as e:
+        raise RuntimeError(f"Vertex AI HTTP {e.code}: {e.read().decode()[:300]}") from e
+    return resp["candidates"][0]["content"]["parts"][0]["text"]
     
 class LLMClient:
     def __init__(self, config = None, mock_generator: Optional["MockSkillGenerator"] = None):
@@ -38,6 +101,18 @@ class LLMClient:
                 model = self.config.model,
                 device_map = "auto"
             )
+            
+        elif self.backend == "vertex":
+            if self.config.model == "Qwen/Qwen2.5-1.5B-Instruct":
+                self.config.model = "gemini-2.5-flash"
+            if self.config.project is None:
+                self.config.project = _vertex_get_project()
+            if not self.config.project:
+                raise RuntimeError(
+                    "backend='vertex' needs a GCP project; pass "
+                    "LLMConfig(project=...) or run `gcloud config set project <PROJECT>`."
+                )
+            
     
     def generate_json(self, system_prompt: str, user_prompt: str) -> Dict[str, Any]:
         """ Returns parsed JSON from the model. """
@@ -84,11 +159,23 @@ class LLMClient:
             print("=" * 80)
             print(text)
             print("=" * 80)
+            
+        elif self.backend == "vertex":
+            token = _vetex_get_token()
+            text = _call_vertex_gemini(
+                system_prompt=system_prompt,
+                user_prompt=user_prompt,
+                token=token,
+                project=self.config.project,
+                model=self.config.model,
+                region=self.config.region,
+                temperature=self.config.temperature,
+            )
         
         else:
             raise ValueError(
                 f"Unknown LLM backend {self.backend!r}. Expected one of: "
-                "'openai', 'hf', 'mock'."
+                "'openai', 'hf', 'vertex', 'mock'."
             )
             
         return self.extract_json(text)
