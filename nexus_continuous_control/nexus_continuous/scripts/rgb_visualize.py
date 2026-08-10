@@ -1,23 +1,26 @@
 """RGB extension -- publication-style demonstration artifacts for one run.
 
-Trains the real NEXUS hierarchy (like rgb_distill_nexus), distills its skills to
-a VisionSkillActor, then runs ONE instrumented closed-loop rollout of the PIXEL
-hierarchy and renders the qualitative figures researchers use to demonstrate
-pixel-based control:
+Trains the real NEXUS hierarchy (like rgb_distill_nexus), behavior-clones its
+skills into a VisionSkillActor, then runs ONE instrumented closed-loop rollout of
+the PIXEL hierarchy and renders the qualitative figures used to demonstrate
+pixel-based control. Env is taken from --config's ENV_NAME and rendered offline,
+so it works for CartpoleBalance (fixed cam) and the locomotion suite
+(CheetahRun/WalkerWalk/HopperHop, tracking side cameras).
 
-  rollout_pixel.mp4 / .gif   video of the pixel hierarchy balancing, each frame
+  rollout_pixel.mp4 / .gif   video of the pixel hierarchy acting, each frame
                              annotated with the meta-selected skill (hi-res render)
   observation_filmstrip.png  the 64x64 grayscale frames the skill actor ACTUALLY
                              sees (the network input, not the human-facing render)
-  skill_timeline.png         pole-angle & cart-position trajectory with the upright
-                             band, aligned to a colored skill-activation strip
-                             (the NEXUS "disentangled skills from pixels" figure)
-  action_tracking.png        state-teacher vs pixel-student action over the episode
-                             + per-skill teacher-vs-student scatter with correlation
+  skill_timeline.png         the trajectory (cartpole: pole angle + cart position;
+                             others: per-step task reward) aligned to a colored
+                             skill-activation strip -- the "disentangled skills
+                             from pixels" figure
+  action_tracking.png        per-skill teacher-vs-student action scatter on held-out
+                             data (pooled over action dims) with Pearson correlation
 
     MUJOCO_GL=egl python -m nexus_continuous.scripts.rgb_visualize \
-        --config configs/cartpole_balance_neural.yaml --meta neural --seed 0 \
-        --out runs/rgb_viz
+        --config configs/cheetah_run_neural.yaml --meta neural --seed 0 \
+        --teacher-steps 3000 --out runs/rgb_viz_cheetah
 """
 
 from __future__ import annotations
@@ -43,7 +46,8 @@ def main(argv: list[str] | None = None) -> None:
     ap.add_argument("--meta", default="neural", choices=["nesy", "neural", "symbolic"])
     ap.add_argument("--seed", type=int, default=0)
     ap.add_argument("--out", default="runs/rgb_viz")
-    ap.add_argument("--teacher-steps", type=int, default=1000)
+    ap.add_argument("--camera", type=int, default=0, help="mj_model camera id (0 = cartpole / locomotion side)")
+    ap.add_argument("--teacher-steps", type=int, default=2000)
     ap.add_argument("--epochs", type=int, default=40)
     ap.add_argument("--eval-steps", type=int, default=250)
     ap.add_argument("--min-samples", type=int, default=64)
@@ -85,14 +89,21 @@ def main(argv: list[str] | None = None) -> None:
     seed = args.seed
     np.random.seed(1234 + seed)  # reproducible BC shuffles / held-out split
     R = args.render_res
-    print("jax", jax.__version__, jax.devices(), "| meta", args.meta, "| seed", seed)
 
-    # ---- renderer (state sim, impl='jax' => no warp) ----
-    rcfg = registry.get_default_config("CartpoleBalance")
+    cfg = load_config(args.config)
+    cfg["SEED"] = seed
+    cfg["META_POLICY_TYPE"] = args.meta
+    cfg["NUM_SEEDS"] = 1
+    env_name = cfg["ENV_NAME"]
+    is_cartpole = env_name == "CartpoleBalance"
+    print("jax", jax.__version__, jax.devices(), "| env", env_name, "| meta", args.meta, "| seed", seed)
+
+    # ---- renderer (state sim, impl='jax' => no warp) for the config's env ----
+    rcfg = registry.get_default_config(env_name)
     rcfg.impl = "jax"
-    render_env = registry.load("CartpoleBalance", rcfg)
+    render_env = registry.load(env_name, rcfg)
     mj_model = getattr(render_env, "mj_model", None) or getattr(render_env, "_mj_model")
-    cam = 0
+    cam = args.camera
     try:
         _d = mujoco.MjData(mj_model)
         mujoco.mj_forward(mj_model, _d)
@@ -100,6 +111,7 @@ def main(argv: list[str] | None = None) -> None:
             _r.update_scene(_d, camera=cam)
     except Exception:
         cam = -1
+    print(f"camera={cam}")
 
     def to_gray64(rgb):
         """hi-res RGB uint8 -> [64,64] float32 centered (mirrors the training preproc)."""
@@ -113,10 +125,6 @@ def main(argv: list[str] | None = None) -> None:
     empty = lambda b: jnp.zeros((b, 0), jnp.float32)
 
     # ---- Stage 1: train the state NEXUS teacher ----
-    cfg = load_config(args.config)
-    cfg["SEED"] = seed
-    cfg["META_POLICY_TYPE"] = args.meta
-    cfg["NUM_SEEDS"] = 1
     print(f"[1] training state NEXUS teacher ({args.meta} meta)...")
     output = run_training(cfg)
     train_state = output.runner_state[0]
@@ -128,8 +136,20 @@ def main(argv: list[str] | None = None) -> None:
     skill_names = list(getattr(policy_module, "SKILL_NAMES", [f"skill{i}" for i in range(num_skills)]))
     print(f"    teacher trained. skills={num_skills} ({', '.join(skill_names)})")
 
+    # eval env (raw obs; frozen stats in norm_actor) + action space
+    eval_cfg = dict(cfg)
+    eval_cfg["NORMALIZE_OBS"] = False
+    eval_cfg["NUM_ENVS"] = 1
+    bundle = build_playground_env(eval_cfg)
+    env, env_params = bundle.env, bundle.env_params
+    alo, ahi = jnp.asarray(bundle.action_low), jnp.asarray(bundle.action_high)
+    action_dim = int(bundle.action_dim)
+    action_scale = (ahi - alo) / 2.0
+    action_bias = (ahi + alo) / 2.0
+    step_fn = jax.jit(env.step)
+
     actor = SkillActor(
-        action_dim=1, action_scale=jnp.ones(1), action_bias=jnp.zeros(1),
+        action_dim=action_dim, action_scale=action_scale, action_bias=action_bias,
         hidden_sizes=tuple(cfg.get("ACTOR_HIDDEN_SIZES", (256, 256))),
         activation=cfg.get("ACTIVATION", "relu"), norm_type=cfg.get("NORM_TYPE", "layer_norm"),
     )
@@ -164,16 +184,6 @@ def main(argv: list[str] | None = None) -> None:
         e = jnp.arange(all_a.shape[1])
         return skill, all_a[skill, e]
 
-    # ---- Stage 2: teacher rollout + record (hi-res render -> gray64 dataset) ----
-    print("[2] rolling out teacher, collecting distillation data...")
-    eval_cfg = dict(cfg)
-    eval_cfg["NORMALIZE_OBS"] = False
-    eval_cfg["NUM_ENVS"] = 1
-    bundle = build_playground_env(eval_cfg)
-    env, env_params = bundle.env, bundle.env_params
-    alo, ahi = jnp.asarray(bundle.action_low), jnp.asarray(bundle.action_high)
-    step_fn = jax.jit(env.step)
-
     _rdata = mujoco.MjData(mj_model)
     _renderer = mujoco.Renderer(mj_model, height=R, width=R)  # one persistent GL context
 
@@ -184,6 +194,8 @@ def main(argv: list[str] | None = None) -> None:
         _renderer.update_scene(_rdata, camera=cam)
         return _renderer.render()
 
+    # ---- Stage 2: teacher rollout + record (hi-res render -> gray64 dataset) ----
+    print("[2] rolling out teacher, collecting distillation data...")
     rng = jax.random.PRNGKey(1000 + seed)
     rng, rr = jax.random.split(rng)
     obs, state = env.reset(jax.random.split(rr, 1), env_params)
@@ -199,13 +211,14 @@ def main(argv: list[str] | None = None) -> None:
         obs, state, _r, _d, _i = step_fn(jax.random.split(rs, 1), state, act, env_params)
     X = stack3(grays)
     skills_ds = np.asarray(skill_seq[2:], np.int32)
-    Y = np.asarray(act_seq[2:], np.float32)
+    Y = np.asarray(act_seq[2:], np.float32)  # [T-2, A]
     print(f"    {len(X)} samples; skill hist={np.bincount(skills_ds, minlength=num_skills)}")
 
     # ---- Stage 3: distill per-skill vision actors ----
     print("[3] distilling per-skill vision actors...")
-    vactor = VisionSkillActor(action_dim=1, action_scale=jnp.ones(1), action_bias=jnp.zeros(1),
-                              hidden_sizes=(128, 128), embedding_dim=args.embed_dim)
+    vactor = VisionSkillActor(action_dim=action_dim, action_scale=action_scale,
+                              action_bias=action_bias, hidden_sizes=(128, 128),
+                              embedding_dim=args.embed_dim)
     opt = optax.adam(3e-4)
 
     def loss_fn(p, x, y):
@@ -218,7 +231,7 @@ def main(argv: list[str] | None = None) -> None:
         return optax.apply_updates(p, u), st, l
 
     skill_params = []
-    ho_t, ho_p, ho_k = [], [], []  # held-out teacher/pixel actions + skill id (fidelity scatter)
+    ho_t, ho_p, ho_k = [], [], []  # held-out teacher/pixel actions (pooled over dims) + skill id
     for k in range(num_skills):
         m = skills_ds == k
         n = int(m.sum())
@@ -243,8 +256,10 @@ def main(argv: list[str] | None = None) -> None:
                 last = float(last)
         skill_params.append(p)
         pred = np.asarray(vactor.apply({"params": p}, jnp.asarray(xk_all[ho_idx]), empty(len(ho_idx))))
-        ho_mse = float(np.mean((pred[:, 0] - yk_all[ho_idx][:, 0]) ** 2))
-        ho_t.append(yk_all[ho_idx][:, 0]); ho_p.append(pred[:, 0]); ho_k.append(np.full(len(ho_idx), k))
+        tt = yk_all[ho_idx]  # [n_ho, A]
+        ho_mse = float(np.mean((pred - tt) ** 2))
+        ho_t.append(tt.reshape(-1)); ho_p.append(pred.reshape(-1))
+        ho_k.append(np.full(tt.size, k))
         print(f"    skill {k} ({skill_names[k]}): {ntr} train / {n_ho} held-out, "
               f"train MSE {last:.4f}, held-out MSE {ho_mse:.4f}")
     ho_t = np.concatenate(ho_t) if ho_t else np.zeros(0)
@@ -257,7 +272,8 @@ def main(argv: list[str] | None = None) -> None:
     rng2, rr2 = jax.random.split(rng2)
     obs, state = env.reset(jax.random.split(rr2, 1), env_params)
     buf = []
-    hires, obs64, sel_skill, t_force, p_force, angle_deg, cart_pos, used_pix = [], [], [], [], [], [], [], []
+    hires, obs64, sel_skill, rew_seq, used_pix = [], [], [], [], []
+    angle_deg, cart_pos = [], []
     for _t in range(args.eval_steps):
         skill_t, teacher_act = teacher_step(obs)
         k = int(np.asarray(skill_t[0]))
@@ -274,24 +290,20 @@ def main(argv: list[str] | None = None) -> None:
         else:
             act = teacher_act
         act = jnp.clip(act, alo, ahi)
-        # record
         hires.append(frame)
         obs64.append(g)
         sel_skill.append(k)
-        t_force.append(float(np.asarray(teacher_act[0, 0])))
-        p_force.append(float(np.asarray(act[0, 0])))
-        ang = float(np.asarray(sd.qpos[0, 1]))
-        angle_deg.append(np.degrees(np.arctan2(np.sin(ang), np.cos(ang))))
-        cart_pos.append(float(np.asarray(sd.qpos[0, 0])))
         used_pix.append(pixel_used)
+        if is_cartpole:
+            ang = float(np.asarray(sd.qpos[0, 1]))
+            angle_deg.append(np.degrees(np.arctan2(np.sin(ang), np.cos(ang))))
+            cart_pos.append(float(np.asarray(sd.qpos[0, 0])))
         rng2, rs2 = jax.random.split(rng2)
-        obs, state, _r, _d, _i = step_fn(jax.random.split(rs2, 1), state, act, env_params)
+        obs, state, rew, _d, _i = step_fn(jax.random.split(rs2, 1), state, act, env_params)
+        rew_seq.append(float(np.asarray(rew).reshape(-1)[0]))
 
     sel_skill = np.asarray(sel_skill)
-    t_force = np.asarray(t_force)
-    p_force = np.asarray(p_force)
-    angle_deg = np.asarray(angle_deg)
-    cart_pos = np.asarray(cart_pos)
+    rew_seq = np.asarray(rew_seq)
     used_pix = np.asarray(used_pix)
     T = len(sel_skill)
     palette = [plt.cm.tab10(i) for i in range(num_skills)]
@@ -318,31 +330,40 @@ def main(argv: list[str] | None = None) -> None:
         ax.imshow(obs64[ti] + 0.5, cmap="gray", vmin=0, vmax=1)
         ax.set_title(f"t={ti}", fontsize=8)
         ax.axis("off")
-    fig.suptitle(f"What the pixel skill actor sees (64x64 grayscale) - {args.meta}", fontsize=10)
+    fig.suptitle(f"What the pixel skill actor sees (64x64 grayscale) - {env_name} ({args.meta})", fontsize=10)
     fig.savefig(out / "observation_filmstrip.png", dpi=140, bbox_inches="tight")
     plt.close(fig)
 
     # ---- artifact 3: skill-activation timeline over the trajectory ----
     fig, (ax1, ax2) = plt.subplots(2, 1, figsize=(9, 4.2), sharex=True,
                                    gridspec_kw={"height_ratios": [3, 0.7]})
-    ax1.axhspan(-14.3, 14.3, color="#8fbf8f", alpha=0.22, label="upright band |θ|<0.25 rad")
-    ln1 = ax1.plot(np.arange(T), angle_deg, color="#C44E52", lw=1.5, label="pole angle (deg)")
-    ax1.axhline(0, color="k", lw=0.5, alpha=0.4)
-    ax1.set_ylabel("pole angle (deg)", color="#C44E52")
-    ax1.tick_params(axis="y", labelcolor="#C44E52")
-    ax1.set_ylim(-20, 20)
-    axc = ax1.twinx()  # cart on its own axis (metres) with the ±1.0 fail lines
-    ln2 = axc.plot(np.arange(T), cart_pos, color="#4C72B0", lw=1.2, alpha=0.85,
-                   label="cart position (m)")
-    axc.axhline(1.0, color="#4C72B0", ls=":", lw=0.9, alpha=0.7)
-    axc.axhline(-1.0, color="#4C72B0", ls=":", lw=0.9, alpha=0.7)
-    axc.set_ylabel("cart position (m)  [fail at ±1.0]", color="#4C72B0")
-    axc.tick_params(axis="y", labelcolor="#4C72B0")
-    axc.set_ylim(-1.15, 1.15)
-    lns = ln1 + ln2
-    ax1.legend(lns, [l.get_label() for l in lns], loc="upper left", fontsize=8)
-    ax1.set_title(f"NEXUS pixel hierarchy on CartpoleBalance ({args.meta}, seed {seed}): "
-                  f"skill activation vs. pole trajectory", fontsize=10)
+    if is_cartpole:
+        angle_deg = np.asarray(angle_deg); cart_pos = np.asarray(cart_pos)
+        ax1.axhspan(-14.3, 14.3, color="#8fbf8f", alpha=0.22, label="upright band |θ|<0.25 rad")
+        ln1 = ax1.plot(np.arange(T), angle_deg, color="#C44E52", lw=1.5, label="pole angle (deg)")
+        ax1.axhline(0, color="k", lw=0.5, alpha=0.4)
+        ax1.set_ylabel("pole angle (deg)", color="#C44E52")
+        ax1.tick_params(axis="y", labelcolor="#C44E52")
+        ax1.set_ylim(-20, 20)
+        axc = ax1.twinx()
+        ln2 = axc.plot(np.arange(T), cart_pos, color="#4C72B0", lw=1.2, alpha=0.85, label="cart position (m)")
+        axc.axhline(1.0, color="#4C72B0", ls=":", lw=0.9, alpha=0.7)
+        axc.axhline(-1.0, color="#4C72B0", ls=":", lw=0.9, alpha=0.7)
+        axc.set_ylabel("cart position (m)  [fail at ±1.0]", color="#4C72B0")
+        axc.tick_params(axis="y", labelcolor="#4C72B0")
+        axc.set_ylim(-1.15, 1.15)
+        lns = ln1 + ln2
+        ax1.legend(lns, [l.get_label() for l in lns], loc="upper left", fontsize=8)
+    else:
+        # cumulative-average per-step reward = running task performance
+        run_avg = np.cumsum(rew_seq) / (np.arange(T) + 1)
+        ax1.plot(np.arange(T), rew_seq, color="#C44E52", lw=0.8, alpha=0.4, label="per-step reward")
+        ax1.plot(np.arange(T), run_avg, color="#C44E52", lw=2.0, label="running-avg reward")
+        ax1.set_ylabel("task reward")
+        ax1.set_ylim(min(0, float(rew_seq.min())), max(1.0, float(rew_seq.max()) * 1.1))
+        ax1.legend(loc="upper left", fontsize=8)
+    ax1.set_title(f"NEXUS pixel hierarchy on {env_name} ({args.meta}, seed {seed}): "
+                  f"skill activation vs. trajectory", fontsize=10)
     cmap = ListedColormap(palette)
     ax2.imshow(sel_skill[None], aspect="auto", cmap=cmap, vmin=-0.5, vmax=num_skills - 0.5,
                extent=[0, T, 0, 1], interpolation="nearest")
@@ -355,34 +376,27 @@ def main(argv: list[str] | None = None) -> None:
     fig.savefig(out / "skill_timeline.png", dpi=140, bbox_inches="tight")
     plt.close(fig)
 
-    # ---- artifact 4: action tracking + per-skill scatter ----
-    fig, (axL, axR) = plt.subplots(1, 2, figsize=(11, 3.6))
-    axL.plot(np.arange(T), t_force, color="#4C72B0", lw=1.3, label="state teacher")
-    axL.plot(np.arange(T), p_force, color="#DD8452", lw=1.0, alpha=0.85, label="pixel student")
-    axL.set_xlabel("closed-loop step")
-    axL.set_ylabel("control (force)")
-    axL.set_title("Closed-loop control: state teacher vs pixel student")
-    axL.legend(fontsize=8)
-    # Right: imitation fidelity on HELD-OUT teacher-distribution samples (not the
-    # shifted closed loop) — the honest "did the distillation clone the skills" test.
+    # ---- artifact 4: held-out imitation fidelity scatter (pooled over action dims) ----
+    fig, ax = plt.subplots(figsize=(5, 4.6))
     r = float(np.corrcoef(ho_t, ho_p)[0, 1]) if len(ho_t) > 1 else float("nan")
     for i in range(num_skills):
         sel = ho_k == i
         if sel.any():
-            axR.scatter(ho_t[sel], ho_p[sel], s=12, alpha=0.6, color=palette[i], label=skill_names[i])
+            ax.scatter(ho_t[sel], ho_p[sel], s=8, alpha=0.4, color=palette[i], label=skill_names[i])
     if len(ho_t):
         lim = [float(min(ho_t.min(), ho_p.min())), float(max(ho_t.max(), ho_p.max()))]
-        axR.plot(lim, lim, "k--", lw=0.8, alpha=0.6)
-    axR.set_xlabel("teacher action")
-    axR.set_ylabel("pixel-student action")
-    axR.set_title(f"Held-out imitation fidelity (Pearson r = {r:.3f})")
-    axR.legend(fontsize=8)
+        ax.plot(lim, lim, "k--", lw=0.8, alpha=0.6)
+    ax.set_xlabel("teacher action")
+    ax.set_ylabel("pixel-student action")
+    ax.set_title(f"{env_name}: held-out imitation fidelity\n(all action dims, Pearson r = {r:.3f})")
+    ax.legend(fontsize=8)
     fig.savefig(out / "action_tracking.png", dpi=140, bbox_inches="tight")
     plt.close(fig)
 
-    upright = float(np.mean((np.abs(angle_deg) < 14.3) & (np.abs(cart_pos) < 1.0)))
-    print(f"\n==== VIZ DONE ==== pixel-hierarchy upright {upright:.3f} over {T} steps, "
-          f"held-out action fidelity r={r:.3f}")
+    perf = f"pixel mean reward/step {rew_seq.mean():.3f}"
+    if is_cartpole:
+        perf += (f", upright {float(np.mean((np.abs(angle_deg) < 14.3) & (np.abs(cart_pos) < 1.0))):.3f}")
+    print(f"\n==== VIZ DONE ==== {perf} over {T} steps, held-out fidelity r={r:.3f}")
     print("wrote", out.resolve())
     for f in ("rollout_pixel.mp4", "rollout_pixel.gif", "observation_filmstrip.png",
               "skill_timeline.png", "action_tracking.png"):
