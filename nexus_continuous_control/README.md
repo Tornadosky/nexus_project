@@ -294,9 +294,16 @@ meta-policy(state/symbols) -> skill            # unchanged symbolic/nesy layer
 - **Env coverage:** only `CartpoleBalance` has a vision pipeline in Playground.
 - **Status:** the code is verified (`pytest tests/test_vision_rgb_smoke.py` drives
   the full `USE_RGB` training path on a fake pixel env). The **in-loop pixel RL**
-  path additionally needs the MuJoCo-Warp renderer, which is currently unstable
-  (Beta CUDA/FFI bug) — so the demonstrated result is obtained via **distillation**
-  (see below), not in-loop RL.
+  path (skills trained directly from MJWarp-rendered pixels) also **runs** on the
+  student pool: install the version-aligned renderer `pip install mujoco-warp==3.11.0`
+  (matches mujoco/mujoco-mjx 3.11), and `build_playground_env` applies two runtime
+  shims automatically — `ensure_mjwarp_graphmode()` and `ensure_mjx_render_compat()`
+  (the latter fixes a mujoco-mjx 3.11 `mjx.render` tuple-arity drift). Verified:
+  `run_training` with `USE_RGB` renders 64×64 batches and completes with finite eval
+  metrics. The earlier Colab block was a mujoco/warp **version desync**, not a
+  fundamental limitation. The headline **distillation** result below is still the
+  primary deliverable (it also covers a second env); in-loop pixel RL is now
+  available for longer training runs.
 
 ### Distillation result (report-grade, reproduced on GPU)
 
@@ -396,7 +403,8 @@ Open them in Colab (GPU runtime); each clones this repo and runs end-to-end.
   disentangled skills are behavior-cloned to 64×64 pixels and retain ~50 % of
   privileged closed-loop success across all three meta variants on CartpoleBalance
   (see `results/rgb/`). The interpretable meta-policy remains state-based by design
-  (privileged-critic asymmetry); in-loop pixel RL is renderer-blocked (MJWarp Beta).
+  (privileged-critic asymmetry). In-loop pixel RL (skills trained from MJWarp
+  pixels) now runs on the pool with `mujoco-warp==3.11.0` + the render shims above.
 
 ## Notes on observation features
 
