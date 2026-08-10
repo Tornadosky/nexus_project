@@ -1,33 +1,35 @@
 """On-thesis RGB extension: distill the TRAINED NEXUS hierarchy to pixel skills.
 
 This is the report-grade continuous-NEXUS + RGB experiment (CartpoleBalance, the
-only vision-capable Playground task). Unlike the hand-coded-teacher demo
-(`rgb_distill.py`), the teacher here is the *actual* NEXUS hierarchy:
+only vision-capable Playground task). The teacher is the *actual* trained NEXUS
+hierarchy -- not a hand-coded controller:
 
-  1. Train state NEXUS with the SYMBOLIC meta-policy (paper's recommended variant:
-     rule-based skill selection + trained neural skill actors), one run per seed.
-  2. Roll the trained hierarchy out; record (rendered 64x64 frame, symbolically
-     selected skill, that skill's action) -- on-policy, so pixel students see
-     deployment states.
-  3. Behavior-clone each of the N real NEXUS skills into a VisionSkillActor.
-  4. Closed-loop eval: run the hierarchy where the UNCHANGED symbolic meta (on
-     privileged state) selects the skill and the PIXEL student acts. Measure the
-     task success rate / return.
-  5. Compare pixel-hierarchy vs state-hierarchy (the privileged upper bound) and
-     save the skill-activation trace, aggregated over seeds (mean +/- std).
+  1. Train state NEXUS for one seed. The meta-policy variant is selectable via
+     --meta: `nesy` (default, the flagship neuro-symbolic meta: learned meta-Q
+     masked by hand-written skill preconditions), `neural` (unmasked learned
+     meta-Q), or `symbolic` (rule-based selection). Skill actors are trained
+     the same way in all cases.
+  2. Roll the trained hierarchy out; record (rendered 64x64 frame, selected
+     skill, that skill's action) -- on-policy, so pixel students see the states
+     they will be deployed on.
+  3. Behavior-clone each real NEXUS skill (with >= --min-samples uses) into a
+     VisionSkillActor. Rarely-used skills keep the privileged teacher and are
+     reported as a pixel-fallback fraction.
+  4. Closed-loop eval: the UNCHANGED meta (on privileged state) selects the
+     skill and the PIXEL student acts. Measure per-step task success.
+  5. Compare pixel-hierarchy vs state-hierarchy (the privileged upper bound),
+     aggregated over seeds (mean +/- std), + skill-activation histograms.
 
-Result framing: "the interpretable symbolic NEXUS meta-policy retains control when
-its disentangled skills act from raw pixels" (asymmetric AC, Pinto 2017;
-Learning-by-Cheating distillation, Chen 2020). Reuses the tested trainer, env
+Meta/critic/meta-Q always stay on privileged state; only the skill actor moves
+to pixels -- the asymmetric actor-critic design (Pinto 2017) with
+Learning-by-Cheating distillation (Chen 2020). Reuses the tested trainer, env
 adapter, and VisionSkillActor.
 
-Run headless on a GPU (student pool / SSH):
+Run headless on a GPU (student pool / SSH). CartpoleBalance renders offscreen via
+software EGL (llvmpipe) when no GPU display device is accessible:
     MUJOCO_GL=egl python -m nexus_continuous.scripts.rgb_distill_nexus \\
-        --config configs/cartpole_balance_symbolic.yaml --seeds 0,1,2 --out runs/rgb_nexus
-
-NOTE: this pipeline has NOT been executed end-to-end by the author (no local GPU);
-expect a short debug pass on first run. Each stage prints shapes/progress so
-failures localize.
+        --config configs/cartpole_balance_symbolic.yaml --meta nesy --seeds 0,1,2 \\
+        --out runs/rgb_nexus
 """
 
 from __future__ import annotations
@@ -51,7 +53,9 @@ def _mjx_data(state):
 
 def main(argv: list[str] | None = None) -> None:
     ap = argparse.ArgumentParser(description=__doc__)
-    ap.add_argument("--config", default="configs/cartpole_balance_symbolic.yaml")
+    ap.add_argument("--config", default="configs/cartpole_balance_nesy.yaml",
+                    help="teacher config; use the variant matching --meta "
+                         "(nesy/neural/symbolic) for correctly-tuned hyperparameters")
     ap.add_argument("--seeds", default="0", help="comma-separated, e.g. 0,1,2")
     ap.add_argument("--out", default="runs/rgb_nexus")
     ap.add_argument("--teacher-steps", type=int, default=4000, help="teacher rollout steps for the distillation dataset")
@@ -60,6 +64,11 @@ def main(argv: list[str] | None = None) -> None:
     ap.add_argument("--embed-dim", type=int, default=64)
     ap.add_argument("--batch-size", type=int, default=128)
     ap.add_argument("--rtpt-initials", default="RB")
+    ap.add_argument("--meta", default="nesy", choices=["nesy", "neural", "symbolic"],
+                    help="NEXUS meta-policy used as the teacher (nesy = flagship neuro-symbolic)")
+    ap.add_argument("--min-samples", type=int, default=64,
+                    help="min per-skill samples to distill a pixel actor; below this the "
+                         "skill keeps the privileged teacher (reported as pixel-fallback)")
     args = ap.parse_args(argv)
 
     os.environ.setdefault("MUJOCO_GL", "egl")
@@ -77,7 +86,7 @@ def main(argv: list[str] | None = None) -> None:
 
     from nexus_continuous.utils import load_config
     from nexus_continuous.algorithms.hierarchical_ac_pqn_playground import run_training
-    from nexus_continuous.networks import SkillActor
+    from nexus_continuous.networks import MetaQ, SkillActor
     from nexus_continuous.policies.registry import load_policy_module
     from nexus_continuous.envs.playground_adapter import (
         build_playground_env,
@@ -139,7 +148,7 @@ def main(argv: list[str] | None = None) -> None:
         print(f"\n================= seed {seed} =================")
         cfg = load_config(args.config)
         cfg["SEED"] = seed
-        cfg["META_POLICY_TYPE"] = "symbolic"   # rule-based selection + trained skill actors
+        cfg["META_POLICY_TYPE"] = args.meta   # nesy/neural = trained meta-Q; symbolic = rule
         cfg["NUM_SEEDS"] = 1
 
         # ---- Stage 1: train the state NEXUS teacher (reuses the tested trainer) ----
@@ -164,6 +173,17 @@ def main(argv: list[str] | None = None) -> None:
             norm_type=cfg.get("NORM_TYPE", "layer_norm"),
         )
 
+        # Trained meta-Q (nesy/neural). It stays on privileged state; only the
+        # skill actor is later distilled to pixels (the asymmetric AC design).
+        meta_q = MetaQ(
+            num_skills=num_skills,
+            hidden_sizes=tuple(cfg.get("META_HIDDEN_SIZES", (256, 256))),
+            activation=cfg.get("ACTIVATION", "relu"),
+            norm_type=cfg.get("NORM_TYPE", "layer_norm"),
+            init_scale=float(cfg.get("META_INIT_SCALE", 1.0)),
+        )
+        meta_params = None if args.meta == "symbolic" else train_state.meta.params
+
         def norm_actor(obs):
             oa = get_actor_obs(obs)
             if normalize_obs:
@@ -172,14 +192,24 @@ def main(argv: list[str] | None = None) -> None:
 
         @jax.jit
         def teacher_step(obs):
-            """Greedy hierarchy: symbolic meta picks skill, that skill's actor acts."""
-            oa = norm_actor(obs)
+            """Greedy NEXUS hierarchy: the meta selects a skill from privileged
+            state, that skill's actor acts. atleast_1d/2d restore the batch axis
+            the policy helpers' jnp.squeeze drops at NUM_ENVS=1 (mirrors the
+            trainer's masked-argmax selection in _select_action)."""
+            oa = norm_actor(obs)                                              # normalized actor obs [E,D]
             all_a = jax.vmap(lambda p: actor.apply({"params": p}, oa))(actor_params)  # [N,E,A]
-            # atleast_1d: at NUM_ENVS=1 the symbolic policy's info_value squeezes the
-            # singleton batch dim to a scalar; restore the [E] axis so skill[e] indexes.
-            skill = jnp.atleast_1d(
-                jnp.asarray(policy_module.symbolic_meta_policy(get_policy_obs(obs)), jnp.int32)
-            )  # [E]
+            pol = get_policy_obs(obs)                                         # raw obs for masks/rules
+            if args.meta == "symbolic":
+                skill = jnp.atleast_1d(
+                    jnp.asarray(policy_module.symbolic_meta_policy(pol), jnp.int32))  # [E]
+            else:
+                qm = jnp.atleast_2d(meta_q.apply({"params": meta_params}, oa))        # [E,N]
+                if args.meta == "nesy":
+                    mask = jnp.atleast_2d(jnp.asarray(policy_module.skill_mask(pol), bool))
+                    any_valid = jnp.any(mask, axis=-1, keepdims=True)
+                    safe = jnp.where(any_valid, mask, jnp.ones_like(mask))
+                    qm = jnp.where(safe, qm, -1.0e9)
+                skill = jnp.argmax(qm, axis=-1).astype(jnp.int32)            # [E]
             e = jnp.arange(all_a.shape[1])
             act = all_a[skill, e]  # [E,A]
             return skill, act
@@ -232,22 +262,24 @@ def main(argv: list[str] | None = None) -> None:
         skill_params = []
         for k in range(num_skills):
             m = skills == k
-            if m.sum() < args.batch_size:
-                print(f"    skill {k}: only {int(m.sum())} samples -> skipped (kept teacher fallback)")
+            n = int(m.sum())
+            if n < args.min_samples:
+                print(f"    skill {k}: {n} samples (<{args.min_samples}) -> kept privileged teacher fallback")
                 skill_params.append(None)
                 continue
+            bs = min(args.batch_size, n)
             xk, yk = jnp.asarray(X[m]), jnp.asarray(Y[m])
             p = vactor.init(jax.random.PRNGKey(k), xk[:1], empty(1))["params"]
             st = opt.init(p)
             last = float("nan")
             for _e in range(args.epochs):
-                perm = np.random.permutation(len(xk))
-                for i in range(0, len(perm), args.batch_size):  # >=1 non-empty batch
-                    idx = perm[i : i + args.batch_size]
+                perm = np.random.permutation(n)
+                for i in range(0, n, bs):  # >=1 non-empty batch
+                    idx = perm[i : i + bs]
                     p, st, l = bc_step(p, st, xk[idx], yk[idx])
                     last = float(l)
             skill_params.append(p)
-            print(f"    skill {k}: trained on {int(m.sum())} samples, final MSE {last:.4f}")
+            print(f"    skill {k}: trained on {n} samples (bs={bs}), final MSE {last:.4f}")
 
         # ---- Stage 4: closed-loop eval (symbolic meta on state, PIXEL student acts) ----
         print("[4] closed-loop eval: pixel hierarchy vs state hierarchy...")
@@ -256,12 +288,13 @@ def main(argv: list[str] | None = None) -> None:
             rng2 = jax.random.PRNGKey(5000 + seed)
             rng2, rr2 = jax.random.split(rng2)
             obs, state = env.reset(jax.random.split(rr2, 1), env_params)
-            buf, up = [], 0
+            buf, up, fb = [], 0, 0
             data = mujoco.MjData(mj_model)
             renderer = mujoco.Renderer(mj_model, height=64, width=64) if use_pixels else None
             for _t in range(args.eval_steps):
                 skill_t, teacher_act = teacher_step(obs)
                 k = int(np.asarray(skill_t[0]))
+                pixel_used = False
                 if use_pixels and skill_params[k] is not None:
                     sd = _mjx_data(state)
                     data.qpos[:] = np.asarray(sd.qpos[0])
@@ -272,12 +305,15 @@ def main(argv: list[str] | None = None) -> None:
                     buf = buf[-3:]
                     if len(buf) == 3:
                         stack = jnp.asarray(np.stack(buf, -1)[None])
-                        act = np.asarray(vactor.apply({"params": skill_params[k]}, stack, empty(1)))
-                        act = jnp.asarray(act)
+                        act = jnp.asarray(np.asarray(
+                            vactor.apply({"params": skill_params[k]}, stack, empty(1))))
+                        pixel_used = True
                     else:
                         act = teacher_act
                 else:
                     act = teacher_act
+                if use_pixels and not pixel_used:
+                    fb += 1  # privileged-teacher fallback (undistilled skill or 2-frame warmup)
                 act = jnp.clip(act, alo, ahi)
                 # success: pole upright & cart centered (matches task_metrics)
                 sd2 = _mjx_data(state)
@@ -288,15 +324,19 @@ def main(argv: list[str] | None = None) -> None:
                 obs, state, _r, _d, _i = step_fn(jax.random.split(rs2, 1), state, act, env_params)
             if renderer is not None:
                 renderer.close()
-            return up / args.eval_steps
+            return up / args.eval_steps, fb / args.eval_steps
 
-        state_success = closed_loop(use_pixels=False)
-        pixel_success = closed_loop(use_pixels=True)
-        print(f"    seed {seed}: state hierarchy {state_success:.3f} | pixel hierarchy {pixel_success:.3f}")
+        state_success, _ = closed_loop(use_pixels=False)
+        pixel_success, pixel_fallback = closed_loop(use_pixels=True)
+        distilled = [k for k in range(num_skills) if skill_params[k] is not None]
+        print(f"    seed {seed}: state {state_success:.3f} | pixel {pixel_success:.3f} "
+              f"| pixel-fallback {pixel_fallback:.2f} | distilled skills {distilled}")
         per_seed.append({
             "seed": seed,
             "state_success": state_success,
             "pixel_success": pixel_success,
+            "pixel_fallback_fraction": pixel_fallback,
+            "distilled_skills": distilled,
             "teacher_eval_primary_success": teacher_eval.get("primary_success_rate"),
             "skill_histogram": np.bincount(skills, minlength=num_skills).tolist(),
         })
@@ -306,15 +346,17 @@ def main(argv: list[str] | None = None) -> None:
     # ---- aggregate + report ----
     ss = np.array([r["state_success"] for r in per_seed])
     ps = np.array([r["pixel_success"] for r in per_seed])
+    fbf = np.array([r["pixel_fallback_fraction"] for r in per_seed])
     summary = {
         "task": "CartpoleBalance",
-        "meta_policy": "symbolic",
+        "meta_policy": args.meta,
         "seeds": seeds,
         "state_hierarchy_success_mean": float(ss.mean()),
         "state_hierarchy_success_std": float(ss.std()),
         "pixel_hierarchy_success_mean": float(ps.mean()),
         "pixel_hierarchy_success_std": float(ps.std()),
         "retention_fraction": float(ps.mean() / max(ss.mean(), 1e-6)),
+        "pixel_fallback_fraction_mean": float(fbf.mean()),
         "per_seed": per_seed,
     }
     (out / "summary.json").write_text(json.dumps(summary, indent=2))
@@ -325,7 +367,7 @@ def main(argv: list[str] | None = None) -> None:
             color=["#4C72B0", "#DD8452"])
     plt.xticks(x, ["state hierarchy\n(privileged)", "pixel hierarchy\n(distilled)"])
     plt.ylabel("closed-loop success rate")
-    plt.title(f"Symbolic NEXUS on CartpoleBalance ({len(seeds)} seeds)")
+    plt.title(f"NEXUS ({args.meta}) on CartpoleBalance ({len(seeds)} seeds)")
     plt.ylim(0, 1)
     fig.savefig(out / "state_vs_pixel.png", dpi=120, bbox_inches="tight")
     plt.close(fig)
