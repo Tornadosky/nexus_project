@@ -1,9 +1,50 @@
 # RGB skill-agent extension — results
 
-Distilling the **real trained NEXUS hierarchy**'s disentangled skills into
-pixel-based actors on `CartpoleBalance` (the only vision-capable MuJoCo Playground
-task), and measuring how much closed-loop performance survives the move from
-privileged state to 64×64 pixels.
+Two ways to give NEXUS's disentangled skills **raw-pixel** input while keeping the
+interpretable meta-policy on privileged state (asymmetric / privileged-critic
+design, Pinto et al. 2017):
+
+1. **Distillation** (`rgb_distill_nexus.py`) — train state NEXUS, then behavior-clone
+   each skill into a `VisionSkillActor` (Learning-by-Cheating, Chen et al. 2020).
+   Renders offline, so it runs on any env: CartpoleBalance (3 meta variants) + CheetahRun.
+2. **In-loop pixel RL** (`USE_RGB`, `*_rgb.yaml`) — train the skill actors *directly*
+   from MJWarp-rendered pixels, end to end. Needs `mujoco-warp==3.11.0` + the render
+   shims (see top-level README); works for CartpoleBalance (framework) and CheetahRun
+   (our `CheetahRunVision` port).
+
+**Headline comparison** — in-loop pixel RL beats distillation on **both** environments:
+
+| env | privileged state teacher | distillation → pixels | in-loop pixel RL |
+|-----|--------------------------|-----------------------|------------------|
+| CartpoleBalance | 1.00 upright | 0.52 upright | **0.64 eval success** |
+| CheetahRun | 0.62 reward/step | 0.16 reward/step | **~0.42 reward/step** |
+
+In-loop wins because it learns perception + control **jointly**, while distillation is
+capped by behavior cloning + covariate shift. Details for each method below.
+
+## In-loop pixel RL (skills trained directly from MJWarp pixels)
+
+![cartpole in-loop](inloop/cartpole_inloop_curve.png)
+![cheetah in-loop](inloop/cheetah_inloop_curve.png)
+
+- **CartpoleBalance:** eval success **0.639** (0.75 on another seed), return 5.26; the
+  learning curve rises from ~0 to peaks ~15 over 250 updates (128 envs, one seed).
+- **CheetahRun:** the config has no greedy-eval stage, but the **training return climbs
+  0 → ~110** (≈ **0.42 reward/step**) over 250 updates — the pixel cheetah learns to
+  run. That is ~68% of the state teacher's 0.62/step, vs distillation's ~26%.
+- Both **beat the distilled pixel policy** on the same env (headline table). Same
+  pattern on both: joint perception+control learning > behavior cloning.
+- **Enabled by:** `mujoco-warp==3.11.0` (version-aligned with mujoco 3.11 — the desync
+  that blocked this on Colab is gone) + two runtime shims (`ensure_mjwarp_graphmode`,
+  `ensure_mjx_render_compat`) + a `CheetahRunVision` subclass that ports cartpole's
+  render pipeline (cheetah's cameras track the body — verified, `inloop/cheetah_render_probe.png`).
+  `walker`/`hopper` share cheetah's structure and could be added the same way.
+- **Caveats:** single seed each; cheetah number is *training* return (no greedy eval in
+  the config); in-loop needs the MJWarp renderer (offline-render distillation is the
+  fallback for envs without a vision port). Absolute cheetah performance is modest —
+  learning a running gait from pixels in 250 updates is hard.
+
+## Distillation (privileged-critic behavior cloning)
 
 **Design (asymmetric / privileged-critic, Pinto et al. 2017).** The meta-policy,
 critics, and meta-Q keep reading privileged state; only the skill *actors* move to
@@ -91,9 +132,13 @@ run-to-run (GPU nondeterminism in teacher training); the retention *ordering*
 - `results_table.md` — the cartpole table (upright metric), machine-generated.
 - `combined.json` — cartpole per-seed records (upright metric).
 - `{nesy,neural,symbolic}_state_vs_pixel.png` — per-variant single-panel figures.
-- `viz/` — cartpole qualitative artifacts (video, filmstrip, skill timeline, scatter).
-- `viz_cheetah/` — CheetahRun qualitative artifacts (same set).
-- `multienv/*.json` — return-based summaries used in the cross-env table above.
+- `viz/` — cartpole distillation qualitative artifacts (video, filmstrip, skill timeline, scatter).
+- `viz_cheetah/` — CheetahRun distillation qualitative artifacts (same set).
+- `multienv/*.json` — return-based distillation summaries used in the cross-env table above.
+- `inloop/` — **in-loop pixel RL** results: `cartpole_inloop_curve.png` + `.json`,
+  `cheetah_inloop_curve.png` + `.json` (learning curves + eval/return), and
+  `cheetah_render_probe.png` (verifies the cheetah tracking camera renders in-frame).
 
-Run environment: TU student pool `mlsp2` (RTX 2080 Ti), jax 0.11 CUDA, mujoco 3.11,
-software-EGL (llvmpipe) offscreen rendering.
+Run environment: TU student pool `mlsp2` (RTX 2080 Ti), jax 0.11 CUDA, mujoco 3.11 +
+mujoco-warp 3.11; distillation renders offline via software-EGL (llvmpipe), in-loop
+renders via MJWarp (CUDA).
