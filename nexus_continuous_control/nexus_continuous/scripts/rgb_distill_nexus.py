@@ -1,23 +1,25 @@
 """On-thesis RGB extension: distill the TRAINED NEXUS hierarchy to pixel skills.
 
-This is the report-grade continuous-NEXUS + RGB experiment (CartpoleBalance, the
-only vision-capable Playground task). The teacher is the *actual* trained NEXUS
-hierarchy -- not a hand-coded controller:
+Report-grade continuous-NEXUS + RGB experiment. The env is chosen by --config's
+ENV_NAME and rendered OFFLINE with mujoco.Renderer (no MJWarp), so this runs on
+any state env with a camera -- CartpoleBalance (fixed cam) and the locomotion
+suite (CheetahRun/WalkerWalk/HopperHop, tracking side cameras) all work. The
+teacher is the *actual* trained NEXUS hierarchy -- not a hand-coded controller:
 
   1. Train state NEXUS for one seed. The meta-policy variant is selectable via
      --meta: `nesy` (default, the flagship neuro-symbolic meta: learned meta-Q
      masked by hand-written skill preconditions), `neural` (unmasked learned
      meta-Q), or `symbolic` (rule-based selection). Skill actors are trained
      the same way in all cases.
-  2. DAgger distillation (Ross 2011) into per-skill VisionSkillActors, rendering
-     64x64 frames on the fly. Round 0 rolls out the TEACHER (plain behavior
-     cloning); each subsequent --dagger-iters round rolls out the current PIXEL
-     student and relabels the states it actually visits with the teacher action,
-     aggregating into the dataset. This closes the covariate-shift gap that pure
-     BC leaves (near-perfect open-loop imitation but drift in closed loop).
-     Skills used < --min-samples keep the privileged teacher (pixel-fallback).
-  3. Closed-loop eval: the UNCHANGED meta (on privileged state) selects the
-     skill and the PIXEL student acts. Report state vs BC-pixel vs DAgger-pixel.
+  2. Behavior-clone each real NEXUS skill (with >= --min-samples uses) into a
+     per-skill VisionSkillActor, rendering 64x64 frames on the fly from the
+     teacher rollout. Rarely-used skills keep the privileged teacher and are
+     reported as a pixel-fallback fraction. (An optional --dagger-iters DAgger
+     stage exists but did NOT robustly help on CartpoleBalance -- see results/rgb;
+     default 0 = plain BC.)
+  3. Closed-loop eval: the UNCHANGED meta (on privileged state) selects the skill
+     and the PIXEL student acts. Primary metric = mean per-step task reward
+     (env-agnostic); CartpoleBalance also reports the interpretable upright rate.
   4. Compare pixel-hierarchy vs state-hierarchy (the privileged upper bound),
      aggregated over seeds (mean +/- std), + skill-activation histograms.
 
@@ -59,6 +61,9 @@ def main(argv: list[str] | None = None) -> None:
                          "(nesy/neural/symbolic) for correctly-tuned hyperparameters")
     ap.add_argument("--seeds", default="0", help="comma-separated, e.g. 0,1,2")
     ap.add_argument("--out", default="runs/rgb_nexus")
+    ap.add_argument("--camera", type=int, default=0,
+                    help="mj_model camera id to render (0 works for cartpole and the "
+                         "locomotion side cameras; -1 = free camera)")
     ap.add_argument("--teacher-steps", type=int, default=4000, help="round-0 teacher rollout steps (BC dataset)")
     ap.add_argument("--dagger-iters", type=int, default=0,
                     help="DAgger aggregation rounds after BC (0 = plain behavior cloning; "
@@ -121,12 +126,15 @@ def main(argv: list[str] | None = None) -> None:
     except Exception as exc:  # pragma: no cover
         print(f"[rtpt] not active ({exc!r}); install `rtpt` for lab etiquette")
 
-    # ---- offline renderer (CartpoleBalance, state sim, impl='jax' => no warp) ----
-    rcfg = registry.get_default_config("CartpoleBalance")
+    # ---- offline renderer (state sim, impl='jax' => no warp) for the config's env ----
+    base_cfg = load_config(args.config)
+    env_name = base_cfg["ENV_NAME"]
+    is_cartpole = env_name == "CartpoleBalance"
+    rcfg = registry.get_default_config(env_name)
     rcfg.impl = "jax"
-    render_env = registry.load("CartpoleBalance", rcfg)
+    render_env = registry.load(env_name, rcfg)
     mj_model = getattr(render_env, "mj_model", None) or getattr(render_env, "_mj_model")
-    cam = 0
+    cam = args.camera
     try:
         _d = mujoco.MjData(mj_model)
         mujoco.mj_forward(mj_model, _d)
@@ -134,6 +142,7 @@ def main(argv: list[str] | None = None) -> None:
             _r.update_scene(_d, camera=cam)
     except Exception:
         cam = -1
+    print(f"env={env_name} camera={cam}")
 
     empty = lambda b: jnp.zeros((b, 0), jnp.float32)
     per_seed = []
@@ -158,10 +167,24 @@ def main(argv: list[str] | None = None) -> None:
                         if np.asarray(v).ndim == 0}
         print(f"    teacher trained. skills={num_skills} eval={teacher_eval.get('primary_success_rate')}")
 
+        # Eval env (raw obs; frozen stats applied in norm_actor) + action space.
+        # Built here so the actor is reconstructed with the env's real action dims
+        # (1 for cartpole, 6 for cheetah, ...), matching the trained teacher.
+        eval_cfg = dict(cfg)
+        eval_cfg["NORMALIZE_OBS"] = False
+        eval_cfg["NUM_ENVS"] = 1
+        bundle = build_playground_env(eval_cfg)
+        env, env_params = bundle.env, bundle.env_params
+        alo, ahi = jnp.asarray(bundle.action_low), jnp.asarray(bundle.action_high)
+        action_dim = int(bundle.action_dim)
+        action_scale = (ahi - alo) / 2.0
+        action_bias = (ahi + alo) / 2.0
+        step_fn = jax.jit(env.step)
+
         actor = SkillActor(
-            action_dim=1,
-            action_scale=jnp.ones(1),
-            action_bias=jnp.zeros(1),
+            action_dim=action_dim,
+            action_scale=action_scale,
+            action_bias=action_bias,
             hidden_sizes=tuple(cfg.get("ACTOR_HIDDEN_SIZES", (256, 256))),
             activation=cfg.get("ACTIVATION", "relu"),
             norm_type=cfg.get("NORM_TYPE", "layer_norm"),
@@ -208,17 +231,10 @@ def main(argv: list[str] | None = None) -> None:
             act = all_a[skill, e]  # [E,A]
             return skill, act
 
-        # ---- Stage 2+3: DAgger distillation (teacher-relabelled aggregation) ----
-        eval_cfg = dict(cfg)
-        eval_cfg["NORMALIZE_OBS"] = False   # raw obs; we apply frozen stats in norm_actor
-        eval_cfg["NUM_ENVS"] = 1
-        bundle = build_playground_env(eval_cfg)
-        env, env_params = bundle.env, bundle.env_params
-        alo, ahi = jnp.asarray(bundle.action_low), jnp.asarray(bundle.action_high)
-        step_fn = jax.jit(env.step)
-
-        vactor = VisionSkillActor(action_dim=1, action_scale=jnp.ones(1), action_bias=jnp.zeros(1),
-                                  hidden_sizes=(128, 128), embedding_dim=args.embed_dim)
+        # ---- Stage 2+3: BC (optionally DAgger) distillation ----
+        vactor = VisionSkillActor(action_dim=action_dim, action_scale=action_scale,
+                                  action_bias=action_bias, hidden_sizes=(128, 128),
+                                  embedding_dim=args.embed_dim)
         opt = optax.adam(3e-4)
 
         def loss_fn(p, x, y):
@@ -298,8 +314,8 @@ def main(argv: list[str] | None = None) -> None:
                     obs, state, _r, _d, _i = step_fn(jax.random.split(ks, 1), state, act, env_params)
             return (np.asarray(Xs, np.float32), np.asarray(Ys, np.float32), np.asarray(Ss, np.int32))
 
-        print(f"[2/3] DAgger distillation ({args.dagger_iters} iters after BC, "
-              f"beta={args.dagger_beta}, reset={args.dagger_reset_every})...")
+        mode = "BC" if args.dagger_iters == 0 else f"BC + DAgger x{args.dagger_iters}"
+        print(f"[2/3] distillation ({mode})...")
         agg_X, agg_Y, agg_S = [], [], []
         skill_params = [None] * num_skills
         skill_params_bc = None
@@ -321,13 +337,13 @@ def main(argv: list[str] | None = None) -> None:
                 skill_params_bc = list(skill_params)   # BC baseline for before/after
 
         # ---- Stage 4: closed-loop eval (meta on state, PIXEL student acts) ----
-        print("[4] closed-loop eval: state vs BC-pixel vs DAgger-pixel...")
+        print("[4] closed-loop eval: pixel hierarchy vs state hierarchy...")
 
         def closed_loop(sp, use_pixels: bool):
             rng2 = jax.random.PRNGKey(5000 + seed)
             rng2, rr2 = jax.random.split(rng2)
             obs, state = env.reset(jax.random.split(rr2, 1), env_params)
-            buf, up, fb = [], 0, 0
+            buf, up, fb, ret = [], 0, 0, 0.0
             data = mujoco.MjData(mj_model)
             renderer = mujoco.Renderer(mj_model, height=64, width=64) if use_pixels else None
             for _t in range(args.eval_steps):
@@ -354,69 +370,80 @@ def main(argv: list[str] | None = None) -> None:
                 if use_pixels and not pixel_used:
                     fb += 1  # privileged-teacher fallback (undistilled skill or 2-frame warmup)
                 act = jnp.clip(act, alo, ahi)
-                # success: pole upright & cart centered (matches task_metrics)
-                sd2 = _mjx_data(state)
-                cart = float(np.asarray(sd2.qpos[0, 0]))
-                angle = float(np.asarray(sd2.qpos[0, 1]))
-                up += int((abs(np.arctan2(np.sin(angle), np.cos(angle))) < 0.25) and (abs(cart) < 1.0))
+                if is_cartpole:  # interpretable bonus metric: pole upright & cart centered
+                    sd2 = _mjx_data(state)
+                    cart = float(np.asarray(sd2.qpos[0, 0]))
+                    angle = float(np.asarray(sd2.qpos[0, 1]))
+                    up += int((abs(np.arctan2(np.sin(angle), np.cos(angle))) < 0.25) and (abs(cart) < 1.0))
                 rng2, rs2 = jax.random.split(rng2)
-                obs, state, _r, _d, _i = step_fn(jax.random.split(rs2, 1), state, act, env_params)
+                obs, state, rew, _d, _i = step_fn(jax.random.split(rs2, 1), state, act, env_params)
+                ret += float(np.asarray(rew).reshape(-1)[0])
             if renderer is not None:
                 renderer.close()
-            return up / args.eval_steps, fb / args.eval_steps
+            return ret / args.eval_steps, up / args.eval_steps, fb / args.eval_steps
 
-        state_success, _ = closed_loop(skill_params, use_pixels=False)
-        bc_success, _ = closed_loop(skill_params_bc, use_pixels=True)
-        pixel_success, pixel_fallback = closed_loop(skill_params, use_pixels=True)
+        # Primary metric = mean per-step task reward (env-agnostic). retention = pixel/state.
+        state_ret, state_up, _ = closed_loop(skill_params, use_pixels=False)
+        pixel_ret, pixel_up, pixel_fb = closed_loop(skill_params, use_pixels=True)
         distilled = [k for k in range(num_skills) if skill_params[k] is not None]
-        print(f"    seed {seed}: state {state_success:.3f} | BC-pixel {bc_success:.3f} "
-              f"| DAgger-pixel {pixel_success:.3f} | fallback {pixel_fallback:.2f} | skills {distilled}")
-        per_seed.append({
+        retention = pixel_ret / state_ret if abs(state_ret) > 1e-6 else float("nan")
+        msg = (f"    seed {seed}: state_rew/step {state_ret:.3f} | pixel_rew/step {pixel_ret:.3f} "
+               f"| retention {retention:.2f} | fallback {pixel_fb:.2f} | skills {distilled}")
+        if is_cartpole:
+            msg += f" | upright state {state_up:.2f}/pixel {pixel_up:.2f}"
+        print(msg)
+        rec = {
             "seed": seed,
-            "state_success": state_success,
-            "bc_pixel_success": bc_success,
-            "pixel_success": pixel_success,
-            "pixel_fallback_fraction": pixel_fallback,
+            "state_success": state_ret,     # mean per-step reward (naming kept for rgb_report)
+            "pixel_success": pixel_ret,
+            "retention": retention,
+            "pixel_fallback_fraction": pixel_fb,
             "distilled_skills": distilled,
             "teacher_eval_primary_success": teacher_eval.get("primary_success_rate"),
             "skill_histogram": np.bincount(skills, minlength=num_skills).tolist(),
-        })
+        }
+        if is_cartpole:
+            rec["state_upright"] = state_up
+            rec["pixel_upright"] = pixel_up
+        per_seed.append(rec)
         if rtpt is not None:
             rtpt.step()
 
-    # ---- aggregate + report ----
+    # ---- aggregate + report (primary metric = mean per-step task reward) ----
     ss = np.array([r["state_success"] for r in per_seed])
-    bc = np.array([r["bc_pixel_success"] for r in per_seed])
     ps = np.array([r["pixel_success"] for r in per_seed])
     fbf = np.array([r["pixel_fallback_fraction"] for r in per_seed])
     summary = {
-        "task": "CartpoleBalance",
+        "task": env_name,
         "meta_policy": args.meta,
+        "metric": "mean_per_step_reward",
         "dagger_iters": args.dagger_iters,
         "seeds": seeds,
         "state_hierarchy_success_mean": float(ss.mean()),
         "state_hierarchy_success_std": float(ss.std()),
-        "bc_pixel_success_mean": float(bc.mean()),
-        "bc_pixel_success_std": float(bc.std()),
         "pixel_hierarchy_success_mean": float(ps.mean()),
         "pixel_hierarchy_success_std": float(ps.std()),
-        "retention_fraction": float(ps.mean() / max(ss.mean(), 1e-6)),
-        "bc_retention_fraction": float(bc.mean() / max(ss.mean(), 1e-6)),
+        "retention_fraction": float(ps.mean() / max(abs(ss.mean()), 1e-6)),
         "pixel_fallback_fraction_mean": float(fbf.mean()),
         "per_seed": per_seed,
     }
+    if is_cartpole:
+        su = np.array([r["state_upright"] for r in per_seed])
+        pu = np.array([r["pixel_upright"] for r in per_seed])
+        summary["state_upright_mean"] = float(su.mean())
+        summary["pixel_upright_mean"] = float(pu.mean())
     (out / "summary.json").write_text(json.dumps(summary, indent=2))
 
-    fig = plt.figure(figsize=(6, 4))
-    x = [0, 1, 2]
-    plt.bar(x, [ss.mean(), bc.mean(), ps.mean()], yerr=[ss.std(), bc.std(), ps.std()], capsize=6,
-            color=["#4C72B0", "#C44E52", "#DD8452"])
-    for xi, v in zip(x, [ss.mean(), bc.mean(), ps.mean()]):
-        plt.text(xi, v + 0.02, f"{v:.2f}", ha="center", fontsize=9)
-    plt.xticks(x, ["state\n(privileged)", "pixel BC", f"pixel DAgger\n({args.dagger_iters} it)"])
-    plt.ylabel("closed-loop success rate")
-    plt.title(f"NEXUS ({args.meta}) on CartpoleBalance ({len(seeds)} seeds)")
-    plt.ylim(0, 1.1)
+    fig = plt.figure(figsize=(5, 4))
+    x = [0, 1]
+    plt.bar(x, [ss.mean(), ps.mean()], yerr=[ss.std(), ps.std()], capsize=6,
+            color=["#4C72B0", "#DD8452"])
+    for xi, v in zip(x, [ss.mean(), ps.mean()]):
+        plt.text(xi, v, f"{v:.2f}", ha="center", va="bottom", fontsize=9)
+    plt.xticks(x, ["state hierarchy\n(privileged)", "pixel hierarchy\n(distilled)"])
+    plt.ylabel("mean per-step task reward")
+    plt.title(f"NEXUS ({args.meta}) on {env_name} ({len(seeds)} seeds)\n"
+              f"pixel retains {100 * ps.mean() / max(abs(ss.mean()), 1e-6):.0f}% of privileged return")
     fig.savefig(out / "state_vs_pixel.png", dpi=120, bbox_inches="tight")
     plt.close(fig)
 
