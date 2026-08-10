@@ -38,6 +38,17 @@ import os
 from pathlib import Path
 
 
+def _mjx_data(state):
+    """Dig through the env wrappers (LogVec/Clip/Normalize) to the mjx State's .data."""
+    for _ in range(8):
+        if hasattr(state, "data"):
+            return state.data
+        state = getattr(state, "env_state", None)
+        if state is None:
+            break
+    raise AttributeError("could not locate .data on the wrapped env state")
+
+
 def main(argv: list[str] | None = None) -> None:
     ap = argparse.ArgumentParser(description=__doc__)
     ap.add_argument("--config", default="configs/cartpole_balance_symbolic.yaml")
@@ -186,8 +197,9 @@ def main(argv: list[str] | None = None) -> None:
         for _t in range(args.teacher_steps):
             skill, act = teacher_step(obs)
             act = jnp.clip(act, alo, ahi)
-            qpos_seq.append(np.asarray(state.data.qpos[0]))
-            qvel_seq.append(np.asarray(state.data.qvel[0]))
+            sd = _mjx_data(state)
+            qpos_seq.append(np.asarray(sd.qpos[0]))
+            qvel_seq.append(np.asarray(sd.qvel[0]))
             skill_seq.append(int(np.asarray(skill[0])))
             act_seq.append(np.asarray(act[0]))
             rng, rs = jax.random.split(rng)
@@ -247,8 +259,9 @@ def main(argv: list[str] | None = None) -> None:
                 skill_t, teacher_act = teacher_step(obs)
                 k = int(np.asarray(skill_t[0]))
                 if use_pixels and skill_params[k] is not None:
-                    data.qpos[:] = np.asarray(state.data.qpos[0])
-                    data.qvel[:] = np.asarray(state.data.qvel[0])
+                    sd = _mjx_data(state)
+                    data.qpos[:] = np.asarray(sd.qpos[0])
+                    data.qvel[:] = np.asarray(sd.qvel[0])
                     mujoco.mj_forward(mj_model, data)
                     renderer.update_scene(data, camera=cam)
                     buf.append(renderer.render().mean(-1).astype(np.float32) / 255.0 - 0.5)
@@ -263,8 +276,9 @@ def main(argv: list[str] | None = None) -> None:
                     act = teacher_act
                 act = jnp.clip(act, alo, ahi)
                 # success: pole upright & cart centered (matches task_metrics)
-                cart = float(np.asarray(state.data.qpos[0, 0]))
-                angle = float(np.asarray(state.data.qpos[0, 1]))
+                sd2 = _mjx_data(state)
+                cart = float(np.asarray(sd2.qpos[0, 0]))
+                angle = float(np.asarray(sd2.qpos[0, 1]))
                 up += int((abs(np.arctan2(np.sin(angle), np.cos(angle))) < 0.25) and (abs(cart) < 1.0))
                 rng2, rs2 = jax.random.split(rng2)
                 obs, state, _r, _d, _i = step_fn(jax.random.split(rs2, 1), state, act, env_params)
