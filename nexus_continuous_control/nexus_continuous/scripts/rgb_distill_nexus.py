@@ -152,7 +152,7 @@ def main(argv: list[str] | None = None) -> None:
         cfg["NUM_SEEDS"] = 1
 
         # ---- Stage 1: train the state NEXUS teacher (reuses the tested trainer) ----
-        print("[1] training state NEXUS teacher (symbolic meta)...")
+        print(f"[1] training state NEXUS teacher ({args.meta} meta)...")
         output = run_training(cfg)
         train_state = output.runner_state[0]
         actor_params = train_state.actor.params           # vmapped over skills: [N, ...]
