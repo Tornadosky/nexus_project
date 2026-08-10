@@ -9,15 +9,16 @@ hierarchy -- not a hand-coded controller:
      masked by hand-written skill preconditions), `neural` (unmasked learned
      meta-Q), or `symbolic` (rule-based selection). Skill actors are trained
      the same way in all cases.
-  2. Roll the trained hierarchy out; record (rendered 64x64 frame, selected
-     skill, that skill's action) -- on-policy, so pixel students see the states
-     they will be deployed on.
-  3. Behavior-clone each real NEXUS skill (with >= --min-samples uses) into a
-     VisionSkillActor. Rarely-used skills keep the privileged teacher and are
-     reported as a pixel-fallback fraction.
-  4. Closed-loop eval: the UNCHANGED meta (on privileged state) selects the
-     skill and the PIXEL student acts. Measure per-step task success.
-  5. Compare pixel-hierarchy vs state-hierarchy (the privileged upper bound),
+  2. DAgger distillation (Ross 2011) into per-skill VisionSkillActors, rendering
+     64x64 frames on the fly. Round 0 rolls out the TEACHER (plain behavior
+     cloning); each subsequent --dagger-iters round rolls out the current PIXEL
+     student and relabels the states it actually visits with the teacher action,
+     aggregating into the dataset. This closes the covariate-shift gap that pure
+     BC leaves (near-perfect open-loop imitation but drift in closed loop).
+     Skills used < --min-samples keep the privileged teacher (pixel-fallback).
+  3. Closed-loop eval: the UNCHANGED meta (on privileged state) selects the
+     skill and the PIXEL student acts. Report state vs BC-pixel vs DAgger-pixel.
+  4. Compare pixel-hierarchy vs state-hierarchy (the privileged upper bound),
      aggregated over seeds (mean +/- std), + skill-activation histograms.
 
 Meta/critic/meta-Q always stay on privileged state; only the skill actor moves
@@ -58,7 +59,11 @@ def main(argv: list[str] | None = None) -> None:
                          "(nesy/neural/symbolic) for correctly-tuned hyperparameters")
     ap.add_argument("--seeds", default="0", help="comma-separated, e.g. 0,1,2")
     ap.add_argument("--out", default="runs/rgb_nexus")
-    ap.add_argument("--teacher-steps", type=int, default=4000, help="teacher rollout steps for the distillation dataset")
+    ap.add_argument("--teacher-steps", type=int, default=4000, help="round-0 teacher rollout steps (BC dataset)")
+    ap.add_argument("--dagger-iters", type=int, default=2,
+                    help="DAgger aggregation rounds after BC (0 = plain behavior cloning)")
+    ap.add_argument("--dagger-steps", type=int, default=1500,
+                    help="student-rollout steps added per DAgger round (teacher-relabelled)")
     ap.add_argument("--epochs", type=int, default=40)
     ap.add_argument("--eval-steps", type=int, default=250, help="closed-loop eval horizon")
     ap.add_argument("--embed-dim", type=int, default=64)
@@ -122,24 +127,6 @@ def main(argv: list[str] | None = None) -> None:
             _r.update_scene(_d, camera=cam)
     except Exception:
         cam = -1
-
-    def render_qpos_qvel(qpos_seq, qvel_seq):
-        """qpos_seq/qvel_seq: [T, nq]/[T, nv] numpy -> frames [T,64,64,3] uint8."""
-        data = mujoco.MjData(mj_model)
-        frames = np.empty((len(qpos_seq), 64, 64, 3), np.uint8)
-        with mujoco.Renderer(mj_model, height=64, width=64) as r:
-            for t in range(len(qpos_seq)):
-                data.qpos[:] = np.asarray(qpos_seq[t])
-                data.qvel[:] = np.asarray(qvel_seq[t])
-                mujoco.mj_forward(mj_model, data)
-                r.update_scene(data, camera=cam)
-                frames[t] = r.render()
-        return frames
-
-    def gray_stack(frames):
-        """[T,64,64,3] uint8 -> stacks [T-2,64,64,3] float centered, aligned targets idx."""
-        g = frames.mean(-1).astype(np.float32) / 255.0 - 0.5
-        return np.stack([g[i - 2 : i + 1] for i in range(2, len(g))], 0).transpose(0, 2, 3, 1)
 
     empty = lambda b: jnp.zeros((b, 0), jnp.float32)
     per_seed = []
@@ -214,8 +201,7 @@ def main(argv: list[str] | None = None) -> None:
             act = all_a[skill, e]  # [E,A]
             return skill, act
 
-        # ---- Stage 2: teacher rollout + record (qpos,qvel,skill,action) ----
-        print("[2] rolling out teacher, collecting data...")
+        # ---- Stage 2+3: DAgger distillation (teacher-relabelled aggregation) ----
         eval_cfg = dict(cfg)
         eval_cfg["NORMALIZE_OBS"] = False   # raw obs; we apply frozen stats in norm_actor
         eval_cfg["NUM_ENVS"] = 1
@@ -224,28 +210,6 @@ def main(argv: list[str] | None = None) -> None:
         alo, ahi = jnp.asarray(bundle.action_low), jnp.asarray(bundle.action_high)
         step_fn = jax.jit(env.step)
 
-        rng = jax.random.PRNGKey(1000 + seed)
-        rng, rr = jax.random.split(rng)
-        obs, state = env.reset(jax.random.split(rr, 1), env_params)
-        qpos_seq, qvel_seq, skill_seq, act_seq = [], [], [], []
-        for _t in range(args.teacher_steps):
-            skill, act = teacher_step(obs)
-            act = jnp.clip(act, alo, ahi)
-            sd = _mjx_data(state)
-            qpos_seq.append(np.asarray(sd.qpos[0]))
-            qvel_seq.append(np.asarray(sd.qvel[0]))
-            skill_seq.append(int(np.asarray(skill[0])))
-            act_seq.append(np.asarray(act[0]))
-            rng, rs = jax.random.split(rng)
-            obs, state, _r, _d, _i = step_fn(jax.random.split(rs, 1), state, act, env_params)
-        frames = render_qpos_qvel(qpos_seq, qvel_seq)
-        X = gray_stack(frames)                       # [T-2,64,64,3]
-        skills = np.asarray(skill_seq[2:], np.int32) # align to X
-        Y = np.asarray(act_seq[2:], np.float32)
-        print(f"    collected {len(X)} samples; skill hist={np.bincount(skills, minlength=num_skills)}")
-
-        # ---- Stage 3: distill each real skill into a VisionSkillActor ----
-        print("[3] distilling per-skill vision actors...")
         vactor = VisionSkillActor(action_dim=1, action_scale=jnp.ones(1), action_bias=jnp.zeros(1),
                                   hidden_sizes=(128, 128), embedding_dim=args.embed_dim)
         opt = optax.adam(3e-4)
@@ -259,32 +223,90 @@ def main(argv: list[str] | None = None) -> None:
             u, st = opt.update(g, st, p)
             return optax.apply_updates(p, u), st, l
 
-        skill_params = []
-        for k in range(num_skills):
-            m = skills == k
-            n = int(m.sum())
-            if n < args.min_samples:
-                print(f"    skill {k}: {n} samples (<{args.min_samples}) -> kept privileged teacher fallback")
-                skill_params.append(None)
-                continue
-            bs = min(args.batch_size, n)
-            xk, yk = jnp.asarray(X[m]), jnp.asarray(Y[m])
-            p = vactor.init(jax.random.PRNGKey(k), xk[:1], empty(1))["params"]
-            st = opt.init(p)
-            last = float("nan")
-            for _e in range(args.epochs):
-                perm = np.random.permutation(n)
-                for i in range(0, n, bs):  # >=1 non-empty batch
-                    idx = perm[i : i + bs]
-                    p, st, l = bc_step(p, st, xk[idx], yk[idx])
-                    last = float(l)
-            skill_params.append(p)
-            print(f"    skill {k}: trained on {n} samples (bs={bs}), final MSE {last:.4f}")
+        def distill(X, Y, skills):
+            """Retrain one VisionSkillActor per skill on the full aggregated dataset."""
+            sp = []
+            for k in range(num_skills):
+                m = skills == k
+                n = int(m.sum())
+                if n < args.min_samples:
+                    print(f"      skill {k}: {n} samples (<{args.min_samples}) -> teacher fallback")
+                    sp.append(None)
+                    continue
+                bs = min(args.batch_size, n)
+                xk, yk = jnp.asarray(X[m]), jnp.asarray(Y[m])
+                p = vactor.init(jax.random.PRNGKey(k), xk[:1], empty(1))["params"]
+                st = opt.init(p)
+                last = float("nan")
+                for _e in range(args.epochs):
+                    perm = np.random.permutation(n)
+                    for i in range(0, n, bs):  # >=1 non-empty batch
+                        p, st, l = bc_step(p, st, xk[perm[i : i + bs]], yk[perm[i : i + bs]])
+                        last = float(l)
+                sp.append(p)
+                print(f"      skill {k}: {n} samples (bs={bs}), MSE {last:.4f}")
+            return sp
 
-        # ---- Stage 4: closed-loop eval (symbolic meta on state, PIXEL student acts) ----
-        print("[4] closed-loop eval: pixel hierarchy vs state hierarchy...")
+        def collect_rollout(sp, n_steps, key):
+            """Roll out the hierarchy for n_steps rendering 64x64 frames on the fly.
+            The meta always selects the skill from privileged state; the EXECUTING
+            actor is the distilled pixel actor when available (sp[k] not None) else
+            the teacher. Every visited state is labelled with the TEACHER action ->
+            this is the DAgger expert relabelling that fixes covariate shift."""
+            key, rk = jax.random.split(key)
+            obs, state = env.reset(jax.random.split(rk, 1), env_params)
+            buf, Xs, Ys, Ss = [], [], [], []
+            data = mujoco.MjData(mj_model)
+            with mujoco.Renderer(mj_model, height=64, width=64) as r:
+                for _t in range(n_steps):
+                    sd = _mjx_data(state)
+                    data.qpos[:] = np.asarray(sd.qpos[0])
+                    data.qvel[:] = np.asarray(sd.qvel[0])
+                    mujoco.mj_forward(mj_model, data)
+                    r.update_scene(data, camera=cam)
+                    buf.append(r.render().mean(-1).astype(np.float32) / 255.0 - 0.5)
+                    buf = buf[-3:]
+                    skill_t, teacher_act = teacher_step(obs)
+                    k = int(np.asarray(skill_t[0]))
+                    if len(buf) == 3:
+                        Xs.append(np.stack(buf, -1))            # [64,64,3]
+                        Ys.append(np.asarray(teacher_act[0]))   # teacher (expert) label
+                        Ss.append(k)
+                        if sp[k] is not None:
+                            stack = jnp.asarray(np.stack(buf, -1)[None])
+                            act = jnp.asarray(np.asarray(
+                                vactor.apply({"params": sp[k]}, stack, empty(1))))
+                        else:
+                            act = teacher_act
+                    else:
+                        act = teacher_act
+                    act = jnp.clip(act, alo, ahi)
+                    key, ks = jax.random.split(key)
+                    obs, state, _r, _d, _i = step_fn(jax.random.split(ks, 1), state, act, env_params)
+            return (np.asarray(Xs, np.float32), np.asarray(Ys, np.float32), np.asarray(Ss, np.int32))
 
-        def closed_loop(use_pixels: bool):
+        print(f"[2/3] DAgger distillation ({args.dagger_iters} iters after BC)...")
+        agg_X, agg_Y, agg_S = [], [], []
+        skill_params = [None] * num_skills
+        skill_params_bc = None
+        drng = jax.random.PRNGKey(1000 + seed)
+        for it in range(args.dagger_iters + 1):
+            n_steps = args.teacher_steps if it == 0 else args.dagger_steps
+            drng, ck = jax.random.split(drng)
+            Xr, Yr, Sr = collect_rollout(skill_params, n_steps, ck)
+            agg_X.append(Xr); agg_Y.append(Yr); agg_S.append(Sr)
+            X = np.concatenate(agg_X); Y = np.concatenate(agg_Y); skills = np.concatenate(agg_S)
+            tag = "BC: teacher rollout" if it == 0 else f"DAgger {it}: student rollout"
+            print(f"    [{tag}] +{len(Xr)} new, {len(X)} total; "
+                  f"hist={np.bincount(skills, minlength=num_skills)}")
+            skill_params = distill(X, Y, skills)
+            if it == 0:
+                skill_params_bc = list(skill_params)   # BC baseline for before/after
+
+        # ---- Stage 4: closed-loop eval (meta on state, PIXEL student acts) ----
+        print("[4] closed-loop eval: state vs BC-pixel vs DAgger-pixel...")
+
+        def closed_loop(sp, use_pixels: bool):
             rng2 = jax.random.PRNGKey(5000 + seed)
             rng2, rr2 = jax.random.split(rng2)
             obs, state = env.reset(jax.random.split(rr2, 1), env_params)
@@ -295,7 +317,7 @@ def main(argv: list[str] | None = None) -> None:
                 skill_t, teacher_act = teacher_step(obs)
                 k = int(np.asarray(skill_t[0]))
                 pixel_used = False
-                if use_pixels and skill_params[k] is not None:
+                if use_pixels and sp[k] is not None:
                     sd = _mjx_data(state)
                     data.qpos[:] = np.asarray(sd.qpos[0])
                     data.qvel[:] = np.asarray(sd.qvel[0])
@@ -306,7 +328,7 @@ def main(argv: list[str] | None = None) -> None:
                     if len(buf) == 3:
                         stack = jnp.asarray(np.stack(buf, -1)[None])
                         act = jnp.asarray(np.asarray(
-                            vactor.apply({"params": skill_params[k]}, stack, empty(1))))
+                            vactor.apply({"params": sp[k]}, stack, empty(1))))
                         pixel_used = True
                     else:
                         act = teacher_act
@@ -326,14 +348,16 @@ def main(argv: list[str] | None = None) -> None:
                 renderer.close()
             return up / args.eval_steps, fb / args.eval_steps
 
-        state_success, _ = closed_loop(use_pixels=False)
-        pixel_success, pixel_fallback = closed_loop(use_pixels=True)
+        state_success, _ = closed_loop(skill_params, use_pixels=False)
+        bc_success, _ = closed_loop(skill_params_bc, use_pixels=True)
+        pixel_success, pixel_fallback = closed_loop(skill_params, use_pixels=True)
         distilled = [k for k in range(num_skills) if skill_params[k] is not None]
-        print(f"    seed {seed}: state {state_success:.3f} | pixel {pixel_success:.3f} "
-              f"| pixel-fallback {pixel_fallback:.2f} | distilled skills {distilled}")
+        print(f"    seed {seed}: state {state_success:.3f} | BC-pixel {bc_success:.3f} "
+              f"| DAgger-pixel {pixel_success:.3f} | fallback {pixel_fallback:.2f} | skills {distilled}")
         per_seed.append({
             "seed": seed,
             "state_success": state_success,
+            "bc_pixel_success": bc_success,
             "pixel_success": pixel_success,
             "pixel_fallback_fraction": pixel_fallback,
             "distilled_skills": distilled,
@@ -345,30 +369,37 @@ def main(argv: list[str] | None = None) -> None:
 
     # ---- aggregate + report ----
     ss = np.array([r["state_success"] for r in per_seed])
+    bc = np.array([r["bc_pixel_success"] for r in per_seed])
     ps = np.array([r["pixel_success"] for r in per_seed])
     fbf = np.array([r["pixel_fallback_fraction"] for r in per_seed])
     summary = {
         "task": "CartpoleBalance",
         "meta_policy": args.meta,
+        "dagger_iters": args.dagger_iters,
         "seeds": seeds,
         "state_hierarchy_success_mean": float(ss.mean()),
         "state_hierarchy_success_std": float(ss.std()),
+        "bc_pixel_success_mean": float(bc.mean()),
+        "bc_pixel_success_std": float(bc.std()),
         "pixel_hierarchy_success_mean": float(ps.mean()),
         "pixel_hierarchy_success_std": float(ps.std()),
         "retention_fraction": float(ps.mean() / max(ss.mean(), 1e-6)),
+        "bc_retention_fraction": float(bc.mean() / max(ss.mean(), 1e-6)),
         "pixel_fallback_fraction_mean": float(fbf.mean()),
         "per_seed": per_seed,
     }
     (out / "summary.json").write_text(json.dumps(summary, indent=2))
 
-    fig = plt.figure(figsize=(5, 4))
-    x = [0, 1]
-    plt.bar(x, [ss.mean(), ps.mean()], yerr=[ss.std(), ps.std()], capsize=6,
-            color=["#4C72B0", "#DD8452"])
-    plt.xticks(x, ["state hierarchy\n(privileged)", "pixel hierarchy\n(distilled)"])
+    fig = plt.figure(figsize=(6, 4))
+    x = [0, 1, 2]
+    plt.bar(x, [ss.mean(), bc.mean(), ps.mean()], yerr=[ss.std(), bc.std(), ps.std()], capsize=6,
+            color=["#4C72B0", "#C44E52", "#DD8452"])
+    for xi, v in zip(x, [ss.mean(), bc.mean(), ps.mean()]):
+        plt.text(xi, v + 0.02, f"{v:.2f}", ha="center", fontsize=9)
+    plt.xticks(x, ["state\n(privileged)", "pixel BC", f"pixel DAgger\n({args.dagger_iters} it)"])
     plt.ylabel("closed-loop success rate")
     plt.title(f"NEXUS ({args.meta}) on CartpoleBalance ({len(seeds)} seeds)")
-    plt.ylim(0, 1)
+    plt.ylim(0, 1.1)
     fig.savefig(out / "state_vs_pixel.png", dpi=120, bbox_inches="tight")
     plt.close(fig)
 
