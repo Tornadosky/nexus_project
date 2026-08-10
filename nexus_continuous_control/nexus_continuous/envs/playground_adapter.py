@@ -621,17 +621,35 @@ def build_playground_env(config: dict[str, Any]) -> PlaygroundEnvBundle:
     # RGB extension: enable the framework's in-loop MJWarp renderer. The render
     # context batch (nworld) must equal the number of parallel envs, which is
     # NUM_ENVS for training and EVAL_NUM_ENVS for eval (passed via RENDER_NWORLD).
+    _vision_env = None
     if config.get("USE_RGB", False):
         # Guard against the MuJoCo-Warp GraphMode desync + the mjx.render tuple-arity
         # drift before the renderer loads.
         ensure_mjwarp_graphmode()
         ensure_mjx_render_compat()
-        env_config.vision = True
-        env_config.vision_config.nworld = int(config.get("RENDER_NWORLD", config["NUM_ENVS"]))
-        # vision=True forces a shorter horizon (e.g. CartpoleBalance -> 250); make
-        # the brax episode wrapper and eval agree with it.
+        nworld = int(config.get("RENDER_NWORLD", config["NUM_ENVS"]))
+        # vision forces a shorter horizon (e.g. CartpoleBalance -> 250); make the
+        # brax episode wrapper and eval agree with it.
         env_config.episode_length = int(config.get("RGB_EPISODE_LENGTH", 250))
-    env = registry.load(config["ENV_NAME"], env_config)
+        if config["ENV_NAME"] == "CartpoleBalance":
+            env_config.vision = True
+            env_config.vision_config.nworld = nworld
+        elif config["ENV_NAME"] == "CheetahRun":
+            # The framework has no in-loop vision for cheetah; use our ported
+            # subclass (mirrors cartpole's MJWarp render path).
+            from nexus_continuous.envs.cheetah_vision import CheetahRunVision
+
+            _vision_env = CheetahRunVision(
+                nworld=nworld,
+                episode_length=env_config.episode_length,
+                impl=env_config.impl,
+            )
+        else:
+            raise NotImplementedError(
+                f"In-loop RGB not available for {config['ENV_NAME']}; only "
+                "CartpoleBalance (framework) and CheetahRun (ported) are supported."
+            )
+    env = _vision_env if _vision_env is not None else registry.load(config["ENV_NAME"], env_config)
     env = wrap_for_brax_training(
         env,
         episode_length=env_config.episode_length,
