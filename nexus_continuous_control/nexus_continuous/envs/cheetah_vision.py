@@ -20,10 +20,24 @@ from __future__ import annotations
 
 from typing import Any
 
+import jax
 import jax.numpy as jp
 from mujoco import mjx
 from mujoco_playground._src import mjx_env
 from mujoco_playground._src.dm_control_suite import cheetah as _cheetah
+
+
+def _arrayify(data):
+    """Coerce any non-array (e.g. scalar ``TypedFloat``) pytree leaf to a JAX array.
+
+    cheetah's state reset sets ``time=0.0`` as a Python float, which lands as a
+    scalar ``TypedFloat`` with no ``.shape``; MJWarp's ``refit_bvh`` broadcast to
+    ``nworld`` then fails. Making every leaf a real JAX array fixes that.
+    """
+
+    return jax.tree_util.tree_map(
+        lambda x: x if hasattr(x, "shape") else jp.asarray(x, jp.float32), data
+    )
 
 # Mirrors cartpole.default_vision_config(); cam_active selects cheetah's 'side'
 # (index 0, trackcom) camera and disables 'back' (index 1).
@@ -54,6 +68,7 @@ class CheetahRunVision(_cheetah.Run):
 
     def _render_gray(self, data):
         """refit + render -> (data, [H,W,1] centered gray). Mirrors cartpole."""
+        data = _arrayify(data)
         data = mjx.refit_bvh(self.mjx_model, data, self._rc_pytree)
         out = mjx.render(self.mjx_model, data, self._rc_pytree)  # shim -> (rgb, depth, data)
         rgb = mjx.get_rgb(self._rc_pytree, 0, out[0])
