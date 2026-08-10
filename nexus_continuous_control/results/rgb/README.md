@@ -55,13 +55,45 @@ python -m nexus_continuous.scripts.rgb_report --runs runs \
   --metas nesy,neural,symbolic --out runs/rgb_report
 ```
 
+## Second environment: CheetahRun (generalization)
+
+The same BC-distillation pipeline runs on a second, harder env by rendering the
+locomotion side (tracking) camera offline — showing the RGB extension is not tied
+to the single framework-vision env. Here the metric is **mean per-step task reward**
+(env-agnostic; cartpole's upright rate has no locomotion analogue), retention =
+pixel / state, 3 seeds. `multienv/*.json` holds the per-seed records; qualitative
+artifacts (running-cheetah video, skill timeline, filmstrip, fidelity scatter) are
+in `viz_cheetah/`.
+
+| env / meta | state reward/step | pixel reward/step | retention |
+|------------|-------------------|-------------------|-----------|
+| CartpoleBalance neural | 0.98 | 0.83 | **0.84** |
+| CheetahRun neural      | 0.62 | 0.16 | **0.25** |
+| CheetahRun nesy        | 0.56 | 0.10 | **0.17** |
+
+**Finding:** on the same reward metric, pixel skills retain ~84 % of privileged
+performance on balancing (CartpoleBalance) but only ~25 % on locomotion
+(CheetahRun) — running needs precise gait timing that is much harder to recover
+from a coarse 64×64 grayscale stack. Open-loop imitation stays near-perfect on both
+(held-out Pearson r ≈ 0.99), so the gap is closed-loop precision, not cloning
+quality. The `stabilize_posture` skill is rarely used (~2 % of steps) and clones
+poorly; `accelerate_forward` / `energy_efficient_run` dominate and clone well.
+
+*Metric note:* CartpoleBalance retention is ~0.84 under mean-reward but ~0.5 under
+the stricter upright-fraction metric (the main table above) — the reward metric
+gives partial credit for a pole that is up-but-drifting. Absolute numbers also vary
+run-to-run (GPU nondeterminism in teacher training); the retention *ordering*
+(balancing ≫ locomotion) is stable.
+
 ## Files
 
-- `comparison.png` — grouped state-vs-pixel bar chart (the report figure).
-- `results_table.md` — the table above, machine-generated.
-- `combined.json` — full per-seed records (skill histograms, distilled skills,
-  per-seed success, fallback) for all three variants.
+- `comparison.png` — grouped state-vs-pixel bar chart (cartpole, 3 variants).
+- `results_table.md` — the cartpole table (upright metric), machine-generated.
+- `combined.json` — cartpole per-seed records (upright metric).
 - `{nesy,neural,symbolic}_state_vs_pixel.png` — per-variant single-panel figures.
+- `viz/` — cartpole qualitative artifacts (video, filmstrip, skill timeline, scatter).
+- `viz_cheetah/` — CheetahRun qualitative artifacts (same set).
+- `multienv/*.json` — return-based summaries used in the cross-env table above.
 
 Run environment: TU student pool `mlsp2` (RTX 2080 Ti), jax 0.11 CUDA, mujoco 3.11,
 software-EGL (llvmpipe) offscreen rendering.

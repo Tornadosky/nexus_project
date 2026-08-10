@@ -1,0 +1,78 @@
+{
+  "task": "CartpoleBalance",
+  "meta_policy": "neural",
+  "metric": "mean_per_step_reward",
+  "dagger_iters": 0,
+  "seeds": [
+    0,
+    1,
+    2
+  ],
+  "state_hierarchy_success_mean": 0.981848600546519,
+  "state_hierarchy_success_std": 0.019184851445486473,
+  "pixel_hierarchy_success_mean": 0.8287394548920809,
+  "pixel_hierarchy_success_std": 0.11855344189296811,
+  "retention_fraction": 0.8440603311251713,
+  "pixel_fallback_fraction_mean": 0.076,
+  "per_seed": [
+    {
+      "seed": 0,
+      "state_success": 0.9548495194911957,
+      "pixel_success": 0.7145716818011133,
+      "retention": 0.748360518819638,
+      "pixel_fallback_fraction": 0.196,
+      "distilled_skills": [
+        1,
+        2
+      ],
+      "teacher_eval_primary_success": null,
+      "skill_histogram": [
+        23,
+        2166,
+        1651
+      ],
+      "state_upright": 1.0,
+      "pixel_upright": 0.584
+    },
+    {
+      "seed": 1,
+      "state_success": 0.9930297355651856,
+      "pixel_success": 0.7794905263352121,
+      "retention": 0.7849619184782648,
+      "pixel_fallback_fraction": 0.024,
+      "distilled_skills": [
+        0,
+        2
+      ],
+      "teacher_eval_primary_success": null,
+      "skill_histogram": [
+        1550,
+        0,
+        2290
+      ],
+      "state_upright": 1.0,
+      "pixel_upright": 0.664
+    },
+    {
+      "seed": 2,
+      "state_success": 0.9976665465831757,
+      "pixel_success": 0.992156156539917,
+      "retention": 0.9944767216439894,
+      "pixel_fallback_fraction": 0.008,
+      "distilled_skills": [
+        0,
+        2
+      ],
+      "teacher_eval_primary_success": null,
+      "skill_histogram": [
+        1071,
+        0,
+        2769
+      ],
+      "state_upright": 1.0,
+      "pixel_upright": 1.0
+    }
+  ],
+  "state_upright_mean": 1.0,
+  "pixel_upright_mean": 0.7493333333333334
+}
