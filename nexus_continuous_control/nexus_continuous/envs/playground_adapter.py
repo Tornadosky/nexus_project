@@ -567,6 +567,35 @@ def ensure_mjwarp_graphmode() -> None:
             continue
 
 
+def ensure_mjx_render_compat() -> None:
+    """Work around a mujoco_playground <-> mujoco-mjx 3.11 render-API drift.
+
+    mujoco 3.11's ``mjx.render(m, d, ctx)`` returns a 2-tuple ``(rgb, depth)``, but
+    the installed dm_control_suite vision path (e.g. ``cartpole.py``) was written
+    for an older API that returned ``(rgb, depth, data)`` and reads ``out[2]`` for
+    the (unchanged) data -- raising ``IndexError: tuple index out of range`` on
+    reset/step. Wrap ``mjx.render`` to append the unmodified ``data`` when it
+    returns a 2-tuple, so the stale ``out[2]`` read is a correct no-op. Idempotent,
+    and a no-op once the framework itself returns a >=3-tuple, so it is safe to call
+    unconditionally before loading a vision env.
+    """
+
+    try:
+        import mujoco.mjx as _mjx  # type: ignore
+    except Exception:
+        return
+    render = getattr(_mjx, "render", None)
+    if render is None or getattr(render, "_nexus_render_compat", False):
+        return
+
+    def _render_compat(m, d, ctx, _orig=render):
+        out = _orig(m, d, ctx)
+        return (out[0], out[1], d) if len(out) == 2 else out
+
+    _render_compat._nexus_render_compat = True
+    _mjx.render = _render_compat
+
+
 def build_playground_env(config: dict[str, Any]) -> PlaygroundEnvBundle:
     """Create a vectorized MuJoCo Playground environment."""
 
@@ -593,8 +622,10 @@ def build_playground_env(config: dict[str, Any]) -> PlaygroundEnvBundle:
     # context batch (nworld) must equal the number of parallel envs, which is
     # NUM_ENVS for training and EVAL_NUM_ENVS for eval (passed via RENDER_NWORLD).
     if config.get("USE_RGB", False):
-        # Guard against the MuJoCo-Warp GraphMode desync before the renderer loads.
+        # Guard against the MuJoCo-Warp GraphMode desync + the mjx.render tuple-arity
+        # drift before the renderer loads.
         ensure_mjwarp_graphmode()
+        ensure_mjx_render_compat()
         env_config.vision = True
         env_config.vision_config.nworld = int(config.get("RENDER_NWORLD", config["NUM_ENVS"]))
         # vision=True forces a shorter horizon (e.g. CartpoleBalance -> 250); make
