@@ -326,8 +326,9 @@ hierarchy is genuinely pixel-driven, not privileged-leaking. **Headline finding:
 distillation retains ~50 % of privileged performance across all three NEXUS meta
 variants — the RGB skill extension is meta-agnostic.**
 
-`notebooks/rgb_distillation_colab.ipynb` runs the same idea interactively on Colab
-(loss curve, pred-vs-teacher scatter, teacher + closed-loop pixel-policy videos).
+`nexus_continuous/scripts/rgb_visualize.py` produces the qualitative artifacts for a
+single run — an annotated rollout video, the 64×64 observation filmstrip, the
+skill-activation timeline, and a held-out fidelity scatter (see `results/rgb/viz/`).
 
 ## Reproducing results for the report (graphs + videos)
 
@@ -351,8 +352,9 @@ done
 python -m nexus_continuous.scripts.rgb_report --runs runs \
   --metas nesy,neural,symbolic --out runs/rgb_report   # -> comparison.png + table
 
-# 3b. Alternatively, notebooks/rgb_distillation_colab.ipynb runs it on Colab with
-#     the loss curve, pred-vs-teacher scatter, and teacher/closed-loop videos.
+# 3b. Qualitative artifacts (annotated video + skill timeline + filmstrip) for one run:
+python -m nexus_continuous.scripts.rgb_visualize \
+  --config configs/cartpole_balance_neural.yaml --meta neural --seed 0 --out runs/rgb_viz
 ```
 
 ### Headless rendering on a shared GPU (no display, no root)
@@ -377,14 +379,18 @@ export __EGL_VENDOR_LIBRARY_DIRS=$M/share/glvnd/egl_vendor.d EGL_PLATFORM=surfac
 | Notebook | Purpose |
 |---|---|
 | `run_environments_colab.ipynb` | Train the NEXUS suite — select 1 env or all 6; per-env curves + eval table. |
-| `rgb_distillation_colab.ipynb` | RGB extension result: pixel skills via distillation + graphs + videos (CartpoleBalance). |
-| `rgb_validation_colab.ipynb`   | RGB code-correctness gate (the `USE_RGB` smoke test + vision shape tests). |
+
+(The RGB extension now runs headless on a GPU via the scripts above; see the
+"RGB skill-agent extension" section and `results/rgb/`. Code-correctness is gated by
+`pytest tests/test_vision_rgb_smoke.py tests/test_vision_shapes.py`.)
 
 Open them in Colab (GPU runtime); each clones this repo and runs end-to-end.
 
-- **Graphs:** distillation loss curve + scatter/trace (notebook Steps 3–4); state
-  training curves (plot from the `.pkl` `metrics`).
-- **Videos:** teacher rollout + learned closed-loop pixel policy (notebook Steps 1 & 5).
+- **Graphs:** `rgb_distill_nexus.py` → `results/rgb/comparison.png` + per-variant
+  `state_vs_pixel.png`; `rgb_visualize.py` → skill-activation timeline, observation
+  filmstrip, held-out fidelity scatter. State training curves: plot the `.pkl` `metrics`.
+- **Videos:** `rgb_visualize.py` → `rollout_pixel.mp4` / `.gif` (the pixel hierarchy
+  acting, each frame annotated with the active skill).
 - **Honest scope for the writeup:** the RGB result is a *quantitative distillation
   study of pixel-based skill actors (asymmetric AC)* — the real NEXUS hierarchy's
   disentangled skills are behavior-cloned to 64×64 pixels and retain ~50 % of
