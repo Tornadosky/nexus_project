@@ -1,0 +1,202 @@
+[
+  {
+    "task": "CartpoleBalance",
+    "meta_policy": "nesy",
+    "seeds": [
+      0,
+      1,
+      2
+    ],
+    "state_hierarchy_success_mean": 0.7426666666666666,
+    "state_hierarchy_success_std": 0.2211806702424262,
+    "pixel_hierarchy_success_mean": 0.3453333333333333,
+    "pixel_hierarchy_success_std": 0.09158359872573012,
+    "retention_fraction": 0.4649910233393178,
+    "pixel_fallback_fraction_mean": 0.008,
+    "per_seed": [
+      {
+        "seed": 0,
+        "state_success": 1.0,
+        "pixel_success": 0.404,
+        "pixel_fallback_fraction": 0.008,
+        "distilled_skills": [
+          0,
+          1,
+          2
+        ],
+        "teacher_eval_primary_success": null,
+        "skill_histogram": [
+          1032,
+          236,
+          2730
+        ]
+      },
+      {
+        "seed": 1,
+        "state_success": 0.46,
+        "pixel_success": 0.416,
+        "pixel_fallback_fraction": 0.008,
+        "distilled_skills": [
+          0,
+          1,
+          2
+        ],
+        "teacher_eval_primary_success": null,
+        "skill_histogram": [
+          1072,
+          288,
+          2638
+        ]
+      },
+      {
+        "seed": 2,
+        "state_success": 0.768,
+        "pixel_success": 0.216,
+        "pixel_fallback_fraction": 0.008,
+        "distilled_skills": [
+          1,
+          2
+        ],
+        "teacher_eval_primary_success": null,
+        "skill_histogram": [
+          32,
+          1440,
+          2526
+        ]
+      }
+    ]
+  },
+  {
+    "task": "CartpoleBalance",
+    "meta_policy": "neural",
+    "seeds": [
+      0,
+      1,
+      2
+    ],
+    "state_hierarchy_success_mean": 1.0,
+    "state_hierarchy_success_std": 0.0,
+    "pixel_hierarchy_success_mean": 0.52,
+    "pixel_hierarchy_success_std": 0.03766519171153476,
+    "retention_fraction": 0.52,
+    "pixel_fallback_fraction_mean": 0.008,
+    "per_seed": [
+      {
+        "seed": 0,
+        "state_success": 1.0,
+        "pixel_success": 0.468,
+        "pixel_fallback_fraction": 0.008,
+        "distilled_skills": [
+          0,
+          1,
+          2
+        ],
+        "teacher_eval_primary_success": null,
+        "skill_histogram": [
+          1712,
+          558,
+          1728
+        ]
+      },
+      {
+        "seed": 1,
+        "state_success": 1.0,
+        "pixel_success": 0.556,
+        "pixel_fallback_fraction": 0.008,
+        "distilled_skills": [
+          0,
+          1,
+          2
+        ],
+        "teacher_eval_primary_success": null,
+        "skill_histogram": [
+          1056,
+          264,
+          2678
+        ]
+      },
+      {
+        "seed": 2,
+        "state_success": 1.0,
+        "pixel_success": 0.536,
+        "pixel_fallback_fraction": 0.008,
+        "distilled_skills": [
+          0,
+          1,
+          2
+        ],
+        "teacher_eval_primary_success": null,
+        "skill_histogram": [
+          2062,
+          1192,
+          744
+        ]
+      }
+    ]
+  },
+  {
+    "task": "CartpoleBalance",
+    "meta_policy": "symbolic",
+    "seeds": [
+      0,
+      1,
+      2
+    ],
+    "state_hierarchy_success_mean": 0.3106666666666667,
+    "state_hierarchy_success_std": 0.2604679549494631,
+    "pixel_hierarchy_success_mean": 0.15733333333333333,
+    "pixel_hierarchy_success_std": 0.09445045732493246,
+    "retention_fraction": 0.5064377682403433,
+    "pixel_fallback_fraction_mean": 0.02266666666666667,
+    "per_seed": [
+      {
+        "seed": 0,
+        "state_success": 0.192,
+        "pixel_success": 0.116,
+        "pixel_fallback_fraction": 0.008,
+        "distilled_skills": [
+          0,
+          2
+        ],
+        "teacher_eval_primary_success": null,
+        "skill_histogram": [
+          3848,
+          0,
+          150
+        ]
+      },
+      {
+        "seed": 1,
+        "state_success": 0.068,
+        "pixel_success": 0.068,
+        "pixel_fallback_fraction": 0.052,
+        "distilled_skills": [
+          0
+        ],
+        "teacher_eval_primary_success": null,
+        "skill_histogram": [
+          3956,
+          0,
+          42
+        ]
+      },
+      {
+        "seed": 2,
+        "state_success": 0.672,
+        "pixel_success": 0.288,
+        "pixel_fallback_fraction": 0.008,
+        "distilled_skills": [
+          0,
+          1,
+          2
+        ],
+        "teacher_eval_primary_success": null,
+        "skill_histogram": [
+          3600,
+          112,
+          286
+        ]
+      }
+    ]
+  }
+]

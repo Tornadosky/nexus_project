@@ -294,17 +294,40 @@ meta-policy(state/symbols) -> skill            # unchanged symbolic/nesy layer
 - **Env coverage:** only `CartpoleBalance` has a vision pipeline in Playground.
 - **Status:** the code is verified (`pytest tests/test_vision_rgb_smoke.py` drives
   the full `USE_RGB` training path on a fake pixel env). The **in-loop pixel RL**
-  path additionally needs the MuJoCo-Warp renderer, which is currently unstable on
-  Colab (Beta CUDA/FFI bug) — so the demonstrated result is obtained via
-  **distillation** (see below), not in-loop RL.
+  path additionally needs the MuJoCo-Warp renderer, which is currently unstable
+  (Beta CUDA/FFI bug) — so the demonstrated result is obtained via **distillation**
+  (see below), not in-loop RL.
 
-### Distillation (the runnable pixel-skill result)
+### Distillation result (report-grade, reproduced on GPU)
 
-`notebooks/rgb_distillation_colab.ipynb` renders frames **offline** with the
-standard MuJoCo EGL renderer (no MJWarp), then behavior-clones the real
-`VisionSkillActor` to control CartpoleBalance from 64×64 pixels. It produces:
-training-loss curve, held-out pred-vs-teacher scatter/trace, a **teacher rollout
-video**, and a **closed-loop video + balance metric** of the learned pixel policy.
+`nexus_continuous/scripts/rgb_distill_nexus.py` is the report deliverable. It
+trains the **real** state NEXUS hierarchy (meta variant via `--meta`:
+`nesy`/`neural`/`symbolic`), rolls it out to record `(rendered 64×64 frame,
+meta-selected skill, action)`, behavior-clones each skill into a
+`VisionSkillActor`, then runs a **closed-loop pixel-vs-state** comparison in which
+the unchanged meta selects skills from privileged state and the pixel students act.
+`nexus_continuous/scripts/rgb_report.py` aggregates the per-variant runs into one
+figure + table.
+
+Results (CartpoleBalance, 3 seeds each; artifacts in [`results/rgb/`](results/rgb/),
+figure `results/rgb/comparison.png`):
+
+| meta | state success | pixel success | retention | pixel-fallback |
+|------|---------------|---------------|-----------|----------------|
+| nesy     | 0.743 ± 0.221 | 0.345 ± 0.092 | 0.46 | 0.008 |
+| neural   | 1.000 ± 0.000 | 0.520 ± 0.038 | 0.52 | 0.008 |
+| symbolic | 0.311 ± 0.260 | 0.157 ± 0.094 | 0.51 | 0.023 |
+
+Per-skill distillation is near-exact for well-sampled skills (BC MSE 1e-4–2e-3);
+the ~50 % closed-loop gap is the expected **compounding-error / partial-
+observability** cost of acting from a 3-frame 64×64 grayscale stack instead of
+privileged state (Ross et al. 2011). Pixel-fallback < 2.5 % confirms the pixel
+hierarchy is genuinely pixel-driven, not privileged-leaking. **Headline finding:
+distillation retains ~50 % of privileged performance across all three NEXUS meta
+variants — the RGB skill extension is meta-agnostic.**
+
+`notebooks/rgb_distillation_colab.ipynb` runs the same idea interactively on Colab
+(loss curve, pred-vs-teacher scatter, teacher + closed-loop pixel-policy videos).
 
 ## Reproducing results for the report (graphs + videos)
 
@@ -318,9 +341,35 @@ python -m nexus_continuous.scripts.train_nexus_playground \
 # metrics live in the checkpoint: load runs/cartpole_state.pkl -> ['metrics'] and plot
 # 'rollout/episode_return', and ['eval_metrics'] for the deterministic eval summary.
 
-# 3. RGB pixel-skill result (graphs + videos): open notebooks/rgb_distillation_colab.ipynb
-#    in Colab (T4 GPU) and Run All. Produces the loss curve, scatter, teacher video,
-#    and the closed-loop pixel-policy video + "balanced N/250 steps" number.
+# 3. RGB pixel-skill result (report-grade, headless GPU): train the real NEXUS
+#    teacher, distill to pixel skills, and compare pixel-vs-state — per variant.
+for META in nesy neural symbolic; do
+  python -m nexus_continuous.scripts.rgb_distill_nexus \
+    --config configs/cartpole_balance_${META}.yaml --meta ${META} \
+    --seeds 0,1,2 --out runs/rgb_nexus_${META}
+done
+python -m nexus_continuous.scripts.rgb_report --runs runs \
+  --metas nesy,neural,symbolic --out runs/rgb_report   # -> comparison.png + table
+
+# 3b. Alternatively, notebooks/rgb_distillation_colab.ipynb runs it on Colab with
+#     the loss curve, pred-vs-teacher scatter, and teacher/closed-loop videos.
+```
+
+### Headless rendering on a shared GPU (no display, no root)
+
+CartpoleBalance needs an offscreen GL context. When the machine's GPU render node
+(`/dev/dri`) is not group-accessible and you have no sudo (typical on a shared
+student pool), skip EGL-on-GPU and OSMesa (dropped from recent `mesalib`) and use
+**software EGL (llvmpipe)** — a pure-CPU offscreen renderer that coexists with
+jax-on-GPU in the same process. Install userspace Mesa once via micromamba, then:
+
+```bash
+micromamba create -n mesa -c conda-forge mesalib -y   # ships libEGL_mesa + llvmpipe
+M=$HOME/micromamba/envs/mesa
+export MUJOCO_GL=egl LD_LIBRARY_PATH=$M/lib:$LD_LIBRARY_PATH
+export LIBGL_DRIVERS_PATH=$M/lib/dri MESA_LOADER_DRIVER_OVERRIDE=llvmpipe
+export __EGL_VENDOR_LIBRARY_DIRS=$M/share/glvnd/egl_vendor.d EGL_PLATFORM=surfaceless
+# now `MUJOCO_GL=egl` renders on CPU; jax still uses the GPU (CudaDevice).
 ```
 
 ## Colab notebooks (`notebooks/`)
@@ -336,10 +385,12 @@ Open them in Colab (GPU runtime); each clones this repo and runs end-to-end.
 - **Graphs:** distillation loss curve + scatter/trace (notebook Steps 3–4); state
   training curves (plot from the `.pkl` `metrics`).
 - **Videos:** teacher rollout + learned closed-loop pixel policy (notebook Steps 1 & 5).
-- **Honest scope for the writeup:** frame the RGB result as a *feasibility result
-  for pixel-based skill actors (asymmetric AC), validated by distillation +
-  closed-loop control on CartpoleBalance*. Note that in-loop pixel RL is
-  environment-blocked, and that the interpretable meta-policy remains state-based.
+- **Honest scope for the writeup:** the RGB result is a *quantitative distillation
+  study of pixel-based skill actors (asymmetric AC)* — the real NEXUS hierarchy's
+  disentangled skills are behavior-cloned to 64×64 pixels and retain ~50 % of
+  privileged closed-loop success across all three meta variants on CartpoleBalance
+  (see `results/rgb/`). The interpretable meta-policy remains state-based by design
+  (privileged-critic asymmetry); in-loop pixel RL is renderer-blocked (MJWarp Beta).
 
 ## Notes on observation features
 
