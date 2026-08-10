@@ -60,8 +60,9 @@ def main(argv: list[str] | None = None) -> None:
     ap.add_argument("--seeds", default="0", help="comma-separated, e.g. 0,1,2")
     ap.add_argument("--out", default="runs/rgb_nexus")
     ap.add_argument("--teacher-steps", type=int, default=4000, help="round-0 teacher rollout steps (BC dataset)")
-    ap.add_argument("--dagger-iters", type=int, default=2,
-                    help="DAgger aggregation rounds after BC (0 = plain behavior cloning)")
+    ap.add_argument("--dagger-iters", type=int, default=0,
+                    help="DAgger aggregation rounds after BC (0 = plain behavior cloning; "
+                         "note: DAgger did not robustly beat BC on CartpoleBalance -- see results/rgb)")
     ap.add_argument("--dagger-steps", type=int, default=1500,
                     help="student-rollout steps added per DAgger round (teacher-relabelled)")
     ap.add_argument("--dagger-beta", type=float, default=0.5,
