@@ -644,6 +644,8 @@ def build_playground_env(config: dict[str, Any]) -> PlaygroundEnvBundle:
                 episode_length=env_config.episode_length,
                 impl=env_config.impl,
             )
+            # Signal the vec wrapper to run its vision obs path (emit actor_pixels).
+            env_config.vision = True
         else:
             raise NotImplementedError(
                 f"In-loop RGB not available for {config['ENV_NAME']}; only "
