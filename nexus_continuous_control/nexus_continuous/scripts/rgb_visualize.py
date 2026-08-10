@@ -49,7 +49,7 @@ def main(argv: list[str] | None = None) -> None:
     ap.add_argument("--min-samples", type=int, default=64)
     ap.add_argument("--embed-dim", type=int, default=64)
     ap.add_argument("--batch-size", type=int, default=128)
-    ap.add_argument("--render-res", type=int, default=200, help="hi-res video render size")
+    ap.add_argument("--render-res", type=int, default=240, help="hi-res video render size (÷16)")
     ap.add_argument("--fps", type=int, default=25)
     args = ap.parse_args(argv)
 
@@ -217,6 +217,7 @@ def main(argv: list[str] | None = None) -> None:
         return optax.apply_updates(p, u), st, l
 
     skill_params = []
+    ho_t, ho_p, ho_k = [], [], []  # held-out teacher/pixel actions + skill id (fidelity scatter)
     for k in range(num_skills):
         m = skills_ds == k
         n = int(m.sum())
@@ -224,18 +225,30 @@ def main(argv: list[str] | None = None) -> None:
             print(f"    skill {k} ({skill_names[k]}): {n} samples -> teacher fallback")
             skill_params.append(None)
             continue
-        bs = min(args.batch_size, n)
-        xk, yk = jnp.asarray(X[m]), jnp.asarray(Y[m])
+        xk_all, yk_all = X[m], Y[m]
+        n_ho = max(1, int(0.15 * n))
+        perm0 = np.random.permutation(n)
+        ho_idx, tr_idx = perm0[:n_ho], perm0[n_ho:]
+        ntr = len(tr_idx)
+        bs = min(args.batch_size, ntr)
+        xk, yk = jnp.asarray(xk_all[tr_idx]), jnp.asarray(yk_all[tr_idx])
         p = vactor.init(jax.random.PRNGKey(k), xk[:1], empty(1))["params"]
         st = opt.init(p)
         last = float("nan")
         for _e in range(args.epochs):
-            perm = np.random.permutation(n)
-            for i in range(0, n, bs):
+            perm = np.random.permutation(ntr)
+            for i in range(0, ntr, bs):
                 p, st, last = bc_step(p, st, xk[perm[i : i + bs]], yk[perm[i : i + bs]])
                 last = float(last)
         skill_params.append(p)
-        print(f"    skill {k} ({skill_names[k]}): {n} samples, MSE {last:.4f}")
+        pred = np.asarray(vactor.apply({"params": p}, jnp.asarray(xk_all[ho_idx]), empty(len(ho_idx))))
+        ho_mse = float(np.mean((pred[:, 0] - yk_all[ho_idx][:, 0]) ** 2))
+        ho_t.append(yk_all[ho_idx][:, 0]); ho_p.append(pred[:, 0]); ho_k.append(np.full(len(ho_idx), k))
+        print(f"    skill {k} ({skill_names[k]}): {ntr} train / {n_ho} held-out, "
+              f"train MSE {last:.4f}, held-out MSE {ho_mse:.4f}")
+    ho_t = np.concatenate(ho_t) if ho_t else np.zeros(0)
+    ho_p = np.concatenate(ho_p) if ho_p else np.zeros(0)
+    ho_k = np.concatenate(ho_k).astype(int) if ho_k else np.zeros(0, int)
 
     # ---- Stage 4: instrumented closed-loop rollout of the PIXEL hierarchy ----
     print("[4] instrumented closed-loop pixel rollout...")
@@ -311,13 +324,22 @@ def main(argv: list[str] | None = None) -> None:
     # ---- artifact 3: skill-activation timeline over the trajectory ----
     fig, (ax1, ax2) = plt.subplots(2, 1, figsize=(9, 4.2), sharex=True,
                                    gridspec_kw={"height_ratios": [3, 0.7]})
-    ax1.axhspan(-14.3, 14.3, color="#8fbf8f", alpha=0.25, label="upright band (|θ|<0.25 rad)")
-    ax1.plot(np.arange(T), angle_deg, color="#C44E52", lw=1.4, label="pole angle (deg)")
-    ax1.plot(np.arange(T), np.degrees(cart_pos), color="#4C72B0", lw=1.0, alpha=0.8,
-             label="cart position (scaled)")
+    ax1.axhspan(-14.3, 14.3, color="#8fbf8f", alpha=0.22, label="upright band |θ|<0.25 rad")
+    ln1 = ax1.plot(np.arange(T), angle_deg, color="#C44E52", lw=1.5, label="pole angle (deg)")
     ax1.axhline(0, color="k", lw=0.5, alpha=0.4)
-    ax1.set_ylabel("angle (deg) / cart")
-    ax1.legend(loc="upper right", fontsize=8, ncol=3)
+    ax1.set_ylabel("pole angle (deg)", color="#C44E52")
+    ax1.tick_params(axis="y", labelcolor="#C44E52")
+    ax1.set_ylim(-20, 20)
+    axc = ax1.twinx()  # cart on its own axis (metres) with the ±1.0 fail lines
+    ln2 = axc.plot(np.arange(T), cart_pos, color="#4C72B0", lw=1.2, alpha=0.85,
+                   label="cart position (m)")
+    axc.axhline(1.0, color="#4C72B0", ls=":", lw=0.9, alpha=0.7)
+    axc.axhline(-1.0, color="#4C72B0", ls=":", lw=0.9, alpha=0.7)
+    axc.set_ylabel("cart position (m)  [fail at ±1.0]", color="#4C72B0")
+    axc.tick_params(axis="y", labelcolor="#4C72B0")
+    axc.set_ylim(-1.15, 1.15)
+    lns = ln1 + ln2
+    ax1.legend(lns, [l.get_label() for l in lns], loc="upper left", fontsize=8)
     ax1.set_title(f"NEXUS pixel hierarchy on CartpoleBalance ({args.meta}, seed {seed}): "
                   f"skill activation vs. pole trajectory", fontsize=10)
     cmap = ListedColormap(palette)
@@ -334,34 +356,32 @@ def main(argv: list[str] | None = None) -> None:
 
     # ---- artifact 4: action tracking + per-skill scatter ----
     fig, (axL, axR) = plt.subplots(1, 2, figsize=(11, 3.6))
-    axL.plot(np.arange(T), t_force, color="#4C72B0", lw=1.3, label="state teacher action")
-    axL.plot(np.arange(T), p_force, color="#DD8452", lw=1.1, alpha=0.85, label="pixel student action")
+    axL.plot(np.arange(T), t_force, color="#4C72B0", lw=1.3, label="state teacher")
+    axL.plot(np.arange(T), p_force, color="#DD8452", lw=1.0, alpha=0.85, label="pixel student")
     axL.set_xlabel("closed-loop step")
     axL.set_ylabel("control (force)")
-    axL.set_title("Closed-loop action: state teacher vs pixel student")
+    axL.set_title("Closed-loop control: state teacher vs pixel student")
     axL.legend(fontsize=8)
-    mpx = used_pix
-    if mpx.sum() > 1:
-        r = float(np.corrcoef(t_force[mpx], p_force[mpx])[0, 1])
-    else:
-        r = float("nan")
+    # Right: imitation fidelity on HELD-OUT teacher-distribution samples (not the
+    # shifted closed loop) — the honest "did the distillation clone the skills" test.
+    r = float(np.corrcoef(ho_t, ho_p)[0, 1]) if len(ho_t) > 1 else float("nan")
     for i in range(num_skills):
-        sel = mpx & (sel_skill == i)
+        sel = ho_k == i
         if sel.any():
-            axR.scatter(t_force[sel], p_force[sel], s=10, alpha=0.6,
-                        color=palette[i], label=skill_names[i])
-    lim = [min(t_force.min(), p_force.min()), max(t_force.max(), p_force.max())]
-    axR.plot(lim, lim, "k--", lw=0.8, alpha=0.6)
+            axR.scatter(ho_t[sel], ho_p[sel], s=12, alpha=0.6, color=palette[i], label=skill_names[i])
+    if len(ho_t):
+        lim = [float(min(ho_t.min(), ho_p.min())), float(max(ho_t.max(), ho_p.max()))]
+        axR.plot(lim, lim, "k--", lw=0.8, alpha=0.6)
     axR.set_xlabel("teacher action")
     axR.set_ylabel("pixel-student action")
-    axR.set_title(f"Per-skill imitation fidelity (Pearson r = {r:.3f})")
+    axR.set_title(f"Held-out imitation fidelity (Pearson r = {r:.3f})")
     axR.legend(fontsize=8)
     fig.savefig(out / "action_tracking.png", dpi=140, bbox_inches="tight")
     plt.close(fig)
 
     upright = float(np.mean((np.abs(angle_deg) < 14.3) & (np.abs(cart_pos) < 1.0)))
     print(f"\n==== VIZ DONE ==== pixel-hierarchy upright {upright:.3f} over {T} steps, "
-          f"action corr r={r:.3f}")
+          f"held-out action fidelity r={r:.3f}")
     print("wrote", out.resolve())
     for f in ("rollout_pixel.mp4", "rollout_pixel.gif", "observation_filmstrip.png",
               "skill_timeline.png", "action_tracking.png"):
