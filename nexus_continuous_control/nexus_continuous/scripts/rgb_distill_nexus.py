@@ -64,6 +64,12 @@ def main(argv: list[str] | None = None) -> None:
                     help="DAgger aggregation rounds after BC (0 = plain behavior cloning)")
     ap.add_argument("--dagger-steps", type=int, default=1500,
                     help="student-rollout steps added per DAgger round (teacher-relabelled)")
+    ap.add_argument("--dagger-beta", type=float, default=0.5,
+                    help="DAgger mixing base: execute teacher w.p. beta**iter (keeps the "
+                         "rollout near-distribution so aggregated states stay useful)")
+    ap.add_argument("--dagger-reset-every", type=int, default=50,
+                    help="reset to upright every N steps during rollouts (0 = never); stops "
+                         "a diverging student from flooding the set with fallen states")
     ap.add_argument("--epochs", type=int, default=40)
     ap.add_argument("--eval-steps", type=int, default=250, help="closed-loop eval horizon")
     ap.add_argument("--embed-dim", type=int, default=64)
@@ -247,18 +253,25 @@ def main(argv: list[str] | None = None) -> None:
                 print(f"      skill {k}: {n} samples (bs={bs}), MSE {last:.4f}")
             return sp
 
-        def collect_rollout(sp, n_steps, key):
+        def collect_rollout(sp, n_steps, key, beta):
             """Roll out the hierarchy for n_steps rendering 64x64 frames on the fly.
-            The meta always selects the skill from privileged state; the EXECUTING
-            actor is the distilled pixel actor when available (sp[k] not None) else
-            the teacher. Every visited state is labelled with the TEACHER action ->
-            this is the DAgger expert relabelling that fixes covariate shift."""
+            The meta always selects the skill from privileged state. Execution mixes
+            teacher/student: teacher w.p. `beta`, else the distilled pixel actor
+            (DAgger-beta, Ross 2011) -- keeping the trajectory near-distribution so
+            the aggregated states are small student perturbations, not garbage.
+            Every visited state is labelled with the TEACHER action (expert
+            relabelling). Periodic resets stop a diverging student from flooding the
+            dataset with fallen states."""
             key, rk = jax.random.split(key)
             obs, state = env.reset(jax.random.split(rk, 1), env_params)
             buf, Xs, Ys, Ss = [], [], [], []
             data = mujoco.MjData(mj_model)
             with mujoco.Renderer(mj_model, height=64, width=64) as r:
-                for _t in range(n_steps):
+                for t in range(n_steps):
+                    if args.dagger_reset_every > 0 and t > 0 and t % args.dagger_reset_every == 0:
+                        key, rk = jax.random.split(key)
+                        obs, state = env.reset(jax.random.split(rk, 1), env_params)
+                        buf = []
                     sd = _mjx_data(state)
                     data.qpos[:] = np.asarray(sd.qpos[0])
                     data.qvel[:] = np.asarray(sd.qvel[0])
@@ -268,35 +281,38 @@ def main(argv: list[str] | None = None) -> None:
                     buf = buf[-3:]
                     skill_t, teacher_act = teacher_step(obs)
                     k = int(np.asarray(skill_t[0]))
+                    act = teacher_act
                     if len(buf) == 3:
                         Xs.append(np.stack(buf, -1))            # [64,64,3]
                         Ys.append(np.asarray(teacher_act[0]))   # teacher (expert) label
                         Ss.append(k)
                         if sp[k] is not None:
-                            stack = jnp.asarray(np.stack(buf, -1)[None])
-                            act = jnp.asarray(np.asarray(
-                                vactor.apply({"params": sp[k]}, stack, empty(1))))
-                        else:
-                            act = teacher_act
-                    else:
-                        act = teacher_act
+                            key, kb = jax.random.split(key)
+                            if float(jax.random.uniform(kb)) >= beta:   # else keep teacher
+                                stack = jnp.asarray(np.stack(buf, -1)[None])
+                                act = jnp.asarray(np.asarray(
+                                    vactor.apply({"params": sp[k]}, stack, empty(1))))
                     act = jnp.clip(act, alo, ahi)
                     key, ks = jax.random.split(key)
                     obs, state, _r, _d, _i = step_fn(jax.random.split(ks, 1), state, act, env_params)
             return (np.asarray(Xs, np.float32), np.asarray(Ys, np.float32), np.asarray(Ss, np.int32))
 
-        print(f"[2/3] DAgger distillation ({args.dagger_iters} iters after BC)...")
+        print(f"[2/3] DAgger distillation ({args.dagger_iters} iters after BC, "
+              f"beta={args.dagger_beta}, reset={args.dagger_reset_every})...")
         agg_X, agg_Y, agg_S = [], [], []
         skill_params = [None] * num_skills
         skill_params_bc = None
         drng = jax.random.PRNGKey(1000 + seed)
         for it in range(args.dagger_iters + 1):
-            n_steps = args.teacher_steps if it == 0 else args.dagger_steps
+            if it == 0:
+                n_steps, beta = args.teacher_steps, 1.0            # pure teacher (BC)
+            else:
+                n_steps, beta = args.dagger_steps, args.dagger_beta ** it
             drng, ck = jax.random.split(drng)
-            Xr, Yr, Sr = collect_rollout(skill_params, n_steps, ck)
+            Xr, Yr, Sr = collect_rollout(skill_params, n_steps, ck, beta)
             agg_X.append(Xr); agg_Y.append(Yr); agg_S.append(Sr)
             X = np.concatenate(agg_X); Y = np.concatenate(agg_Y); skills = np.concatenate(agg_S)
-            tag = "BC: teacher rollout" if it == 0 else f"DAgger {it}: student rollout"
+            tag = "BC: teacher rollout" if it == 0 else f"DAgger {it}: beta={beta:.2f}"
             print(f"    [{tag}] +{len(Xr)} new, {len(X)} total; "
                   f"hist={np.bincount(skills, minlength=num_skills)}")
             skill_params = distill(X, Y, skills)
