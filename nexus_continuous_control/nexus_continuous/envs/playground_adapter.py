@@ -234,12 +234,17 @@ class _PlaygroundVecWrapper(_EnvWrapper):
                         "height": xpos[..., torso_idx, 2],
                     }
                 )
+            # walker.xml root-joint order is rootz(0), rootx(1), rooty(2), so qvel[1]
+            # is the FORWARD (horizontal) velocity and qvel[0] is the VERTICAL one.
+            # (The env's own move reward reads the torso_subtreelinvel sensor; qvel[1]
+            # matches it for the planar root. Cheetah/hopper are rootx-first, so their
+            # qvel[0] is already forward — walker is the lone odd ordering.)
             info.update(
                 {
                     "torso_pitch": qpos[..., 2],
                     "pitch": qpos[..., 2],
-                    "x_velocity": qvel[..., 0],
-                    "forward_velocity": qvel[..., 0],
+                    "x_velocity": qvel[..., 1],
+                    "forward_velocity": qvel[..., 1],
                     "joint_speed": self._tail_abs_mean(qvel, 3),
                 }
             )
@@ -290,23 +295,40 @@ class _PlaygroundVecWrapper(_EnvWrapper):
                 {
                     "base_height": qpos[..., 2],
                     "height": qpos[..., 2],
+                    # World-frame fallback; overridden below with the body-frame
+                    # velocity when the IMU-site orientation is available.
                     "lin_vel_x": qvel[..., 0],
                     "lin_vel_y": qvel[..., 1],
                     "x_velocity": qvel[..., 0],
                     "y_velocity": qvel[..., 1],
+                    # Free-joint angular velocity qvel[3:6] is already body-local.
                     "yaw_rate": qvel[..., 5],
                     "ang_vel_yaw": qvel[..., 5],
                 }
             )
             imu_site = self._static_int(self._safe_attr(self._env, "_imu_site_id"))
             if imu_site is not None and site_xmat is not None:
-                up = site_xmat[..., imu_site, :, 2]
+                rot = site_xmat[..., imu_site, :, :]  # world<-body (columns = body axes)
+                up = rot[..., :, 2]
                 roll = jnp.arctan2(up[..., 1], up[..., 2])
                 pitch = jnp.arctan2(
                     -up[..., 0],
                     jnp.sqrt(jnp.square(up[..., 1]) + jnp.square(up[..., 2])),
                 )
                 info.update({"roll": roll, "base_roll": roll, "pitch": pitch, "base_pitch": pitch})
+                # The go1 env's tracking reward compares the command (BODY frame) to
+                # get_local_linvel(data). The free-joint qvel[0:3] is WORLD frame, so
+                # rotate it into the base/body frame (v_body = R^T v_world) before it
+                # feeds the track skill's reward and the tracking metric.
+                v_body = jnp.einsum("...ij,...i->...j", rot, qvel[..., 0:3])
+                info.update(
+                    {
+                        "lin_vel_x": v_body[..., 0],
+                        "x_velocity": v_body[..., 0],
+                        "lin_vel_y": v_body[..., 1],
+                        "y_velocity": v_body[..., 1],
+                    }
+                )
             if isinstance(raw_info, Mapping) and "command" in raw_info:
                 command = raw_info["command"]
                 info.update(
