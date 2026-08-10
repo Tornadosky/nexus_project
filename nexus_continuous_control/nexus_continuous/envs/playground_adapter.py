@@ -642,7 +642,7 @@ def build_playground_env(config: dict[str, Any]) -> PlaygroundEnvBundle:
             _vision_env = CheetahRunVision(
                 nworld=nworld,
                 episode_length=env_config.episode_length,
-                impl=env_config.impl,
+                impl="warp",  # the MJWarp render path (refit_bvh/render) requires warp
             )
             # Signal the vec wrapper to run its vision obs path (emit actor_pixels).
             env_config.vision = True
