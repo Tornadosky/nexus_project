@@ -83,6 +83,7 @@ def main(argv: list[str] | None = None) -> None:
     out = Path(args.out)
     out.mkdir(parents=True, exist_ok=True)
     seed = args.seed
+    np.random.seed(1234 + seed)  # reproducible BC shuffles / held-out split
     R = args.render_res
     print("jax", jax.__version__, jax.devices(), "| meta", args.meta, "| seed", seed)
 
