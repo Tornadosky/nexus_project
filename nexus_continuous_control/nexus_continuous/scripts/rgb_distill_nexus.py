@@ -175,7 +175,11 @@ def main(argv: list[str] | None = None) -> None:
             """Greedy hierarchy: symbolic meta picks skill, that skill's actor acts."""
             oa = norm_actor(obs)
             all_a = jax.vmap(lambda p: actor.apply({"params": p}, oa))(actor_params)  # [N,E,A]
-            skill = jnp.asarray(policy_module.symbolic_meta_policy(get_policy_obs(obs)), jnp.int32)  # [E]
+            # atleast_1d: at NUM_ENVS=1 the symbolic policy's info_value squeezes the
+            # singleton batch dim to a scalar; restore the [E] axis so skill[e] indexes.
+            skill = jnp.atleast_1d(
+                jnp.asarray(policy_module.symbolic_meta_policy(get_policy_obs(obs)), jnp.int32)
+            )  # [E]
             e = jnp.arange(all_a.shape[1])
             act = all_a[skill, e]  # [E,A]
             return skill, act
