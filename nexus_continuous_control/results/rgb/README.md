@@ -34,6 +34,12 @@ capped by behavior cloning + covariate shift. Details for each method below.
   run. That is ~68% of the state teacher's 0.62/step, vs distillation's ~26%.
 - Both **beat the distilled pixel policy** on the same env (headline table). Same
   pattern on both: joint perception+control learning > behavior cloning.
+- **Qualitative artifacts** (`inloop/viz_cartpole/`, `inloop/viz_cheetah/`): a video
+  (`rollout_inloop.mp4`/`.gif`) of *what the in-loop pixel policy sees* — the 64×64
+  agent view, skill-annotated (pole balancing / cheetah running) — plus the
+  observation filmstrip and a skill-activation + reward timeline. Each rollout is
+  self-checked: mean reward 0.074/step (cartpole) and 0.259/step (cheetah, above the
+  distilled 0.16), confirming the visualized policy really is the trained one.
 - **Enabled by:** `mujoco-warp==3.11.0` (version-aligned with mujoco 3.11 — the desync
   that blocked this on Colab is gone) + two runtime shims (`ensure_mjwarp_graphmode`,
   `ensure_mjx_render_compat`) + a `CheetahRunVision` subclass that ports cartpole's
@@ -136,8 +142,10 @@ run-to-run (GPU nondeterminism in teacher training); the retention *ordering*
 - `viz_cheetah/` — CheetahRun distillation qualitative artifacts (same set).
 - `multienv/*.json` — return-based distillation summaries used in the cross-env table above.
 - `inloop/` — **in-loop pixel RL** results: `cartpole_inloop_curve.png` + `.json`,
-  `cheetah_inloop_curve.png` + `.json` (learning curves + eval/return), and
-  `cheetah_render_probe.png` (verifies the cheetah tracking camera renders in-frame).
+  `cheetah_inloop_curve.png` + `.json` (learning curves + eval/return),
+  `cheetah_render_probe.png` (verifies the cheetah tracking camera renders in-frame),
+  and `viz_cartpole/` + `viz_cheetah/` (in-loop rollout **video** + filmstrip +
+  skill/reward timeline for each env).
 
 Run environment: TU student pool `mlsp2` (RTX 2080 Ti), jax 0.11 CUDA, mujoco 3.11 +
 mujoco-warp 3.11; distillation renders offline via software-EGL (llvmpipe), in-loop
