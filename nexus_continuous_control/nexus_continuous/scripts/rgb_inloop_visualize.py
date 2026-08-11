@@ -89,6 +89,22 @@ def main(argv: list[str] | None = None) -> None:
     skill_names = list(getattr(policy_module, "SKILL_NAMES", [f"skill{i}" for i in range(num_skills)]))
     print(f"[1] trained in-loop. skills={num_skills} ({', '.join(skill_names)})")
 
+    # save the in-loop learning curve (training episode return per update)
+    import json as _json
+    _m = output.metrics or {}
+    _c = np.asarray(_m["env/returned_episode_returns"]) if "env/returned_episode_returns" in _m else None
+    if _c is not None and _c.size > 1:
+        _c = _c.reshape(_c.shape[0], -1).mean(1) if _c.ndim > 1 else _c.reshape(-1)
+        _json.dump({"env": env_name, "mode": "in_loop_pixel_rl", "updates": args.updates,
+                    "return_curve": _c.tolist()}, open(out / "inloop_curve.json", "w"))
+        _fig = plt.figure(figsize=(6, 4))
+        plt.plot(np.arange(len(_c)), _c, color="#4C72B0", lw=1.8)
+        plt.xlabel("training update"); plt.ylabel("episode return (train, per update)")
+        plt.title(f"In-loop pixel RL on {env_name} ({args.meta})\n"
+                  f"final training return ~{_c[-20:].mean():.1f} (peak {_c.max():.1f})")
+        _fig.savefig(out / "inloop_curve.png", dpi=130, bbox_inches="tight"); plt.close(_fig)
+        print(f"    saved learning curve (final ~{_c[-20:].mean():.1f})")
+
     # ---- Stage 2: build a 1-env vision environment for the rollout ----
     eval_cfg = dict(cfg)
     eval_cfg["NORMALIZE_OBS"] = False   # raw; we apply frozen stats to the meta input

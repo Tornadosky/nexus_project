@@ -634,12 +634,12 @@ def build_playground_env(config: dict[str, Any]) -> PlaygroundEnvBundle:
         if config["ENV_NAME"] == "CartpoleBalance":
             env_config.vision = True
             env_config.vision_config.nworld = nworld
-        elif config["ENV_NAME"] == "CheetahRun":
-            # The framework has no in-loop vision for cheetah; use our ported
-            # subclass (mirrors cartpole's MJWarp render path).
-            from nexus_continuous.envs.cheetah_vision import CheetahRunVision
+        elif config["ENV_NAME"] in ("CheetahRun", "WalkerWalk", "HopperHop"):
+            # The framework has no in-loop vision for the locomotion envs; use our
+            # ported subclasses (mirror cartpole's MJWarp render path).
+            from nexus_continuous.envs.dm_control_vision import VISION_ENVS
 
-            _vision_env = CheetahRunVision(
+            _vision_env = VISION_ENVS[config["ENV_NAME"]](
                 nworld=nworld,
                 episode_length=env_config.episode_length,
                 impl="warp",  # the MJWarp render path (refit_bvh/render) requires warp
@@ -649,7 +649,8 @@ def build_playground_env(config: dict[str, Any]) -> PlaygroundEnvBundle:
         else:
             raise NotImplementedError(
                 f"In-loop RGB not available for {config['ENV_NAME']}; only "
-                "CartpoleBalance (framework) and CheetahRun (ported) are supported."
+                "CartpoleBalance (framework) and CheetahRun/WalkerWalk/HopperHop "
+                "(ported) are supported."
             )
     env = _vision_env if _vision_env is not None else registry.load(config["ENV_NAME"], env_config)
     env = wrap_for_brax_training(
