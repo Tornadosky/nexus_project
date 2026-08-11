@@ -27,28 +27,36 @@ capped by behavior cloning + covariate shift. Details for each method below.
 ![cartpole in-loop](inloop/cartpole_inloop_curve.png)
 ![cheetah in-loop](inloop/cheetah_inloop_curve.png)
 
-- **CartpoleBalance:** eval success **0.639** (0.75 on another seed), return 5.26; the
-  learning curve rises from ~0 to peaks ~15 over 250 updates (128 envs, one seed).
-- **CheetahRun:** the config has no greedy-eval stage, but the **training return climbs
-  0 → ~110** (≈ **0.42 reward/step**) over 250 updates — the pixel cheetah learns to
-  run. That is ~68% of the state teacher's 0.62/step, vs distillation's ~26%.
-- Both **beat the distilled pixel policy** on the same env (headline table). Same
-  pattern on both: joint perception+control learning > behavior cloning.
-- **Qualitative artifacts** (`inloop/viz_cartpole/`, `inloop/viz_cheetah/`): a video
-  (`rollout_inloop.mp4`/`.gif`) of *what the in-loop pixel policy sees* — the 64×64
-  agent view, skill-annotated (pole balancing / cheetah running) — plus the
-  observation filmstrip and a skill-activation + reward timeline. Each rollout is
-  self-checked: mean reward 0.074/step (cartpole) and 0.259/step (cheetah, above the
-  distilled 0.16), confirming the visualized policy really is the trained one.
+In-loop pixel RL was run on **all four environments** (one seed; 128 envs / 250
+updates for the headline cartpole/cheetah runs, 96 envs / 200 updates for the
+visualized walker/hopper rollouts):
+
+| env | in-loop result | notes |
+|-----|----------------|-------|
+| CartpoleBalance | **0.64 eval success** | learns to balance from pixels |
+| CheetahRun | **~0.42 reward/step** (return 0→~110) | learns to run |
+| WalkerWalk | **~0.40 reward/step** (return 0→~90) | learns to walk |
+| HopperHop | **~0.00 reward/step** (return ~0) | **failed to learn** — see below |
+
+- Cartpole / cheetah / walker all **beat the distilled pixel policy** on the same env
+  (joint perception+control learning > behavior cloning).
+- **HopperHop is the honest exception:** the single-leg hopper is inherently unstable
+  — if the policy can't keep it upright the `standing×hopping` reward is exactly 0, and
+  learning to hop from pixels at this budget is too hard. The render is correct (the
+  fallen hopper is visible in `inloop/viz_hopper/`); it just doesn't learn. A useful
+  negative result — **difficulty ordering: balance < walk/run < hop.**
+- **Qualitative artifacts** for every env (`inloop/viz_{cartpole,cheetah,walker,hopper}/`):
+  a **video** of what the in-loop pixel policy sees (skill-annotated), the 64×64
+  observation filmstrip, a skill + reward timeline, and the learning curve. Each rollout
+  is self-checked (rollout reward matches the trained policy — 0.074 cartpole, 0.259
+  cheetah, 0.404 walker, 0.000 hopper), so the videos show the real trained policy.
 - **Enabled by:** `mujoco-warp==3.11.0` (version-aligned with mujoco 3.11 — the desync
   that blocked this on Colab is gone) + two runtime shims (`ensure_mjwarp_graphmode`,
-  `ensure_mjx_render_compat`) + a `CheetahRunVision` subclass that ports cartpole's
-  render pipeline (cheetah's cameras track the body — verified, `inloop/cheetah_render_probe.png`).
-  `walker`/`hopper` share cheetah's structure and could be added the same way.
-- **Caveats:** single seed each; cheetah number is *training* return (no greedy eval in
-  the config); in-loop needs the MJWarp renderer (offline-render distillation is the
-  fallback for envs without a vision port). Absolute cheetah performance is modest —
-  learning a running gait from pixels in 250 updates is hard.
+  `ensure_mjx_render_compat`) + `dm_control_vision.py` (Cheetah/Walker/Hopper vision
+  subclasses porting cartpole's render pipeline; tracking cameras verified in-frame,
+  `inloop/cheetah_render_probe.png`).
+- **Caveats:** single seed each; the locomotion numbers are *training* return (those
+  configs have no greedy-eval stage); in-loop needs the MJWarp renderer.
 
 ## Distillation (privileged-critic behavior cloning)
 
@@ -144,8 +152,8 @@ run-to-run (GPU nondeterminism in teacher training); the retention *ordering*
 - `inloop/` — **in-loop pixel RL** results: `cartpole_inloop_curve.png` + `.json`,
   `cheetah_inloop_curve.png` + `.json` (learning curves + eval/return),
   `cheetah_render_probe.png` (verifies the cheetah tracking camera renders in-frame),
-  and `viz_cartpole/` + `viz_cheetah/` (in-loop rollout **video** + filmstrip +
-  skill/reward timeline for each env).
+  and `viz_{cartpole,cheetah,walker,hopper}/` (in-loop rollout **video** + filmstrip +
+  skill/reward timeline + learning curve for each env).
 
 Run environment: TU student pool `mlsp2` (RTX 2080 Ti), jax 0.11 CUDA, mujoco 3.11 +
 mujoco-warp 3.11; distillation renders offline via software-EGL (llvmpipe), in-loop
