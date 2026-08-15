@@ -119,6 +119,12 @@ def masked_meta_bootstrap_value(q_values: jnp.ndarray, mask: jnp.ndarray | None 
     """Return max_i Q_meta(s, i), applying NeSy masks with -inf-style blocking."""
 
     if mask is not None:
+        # Defense-in-depth: if a row masks out ALL skills, fall back to the
+        # unmasked values so the bootstrap target cannot collapse to -1e9. Every
+        # shipped policy guarantees an always-on skill, so this normally never
+        # triggers, but it removes a fragile contract dependency.
+        any_valid = jnp.any(mask, axis=-1, keepdims=True)
+        mask = jnp.where(any_valid, mask, jnp.ones_like(mask))
         q_values = jnp.where(mask, q_values, -1.0e9)
     return jnp.max(q_values, axis=-1)
 
@@ -449,7 +455,11 @@ def make_train(config: dict[str, Any]) -> Callable[[jax.Array], NexusTrainOutput
             meta_values = _meta_values(train_state.meta.params, obs_actor)
             if meta_policy_type == "nesy":
                 mask = _skill_mask(policy_obs)
-                masked_values = jnp.where(mask, meta_values, -1.0e9)
+                # Guard against an all-masked row selecting an invalid skill 0
+                # (metrics below still use the true `mask`).
+                any_valid = jnp.any(mask, axis=-1, keepdims=True)
+                safe_mask = jnp.where(any_valid, mask, jnp.ones_like(mask))
+                masked_values = jnp.where(safe_mask, meta_values, -1.0e9)
                 greedy_skill = jnp.argmax(masked_values, axis=-1).astype(jnp.int32)
             else:
                 mask = jnp.ones_like(meta_values, dtype=bool)
@@ -895,6 +905,19 @@ def make_train(config: dict[str, Any]) -> Callable[[jax.Array], NexusTrainOutput
                     dtype=last_obs_actor.dtype,
                 )
 
+            # Distinguish time-limit truncation from true termination so the Q(lambda)
+            # target bootstraps V(s') at the horizon instead of collapsing to r
+            # (Pardo et al. 2018). brax's EpisodeWrapper exposes info['truncation'];
+            # DM-control tasks end ONLY by truncation, so this matters at every
+            # episode boundary. Falls back to `done` (previous behavior) if absent.
+            _truncation = traj.info.get("truncation") if isinstance(traj.info, dict) else None
+            if _truncation is None:
+                terminal = traj.done
+            else:
+                terminal = traj.done.astype(jnp.float32) * (
+                    1.0 - jnp.asarray(_truncation, dtype=jnp.float32)
+                )
+
             skill_targets = q_lambda_returns(
                 rewards=traj.skill_rewards,
                 dones=traj.done,
@@ -902,6 +925,7 @@ def make_train(config: dict[str, Any]) -> Callable[[jax.Array], NexusTrainOutput
                 last_value=last_skill_bootstrap_values,
                 gamma=float(config.get("GAMMA", 0.99)),
                 lambda_=float(config.get("SKILL_LAMBDA", config.get("LAMBDA", 0.65))),
+                terminals=terminal,
             )
             if train_state.meta is not None:
                 meta_targets = q_lambda_returns(
@@ -911,6 +935,7 @@ def make_train(config: dict[str, Any]) -> Callable[[jax.Array], NexusTrainOutput
                     last_value=last_meta_bootstrap_value,
                     gamma=float(config.get("GAMMA", 0.99)),
                     lambda_=float(config.get("META_LAMBDA", config.get("LAMBDA", 0.65))),
+                    terminals=terminal,
                 )
             else:
                 meta_targets = jnp.zeros_like(traj.env_reward)

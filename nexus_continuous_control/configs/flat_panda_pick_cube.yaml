@@ -3,7 +3,7 @@ ENV_NAME: PandaPickCube
 PLAYGROUND_IMPL: jax
 POLICY: flat_baseline
 META_POLICY_TYPE: flat
-TOTAL_TIMESTEPS: 10000000
+TOTAL_TIMESTEPS: 26214400  # 400 updates (1024x64); raised from ~152 for adequate training / fair within-env comparison
 NUM_ENVS: 1024
 NUM_STEPS: 64
 NUM_EPOCHS: 4

@@ -3,7 +3,7 @@ ENV_NAME: WalkerWalk
 PLAYGROUND_IMPL: jax
 POLICY: walker_walk
 META_POLICY_TYPE: neural
-TOTAL_TIMESTEPS: 5000000
+TOTAL_TIMESTEPS: 52428800  # 400 updates (2048x64); raised from ~38 for adequate training / fair within-env comparison
 NUM_ENVS: 2048
 NUM_STEPS: 64
 NUM_EPOCHS: 4

@@ -234,12 +234,17 @@ class _PlaygroundVecWrapper(_EnvWrapper):
                         "height": xpos[..., torso_idx, 2],
                     }
                 )
+            # walker.xml root-joint order is rootz(0), rootx(1), rooty(2), so qvel[1]
+            # is the FORWARD (horizontal) velocity and qvel[0] is the VERTICAL one.
+            # (The env's own move reward reads the torso_subtreelinvel sensor; qvel[1]
+            # matches it for the planar root. Cheetah/hopper are rootx-first, so their
+            # qvel[0] is already forward — walker is the lone odd ordering.)
             info.update(
                 {
                     "torso_pitch": qpos[..., 2],
                     "pitch": qpos[..., 2],
-                    "x_velocity": qvel[..., 0],
-                    "forward_velocity": qvel[..., 0],
+                    "x_velocity": qvel[..., 1],
+                    "forward_velocity": qvel[..., 1],
                     "joint_speed": self._tail_abs_mean(qvel, 3),
                 }
             )
@@ -290,23 +295,40 @@ class _PlaygroundVecWrapper(_EnvWrapper):
                 {
                     "base_height": qpos[..., 2],
                     "height": qpos[..., 2],
+                    # World-frame fallback; overridden below with the body-frame
+                    # velocity when the IMU-site orientation is available.
                     "lin_vel_x": qvel[..., 0],
                     "lin_vel_y": qvel[..., 1],
                     "x_velocity": qvel[..., 0],
                     "y_velocity": qvel[..., 1],
+                    # Free-joint angular velocity qvel[3:6] is already body-local.
                     "yaw_rate": qvel[..., 5],
                     "ang_vel_yaw": qvel[..., 5],
                 }
             )
             imu_site = self._static_int(self._safe_attr(self._env, "_imu_site_id"))
             if imu_site is not None and site_xmat is not None:
-                up = site_xmat[..., imu_site, :, 2]
+                rot = site_xmat[..., imu_site, :, :]  # world<-body (columns = body axes)
+                up = rot[..., :, 2]
                 roll = jnp.arctan2(up[..., 1], up[..., 2])
                 pitch = jnp.arctan2(
                     -up[..., 0],
                     jnp.sqrt(jnp.square(up[..., 1]) + jnp.square(up[..., 2])),
                 )
                 info.update({"roll": roll, "base_roll": roll, "pitch": pitch, "base_pitch": pitch})
+                # The go1 env's tracking reward compares the command (BODY frame) to
+                # get_local_linvel(data). The free-joint qvel[0:3] is WORLD frame, so
+                # rotate it into the base/body frame (v_body = R^T v_world) before it
+                # feeds the track skill's reward and the tracking metric.
+                v_body = jnp.einsum("...ij,...i->...j", rot, qvel[..., 0:3])
+                info.update(
+                    {
+                        "lin_vel_x": v_body[..., 0],
+                        "x_velocity": v_body[..., 0],
+                        "lin_vel_y": v_body[..., 1],
+                        "y_velocity": v_body[..., 1],
+                    }
+                )
             if isinstance(raw_info, Mapping) and "command" in raw_info:
                 command = raw_info["command"]
                 info.update(
@@ -578,6 +600,35 @@ def ensure_mjwarp_graphmode() -> None:
             continue
 
 
+def ensure_mjx_render_compat() -> None:
+    """Work around a mujoco_playground <-> mujoco-mjx 3.11 render-API drift.
+
+    mujoco 3.11's ``mjx.render(m, d, ctx)`` returns a 2-tuple ``(rgb, depth)``, but
+    the installed dm_control_suite vision path (e.g. ``cartpole.py``) was written
+    for an older API that returned ``(rgb, depth, data)`` and reads ``out[2]`` for
+    the (unchanged) data -- raising ``IndexError: tuple index out of range`` on
+    reset/step. Wrap ``mjx.render`` to append the unmodified ``data`` when it
+    returns a 2-tuple, so the stale ``out[2]`` read is a correct no-op. Idempotent,
+    and a no-op once the framework itself returns a >=3-tuple, so it is safe to call
+    unconditionally before loading a vision env.
+    """
+
+    try:
+        import mujoco.mjx as _mjx  # type: ignore
+    except Exception:
+        return
+    render = getattr(_mjx, "render", None)
+    if render is None or getattr(render, "_nexus_render_compat", False):
+        return
+
+    def _render_compat(m, d, ctx, _orig=render):
+        out = _orig(m, d, ctx)
+        return (out[0], out[1], d) if len(out) == 2 else out
+
+    _render_compat._nexus_render_compat = True
+    _mjx.render = _render_compat
+
+
 def build_playground_env(config: dict[str, Any]) -> PlaygroundEnvBundle:
     """Create a vectorized MuJoCo Playground environment."""
 
@@ -603,15 +654,38 @@ def build_playground_env(config: dict[str, Any]) -> PlaygroundEnvBundle:
     # RGB extension: enable the framework's in-loop MJWarp renderer. The render
     # context batch (nworld) must equal the number of parallel envs, which is
     # NUM_ENVS for training and EVAL_NUM_ENVS for eval (passed via RENDER_NWORLD).
+    _vision_env = None
     if config.get("USE_RGB", False):
-        # Guard against the MuJoCo-Warp GraphMode desync before the renderer loads.
+        # Guard against the MuJoCo-Warp GraphMode desync + the mjx.render tuple-arity
+        # drift before the renderer loads.
         ensure_mjwarp_graphmode()
-        env_config.vision = True
-        env_config.vision_config.nworld = int(config.get("RENDER_NWORLD", config["NUM_ENVS"]))
-        # vision=True forces a shorter horizon (e.g. CartpoleBalance -> 250); make
-        # the brax episode wrapper and eval agree with it.
+        ensure_mjx_render_compat()
+        nworld = int(config.get("RENDER_NWORLD", config["NUM_ENVS"]))
+        # vision forces a shorter horizon (e.g. CartpoleBalance -> 250); make the
+        # brax episode wrapper and eval agree with it.
         env_config.episode_length = int(config.get("RGB_EPISODE_LENGTH", 250))
-    env = registry.load(config["ENV_NAME"], env_config)
+        if config["ENV_NAME"] == "CartpoleBalance":
+            env_config.vision = True
+            env_config.vision_config.nworld = nworld
+        elif config["ENV_NAME"] in ("CheetahRun", "WalkerWalk", "HopperHop"):
+            # The framework has no in-loop vision for the locomotion envs; use our
+            # ported subclasses (mirror cartpole's MJWarp render path).
+            from nexus_continuous.envs.dm_control_vision import VISION_ENVS
+
+            _vision_env = VISION_ENVS[config["ENV_NAME"]](
+                nworld=nworld,
+                episode_length=env_config.episode_length,
+                impl="warp",  # the MJWarp render path (refit_bvh/render) requires warp
+            )
+            # Signal the vec wrapper to run its vision obs path (emit actor_pixels).
+            env_config.vision = True
+        else:
+            raise NotImplementedError(
+                f"In-loop RGB not available for {config['ENV_NAME']}; only "
+                "CartpoleBalance (framework) and CheetahRun/WalkerWalk/HopperHop "
+                "(ported) are supported."
+            )
+    env = _vision_env if _vision_env is not None else registry.load(config["ENV_NAME"], env_config)
     env = wrap_for_brax_training(
         env,
         episode_length=env_config.episode_length,
