@@ -1,0 +1,158 @@
+[
+  {
+    "iteration": 0,
+    "metrics": {
+      "action/action_norm_mean": 0.9496995210647583,
+      "action/noise_norm_mean": 0.012172255665063858,
+      "action/original_action_norm_mean": 0.9563342928886414,
+      "debug/host_time_token": 0.0,
+      "env/nonfinite_reward": 0.0,
+      "env/original_reward": 0.1664937287569046,
+      "env/returned_episode_lengths": 878.125,
+      "env/returned_episode_returns": 211.0511932373047,
+      "env_step": 1179648.0,
+      "episode/done_fraction": 0.0031250000465661287,
+      "loss/actor": 0.2909117043018341,
+      "loss/critic": 0.0014563064323738217,
+      "loss/meta": 0.13291603326797485,
+      "mask/violation_rate": 0.0,
+      "mask_available/0_string": 1.0,
+      "mask_selected_given_available/0_string": 1.0,
+      "mask_selected_when_available/0_string": 1.0,
+      "mask_violation/0_string": 0.0,
+      "meta_epsilon": 0.019999999552965164,
+      "noise": 0.019999999552965164,
+      "policy_diag/cartpole/angle_abs_mean": 1.5207372903823853,
+      "policy_diag/cartpole/centered_fraction": 0.14548949897289276,
+      "policy_diag/cartpole/upright_fraction": 0.12186889350414276,
+      "policy_diag/primary_goal_metric": 0.03453555703163147,
+      "policy_diag/primary_success_rate": 0.05852966383099556,
+      "returns/env_reward_mean": 0.1664937287569046,
+      "returns/skill_reward_mean": -0.0031250000465661287,
+      "rollout/done_fraction": 0.0031250000465661287,
+      "rollout/episode_length": 878.125,
+      "rollout/episode_return": 211.0511932373047,
+      "schedule/meta_epsilon": 0.019999999552965164,
+      "schedule/noise": 0.019999999552965164,
+      "schedule/skill_epsilon": 0.019999999552965164,
+      "skill_reward/0_string": -0.0031250000465661287,
+      "skill_usage/0_string": 1.0,
+      "train/actor_grad_norm": 0.004826194141060114,
+      "train/actor_loss": 0.2909117043018341,
+      "train/actor_penalty": 0.0010911355493590236,
+      "train/actor_q": -0.29091060161590576,
+      "train/critic_abs_td": 0.018541369587183,
+      "train/critic_grad_norm": 0.022828295826911926,
+      "train/critic_loss": 0.0014563064323738217,
+      "train/critic_target": -0.2921609878540039,
+      "train/critic_value": -0.292102575302124,
+      "train/meta_abs_td": 0.2334887534379959,
+      "train/meta_grad_norm": 0.5061855316162109,
+      "train/meta_loss": 0.13291603326797485,
+      "train/meta_q": 11.366286277770996,
+      "update": 18.0
+    },
+    "skillset": {
+      "environment": "CartpoleBalance",
+      "observation_schema": "...",
+      "skills": [
+        {
+          "name": "string",
+          "description": "string",
+          "activation_rule": "boolean expression over fields",
+          "reward_terms": [
+            {
+              "type": "negative_distance | positive_velocity | target_height | binary_bonus | action_penalty | posture_penalty",
+              "weight": 1.0,
+              "lhs": "field_name or null",
+              "rhs": "field_name or null",
+              "threshold": 0.0,
+              "description": ""
+            }
+          ]
+        }
+      ],
+      "meta_policy_notes": "string"
+    },
+    "refinement_ok": true,
+    "refinement_error": null
+  },
+  {
+    "iteration": 1,
+    "metrics": {
+      "action/action_norm_mean": 0.9496995210647583,
+      "action/noise_norm_mean": 0.012172255665063858,
+      "action/original_action_norm_mean": 0.9563342928886414,
+      "debug/host_time_token": 0.0,
+      "env/nonfinite_reward": 0.0,
+      "env/original_reward": 0.1664937287569046,
+      "env/returned_episode_lengths": 878.125,
+      "env/returned_episode_returns": 211.0511932373047,
+      "env_step": 1179648.0,
+      "episode/done_fraction": 0.0031250000465661287,
+      "loss/actor": 0.2909117043018341,
+      "loss/critic": 0.0014563064323738217,
+      "loss/meta": 0.13291603326797485,
+      "mask/violation_rate": 0.0,
+      "mask_available/0_string": 1.0,
+      "mask_selected_given_available/0_string": 1.0,
+      "mask_selected_when_available/0_string": 1.0,
+      "mask_violation/0_string": 0.0,
+      "meta_epsilon": 0.019999999552965164,
+      "noise": 0.019999999552965164,
+      "policy_diag/cartpole/angle_abs_mean": 1.5207372903823853,
+      "policy_diag/cartpole/centered_fraction": 0.14548949897289276,
+      "policy_diag/cartpole/upright_fraction": 0.12186889350414276,
+      "policy_diag/primary_goal_metric": 0.03453555703163147,
+      "policy_diag/primary_success_rate": 0.05852966383099556,
+      "returns/env_reward_mean": 0.1664937287569046,
+      "returns/skill_reward_mean": -0.0031250000465661287,
+      "rollout/done_fraction": 0.0031250000465661287,
+      "rollout/episode_length": 878.125,
+      "rollout/episode_return": 211.0511932373047,
+      "schedule/meta_epsilon": 0.019999999552965164,
+      "schedule/noise": 0.019999999552965164,
+      "schedule/skill_epsilon": 0.019999999552965164,
+      "skill_reward/0_string": -0.0031250000465661287,
+      "skill_usage/0_string": 1.0,
+      "train/actor_grad_norm": 0.004826194141060114,
+      "train/actor_loss": 0.2909117043018341,
+      "train/actor_penalty": 0.0010911355493590236,
+      "train/actor_q": -0.29091060161590576,
+      "train/critic_abs_td": 0.018541369587183,
+      "train/critic_grad_norm": 0.022828295826911926,
+      "train/critic_loss": 0.0014563064323738217,
+      "train/critic_target": -0.2921609878540039,
+      "train/critic_value": -0.292102575302124,
+      "train/meta_abs_td": 0.2334887534379959,
+      "train/meta_grad_norm": 0.5061855316162109,
+      "train/meta_loss": 0.13291603326797485,
+      "train/meta_q": 11.366286277770996,
+      "update": 18.0
+    },
+    "skillset": {
+      "environment": "CartpoleBalance",
+      "observation_schema": "...",
+      "skills": [
+        {
+          "name": "string",
+          "description": "string",
+          "activation_rule": "boolean expression over fields",
+          "reward_terms": [
+            {
+              "type": "negative_distance | positive_velocity | target_height | binary_bonus | action_penalty | posture_penalty",
+              "weight": 1.0,
+              "lhs": "field_name or null",
+              "rhs": "field_name or null",
+              "threshold": 0.0,
+              "description": ""
+            }
+          ]
+        }
+      ],
+      "meta_policy_notes": "string"
+    },
+    "refinement_ok": true,
+    "refinement_error": null
+  }
+]
