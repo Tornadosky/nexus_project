@@ -26,6 +26,8 @@ playground = [
 vision = ["Pillow>=10.0"]
 dev = ["pytest>=8.0", "ruff>=0.5.0"]
 analysis = ["matplotlib>=3.8", "pandas>=2.0"]
+llm = ["transformers>=4.40", "accelerate>=0.30", "torch>=2.2", "huggingface_hub>=0.23"]
+llm-openai = ["openai>=1.0"]
 
 [project.scripts]
 nexus-playground-train = "nexus_continuous.scripts.train_nexus_playground:main"
