@@ -1,0 +1,22 @@
+{
+  "environment": "CartpoleBalance",
+  "observation_schema": "...",
+  "skills": [
+    {
+      "name": "string",
+      "description": "string",
+      "activation_rule": "boolean expression over fields",
+      "reward_terms": [
+        {
+          "type": "negative_distance | positive_velocity | target_height | binary_bonus | action_penalty | posture_penalty",
+          "weight": 1.0,
+          "lhs": "field_name or null",
+          "rhs": "field_name or null",
+          "threshold": 0.0,
+          "description": ""
+        }
+      ]
+    }
+  ],
+  "meta_policy_notes": "string"
+}

@@ -1,0 +1,387 @@
+{
+  "config": "configs/cartpole_balance_nesy.yaml",
+  "hand_written": {
+    "runs": [
+      {
+        "seed": 0,
+        "metrics": {
+          "action/action_norm_mean": 0.33778446912765503,
+          "action/noise_norm_mean": 0.017055150121450424,
+          "action/original_action_norm_mean": 0.3376390337944031,
+          "debug/host_time_token": 0.0,
+          "env/nonfinite_reward": 0.0,
+          "env/original_reward": 0.5380849838256836,
+          "env/returned_episode_lengths": 878.125,
+          "env/returned_episode_returns": 238.63525390625,
+          "env_step": 1179648.0,
+          "episode/done_fraction": 0.0031250000465661287,
+          "loss/actor": 9.250898361206055,
+          "loss/critic": 5.934299468994141,
+          "loss/meta": 0.5855043530464172,
+          "mask/violation_rate": 0.0,
+          "mask_available/0_recover_balance": 0.945587158203125,
+          "mask_available/1_center_cart": 0.8594818115234375,
+          "mask_available/2_damp_motion": 1.0,
+          "mask_selected_given_available/0_recover_balance": 0.07107852399349213,
+          "mask_selected_given_available/1_center_cart": 0.046341750770807266,
+          "mask_selected_given_available/2_damp_motion": 0.9068359136581421,
+          "mask_selected_when_available/0_recover_balance": 0.0613555908203125,
+          "mask_selected_when_available/1_center_cart": 0.03180847316980362,
+          "mask_selected_when_available/2_damp_motion": 0.9068359136581421,
+          "mask_violation/0_recover_balance": 0.0,
+          "mask_violation/1_center_cart": 0.0,
+          "mask_violation/2_damp_motion": 0.0,
+          "meta_epsilon": 0.019999999552965164,
+          "noise": 0.019999999552965164,
+          "policy_diag/cartpole/angle_abs_mean": 1.031052827835083,
+          "policy_diag/cartpole/cart_position": 0.4075031280517578,
+          "policy_diag/cartpole/cart_velocity": 0.0872827023267746,
+          "policy_diag/cartpole/centered_fraction": 0.8861053586006165,
+          "policy_diag/cartpole/pole_angle": -2.5752525329589844,
+          "policy_diag/cartpole/pole_angular_velocity": -1.3632373809814453,
+          "policy_diag/cartpole/upright_fraction": 0.20531311631202698,
+          "policy_diag/primary_goal_metric": 0.40836581587791443,
+          "policy_diag/primary_success_rate": 0.19573974609375,
+          "returns/env_reward_mean": 0.5380849838256836,
+          "returns/skill_reward_mean": -2.0973055362701416,
+          "rollout/done_fraction": 0.0031250000465661287,
+          "rollout/episode_length": 878.125,
+          "rollout/episode_return": 238.63525390625,
+          "schedule/meta_epsilon": 0.019999999552965164,
+          "schedule/noise": 0.019999999552965164,
+          "schedule/skill_epsilon": 0.019999999552965164,
+          "skill_reward/0_recover_balance": -6.791051387786865,
+          "skill_reward/1_center_cart": 0.588761031627655,
+          "skill_reward/2_damp_motion": -0.0896267369389534,
+          "skill_usage/0_recover_balance": 0.0613555908203125,
+          "skill_usage/1_center_cart": 0.03180847316980362,
+          "skill_usage/2_damp_motion": 0.9068359136581421,
+          "train/actor_grad_norm": 0.6068545579910278,
+          "train/actor_loss": 9.250898361206055,
+          "train/actor_penalty": 0.881807804107666,
+          "train/actor_q": -9.250017166137695,
+          "train/critic_abs_td": 6.241607666015625,
+          "train/critic_grad_norm": 4.240292072296143,
+          "train/critic_loss": 5.934299468994141,
+          "train/critic_target": -14.960012435913086,
+          "train/critic_value": -9.388216018676758,
+          "train/meta_abs_td": 0.8673148155212402,
+          "train/meta_grad_norm": 4.938117027282715,
+          "train/meta_loss": 0.5855043530464172,
+          "train/meta_q": 19.50010108947754,
+          "update": 18.0
+        },
+        "eval_metrics": {
+          "cartpole/angle_abs_mean": 1.782342553138733,
+          "cartpole/centered_fraction": 0.5754062533378601,
+          "cartpole/upright_fraction": 0.08023437857627869,
+          "episode_length_mean": 1000.0,
+          "episode_return_mean": 292.48394775390625,
+          "episode_return_std": 25.80386734008789,
+          "eval_seed": 10000.0,
+          "num_eval_episodes": 64.0,
+          "primary_goal_metric": -0.17796432971954346,
+          "primary_success_rate": 0.08023437857627869
+        },
+        "wall_s": 29.934219360351562
+      }
+    ],
+    "summary": {
+      "env_reward_mean": 0.5380849838256836,
+      "env_reward_std": 0.0,
+      "success_rate_mean": 0.08023437857627869,
+      "success_rate_std": 0.0,
+      "goal_metric_mean": -0.17796432971954346,
+      "goal_metric_std": 0.0
+    }
+  },
+  "backends": {
+    "hf": {
+      "llm": {
+        "runs": [
+          {
+            "seed": 0,
+            "metrics": {
+              "action/action_norm_mean": 0.9496995210647583,
+              "action/noise_norm_mean": 0.012172255665063858,
+              "action/original_action_norm_mean": 0.9563342928886414,
+              "debug/host_time_token": 0.0,
+              "env/nonfinite_reward": 0.0,
+              "env/original_reward": 0.1664937287569046,
+              "env/returned_episode_lengths": 878.125,
+              "env/returned_episode_returns": 211.0511932373047,
+              "env_step": 1179648.0,
+              "episode/done_fraction": 0.0031250000465661287,
+              "loss/actor": 0.2909117043018341,
+              "loss/critic": 0.0014563064323738217,
+              "loss/meta": 0.13291603326797485,
+              "mask/violation_rate": 0.0,
+              "mask_available/0_string": 1.0,
+              "mask_selected_given_available/0_string": 1.0,
+              "mask_selected_when_available/0_string": 1.0,
+              "mask_violation/0_string": 0.0,
+              "meta_epsilon": 0.019999999552965164,
+              "noise": 0.019999999552965164,
+              "policy_diag/cartpole/angle_abs_mean": 1.5207372903823853,
+              "policy_diag/cartpole/centered_fraction": 0.14548949897289276,
+              "policy_diag/cartpole/upright_fraction": 0.12186889350414276,
+              "policy_diag/primary_goal_metric": 0.03453555703163147,
+              "policy_diag/primary_success_rate": 0.05852966383099556,
+              "returns/env_reward_mean": 0.1664937287569046,
+              "returns/skill_reward_mean": -0.0031250000465661287,
+              "rollout/done_fraction": 0.0031250000465661287,
+              "rollout/episode_length": 878.125,
+              "rollout/episode_return": 211.0511932373047,
+              "schedule/meta_epsilon": 0.019999999552965164,
+              "schedule/noise": 0.019999999552965164,
+              "schedule/skill_epsilon": 0.019999999552965164,
+              "skill_reward/0_string": -0.0031250000465661287,
+              "skill_usage/0_string": 1.0,
+              "train/actor_grad_norm": 0.004826194141060114,
+              "train/actor_loss": 0.2909117043018341,
+              "train/actor_penalty": 0.0010911355493590236,
+              "train/actor_q": -0.29091060161590576,
+              "train/critic_abs_td": 0.018541369587183,
+              "train/critic_grad_norm": 0.022828295826911926,
+              "train/critic_loss": 0.0014563064323738217,
+              "train/critic_target": -0.2921609878540039,
+              "train/critic_value": -0.292102575302124,
+              "train/meta_abs_td": 0.2334887534379959,
+              "train/meta_grad_norm": 0.5061855316162109,
+              "train/meta_loss": 0.13291603326797485,
+              "train/meta_q": 11.366286277770996,
+              "update": 18.0
+            },
+            "eval_metrics": {
+              "cartpole/angle_abs_mean": 1.4916818141937256,
+              "cartpole/centered_fraction": 0.04590625315904617,
+              "cartpole/upright_fraction": 0.09901563078165054,
+              "episode_length_mean": 1000.0,
+              "episode_return_mean": 135.56640625,
+              "episode_return_std": 0.625681459903717,
+              "eval_seed": 10000.0,
+              "num_eval_episodes": 64.0,
+              "primary_goal_metric": 0.059717342257499695,
+              "primary_success_rate": 0.01850000023841858
+            },
+            "wall_s": 24.005491018295288
+          }
+        ],
+        "summary": {
+          "env_reward_mean": 0.1664937287569046,
+          "env_reward_std": 0.0,
+          "success_rate_mean": 0.01850000023841858,
+          "success_rate_std": 0.0,
+          "goal_metric_mean": 0.059717342257499695,
+          "goal_metric_std": 0.0
+        },
+        "skillset": {
+          "environment": "CartpoleBalance",
+          "observation_schema": "...",
+          "skills": [
+            {
+              "name": "string",
+              "description": "string",
+              "activation_rule": "boolean expression over fields",
+              "reward_terms": [
+                {
+                  "type": "negative_distance | positive_velocity | target_height | binary_bonus | action_penalty | posture_penalty",
+                  "weight": 1.0,
+                  "lhs": "field_name or null",
+                  "rhs": "field_name or null",
+                  "threshold": 0.0,
+                  "description": ""
+                }
+              ]
+            }
+          ],
+          "meta_policy_notes": "string"
+        }
+      },
+      "refinement": {
+        "curve": [
+          {
+            "iteration": 0,
+            "metrics": {
+              "action/action_norm_mean": 0.9496995210647583,
+              "action/noise_norm_mean": 0.012172255665063858,
+              "action/original_action_norm_mean": 0.9563342928886414,
+              "debug/host_time_token": 0.0,
+              "env/nonfinite_reward": 0.0,
+              "env/original_reward": 0.1664937287569046,
+              "env/returned_episode_lengths": 878.125,
+              "env/returned_episode_returns": 211.0511932373047,
+              "env_step": 1179648.0,
+              "episode/done_fraction": 0.0031250000465661287,
+              "loss/actor": 0.2909117043018341,
+              "loss/critic": 0.0014563064323738217,
+              "loss/meta": 0.13291603326797485,
+              "mask/violation_rate": 0.0,
+              "mask_available/0_string": 1.0,
+              "mask_selected_given_available/0_string": 1.0,
+              "mask_selected_when_available/0_string": 1.0,
+              "mask_violation/0_string": 0.0,
+              "meta_epsilon": 0.019999999552965164,
+              "noise": 0.019999999552965164,
+              "policy_diag/cartpole/angle_abs_mean": 1.5207372903823853,
+              "policy_diag/cartpole/centered_fraction": 0.14548949897289276,
+              "policy_diag/cartpole/upright_fraction": 0.12186889350414276,
+              "policy_diag/primary_goal_metric": 0.03453555703163147,
+              "policy_diag/primary_success_rate": 0.05852966383099556,
+              "returns/env_reward_mean": 0.1664937287569046,
+              "returns/skill_reward_mean": -0.0031250000465661287,
+              "rollout/done_fraction": 0.0031250000465661287,
+              "rollout/episode_length": 878.125,
+              "rollout/episode_return": 211.0511932373047,
+              "schedule/meta_epsilon": 0.019999999552965164,
+              "schedule/noise": 0.019999999552965164,
+              "schedule/skill_epsilon": 0.019999999552965164,
+              "skill_reward/0_string": -0.0031250000465661287,
+              "skill_usage/0_string": 1.0,
+              "train/actor_grad_norm": 0.004826194141060114,
+              "train/actor_loss": 0.2909117043018341,
+              "train/actor_penalty": 0.0010911355493590236,
+              "train/actor_q": -0.29091060161590576,
+              "train/critic_abs_td": 0.018541369587183,
+              "train/critic_grad_norm": 0.022828295826911926,
+              "train/critic_loss": 0.0014563064323738217,
+              "train/critic_target": -0.2921609878540039,
+              "train/critic_value": -0.292102575302124,
+              "train/meta_abs_td": 0.2334887534379959,
+              "train/meta_grad_norm": 0.5061855316162109,
+              "train/meta_loss": 0.13291603326797485,
+              "train/meta_q": 11.366286277770996,
+              "update": 18.0
+            },
+            "skillset": {
+              "environment": "CartpoleBalance",
+              "observation_schema": "...",
+              "skills": [
+                {
+                  "name": "string",
+                  "description": "string",
+                  "activation_rule": "boolean expression over fields",
+                  "reward_terms": [
+                    {
+                      "type": "negative_distance | positive_velocity | target_height | binary_bonus | action_penalty | posture_penalty",
+                      "weight": 1.0,
+                      "lhs": "field_name or null",
+                      "rhs": "field_name or null",
+                      "threshold": 0.0,
+                      "description": ""
+                    }
+                  ]
+                }
+              ],
+              "meta_policy_notes": "string"
+            },
+            "refinement_ok": true,
+            "refinement_error": null
+          },
+          {
+            "iteration": 1,
+            "metrics": {
+              "action/action_norm_mean": 0.9496995210647583,
+              "action/noise_norm_mean": 0.012172255665063858,
+              "action/original_action_norm_mean": 0.9563342928886414,
+              "debug/host_time_token": 0.0,
+              "env/nonfinite_reward": 0.0,
+              "env/original_reward": 0.1664937287569046,
+              "env/returned_episode_lengths": 878.125,
+              "env/returned_episode_returns": 211.0511932373047,
+              "env_step": 1179648.0,
+              "episode/done_fraction": 0.0031250000465661287,
+              "loss/actor": 0.2909117043018341,
+              "loss/critic": 0.0014563064323738217,
+              "loss/meta": 0.13291603326797485,
+              "mask/violation_rate": 0.0,
+              "mask_available/0_string": 1.0,
+              "mask_selected_given_available/0_string": 1.0,
+              "mask_selected_when_available/0_string": 1.0,
+              "mask_violation/0_string": 0.0,
+              "meta_epsilon": 0.019999999552965164,
+              "noise": 0.019999999552965164,
+              "policy_diag/cartpole/angle_abs_mean": 1.5207372903823853,
+              "policy_diag/cartpole/centered_fraction": 0.14548949897289276,
+              "policy_diag/cartpole/upright_fraction": 0.12186889350414276,
+              "policy_diag/primary_goal_metric": 0.03453555703163147,
+              "policy_diag/primary_success_rate": 0.05852966383099556,
+              "returns/env_reward_mean": 0.1664937287569046,
+              "returns/skill_reward_mean": -0.0031250000465661287,
+              "rollout/done_fraction": 0.0031250000465661287,
+              "rollout/episode_length": 878.125,
+              "rollout/episode_return": 211.0511932373047,
+              "schedule/meta_epsilon": 0.019999999552965164,
+              "schedule/noise": 0.019999999552965164,
+              "schedule/skill_epsilon": 0.019999999552965164,
+              "skill_reward/0_string": -0.0031250000465661287,
+              "skill_usage/0_string": 1.0,
+              "train/actor_grad_norm": 0.004826194141060114,
+              "train/actor_loss": 0.2909117043018341,
+              "train/actor_penalty": 0.0010911355493590236,
+              "train/actor_q": -0.29091060161590576,
+              "train/critic_abs_td": 0.018541369587183,
+              "train/critic_grad_norm": 0.022828295826911926,
+              "train/critic_loss": 0.0014563064323738217,
+              "train/critic_target": -0.2921609878540039,
+              "train/critic_value": -0.292102575302124,
+              "train/meta_abs_td": 0.2334887534379959,
+              "train/meta_grad_norm": 0.5061855316162109,
+              "train/meta_loss": 0.13291603326797485,
+              "train/meta_q": 11.366286277770996,
+              "update": 18.0
+            },
+            "skillset": {
+              "environment": "CartpoleBalance",
+              "observation_schema": "...",
+              "skills": [
+                {
+                  "name": "string",
+                  "description": "string",
+                  "activation_rule": "boolean expression over fields",
+                  "reward_terms": [
+                    {
+                      "type": "negative_distance | positive_velocity | target_height | binary_bonus | action_penalty | posture_penalty",
+                      "weight": 1.0,
+                      "lhs": "field_name or null",
+                      "rhs": "field_name or null",
+                      "threshold": 0.0,
+                      "description": ""
+                    }
+                  ]
+                }
+              ],
+              "meta_policy_notes": "string"
+            },
+            "refinement_ok": true,
+            "refinement_error": null
+          }
+        ],
+        "stopped_early": false,
+        "plot_path": "results_smoke/CartpoleBalance/hf/refinement/refinement_curve.png",
+        "final_skillset": {
+          "environment": "CartpoleBalance",
+          "observation_schema": "...",
+          "skills": [
+            {
+              "name": "string",
+              "description": "string",
+              "activation_rule": "boolean expression over fields",
+              "reward_terms": [
+                {
+                  "type": "negative_distance | positive_velocity | target_height | binary_bonus | action_penalty | posture_penalty",
+                  "weight": 1.0,
+                  "lhs": "field_name or null",
+                  "rhs": "field_name or null",
+                  "threshold": 0.0,
+                  "description": ""
+                }
+              ]
+            }
+          ],
+          "meta_policy_notes": "string"
+        }
+      }
+    }
+  }
+}
