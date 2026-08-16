@@ -47,8 +47,8 @@ def build_skill_prompt(
                     {{
                         "type": "negative_distance | positive_velocity | target_height | binary_bonus | action_penalty | posture_penalty",
                         "weight": 1.0,
-                        "lhs": "field_name or null",
-                        "rhs": "field_name or null",
+                        "lhs": "observation_field_or_null",
+                        "rhs": "observation_field_or_numeric_constant_or_null",
                         "threshold": 0.0
                     }}
                 ]
@@ -59,6 +59,8 @@ def build_skill_prompt(
     
     Rules:
     - Use ONLY fields from observation schema
+    - lhs MUST be an observation field name or null
+    - rhs MUST be either an observation field name, a numeric constant, or null
     - 3-5 skills only
     - Skills should form a progression (safe -> locomotion -> optimal performance)
     - activation_rule must be a boolean expression (and/or/not, comparisons)
@@ -70,6 +72,14 @@ def build_skill_prompt(
     """
     return system_prompt, user_prompt
 
+def _coerce_numeric(value):
+    if isinstance(value, str):
+        try:
+            return float(value)
+        except ValueError:
+            return value
+    return value
+
 def _parse_reward_terms(raw_terms: list[dict]) -> list[RewardTerm]:
     terms = []
     for t in raw_terms:
@@ -77,8 +87,8 @@ def _parse_reward_terms(raw_terms: list[dict]) -> list[RewardTerm]:
             RewardTerm(
                 type = t["type"],
                 weight = float(t.get("weight", 1.0)),
-                lhs = t.get("lhs"),
-                rhs = t.get("rhs"),
+                lhs = _coerce_numeric(t.get("lhs")),
+                rhs = _coerce_numeric(t.get("rhs")),
                 threshold = t.get("threshold"),
                 description = t.get("description", "")
             )
@@ -99,7 +109,9 @@ def _check_fields(skills: list[SkillSpec], allowed_fields: Optional[set[str]]) -
     for s in skills:
         for term in s.reward_terms:
             for side_name, side_val in (("lhs", term.lhs), ("rhs", term.rhs)):
-                if side_val is not None and side_val not in allowed_fields:
+                if side_val is None or isinstance(side_val, (int, float)):
+                    continue
+                if side_val not in allowed_fields:
                     warnings.warn(
                         f"Skill '{s.name}' reward term references unknown field "
                         f"{side_name}={side_val!r}; not in observation schema "

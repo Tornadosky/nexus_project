@@ -76,6 +76,8 @@ def _normalize(rule: str) -> str:
     rule = re.sub(r"\bAND\b", "and", rule)
     rule = re.sub(r"\bOR\b", "or", rule)
     rule = re.sub(r"\bNOT\b", "not", rule)
+    rule = rule.replace("&&", " and ").replace("||", " or ")
+    rule = re.sub(r"!(?!=)", " not ", rule)
     return rule
 
 
@@ -153,11 +155,32 @@ def eval_rule(rule: str, fields: dict[str, jnp.ndarray]) -> jnp.ndarray:
 
 
 # ---- reward-term -> JAX ----
+def _resolve_side(value: object, fields: dict[str, jnp.ndarray]) -> jnp.ndarray | None:
+    """Resolve a reward-term lhs/rhs value: a field name -> the field's array;
+    a numeric constant (JSON number, or a numeric-looking JSON string like
+    "0.75") -> a scalar; anything else (a genuinely unrecognized field name,
+    e.g. an accidental function-call expression) -> None, same fail-closed
+    behavior as before."""
+    if value is None:
+        return None
+    if isinstance(value, bool):  # bool is an int subclass -- exclude explicitly
+        return None
+    if isinstance(value, (int, float)):
+        return jnp.asarray(float(value))
+    if isinstance(value, str):
+        if value in fields:
+            return fields[value]
+        try:
+            return jnp.asarray(float(value))
+        except ValueError:
+            return None
+    return None
+
 def _term_reward(term: dict, fields: dict[str, jnp.ndarray], action: jnp.ndarray) -> jnp.ndarray:
     t = term.get("type")
     w = float(term.get("weight", 1.0) or 1.0)
-    lhs = fields.get(term.get("lhs")) if term.get("lhs") in fields else None
-    rhs = fields.get(term.get("rhs")) if term.get("rhs") in fields else None
+    lhs = _resolve_side(term.get("lhs"), fields)
+    rhs = _resolve_side(term.get("rhs"), fields)
     thr = term.get("threshold")
     thr = float(thr) if thr is not None else None
     zero = jnp.zeros(action.shape[:-1], dtype=action.dtype)

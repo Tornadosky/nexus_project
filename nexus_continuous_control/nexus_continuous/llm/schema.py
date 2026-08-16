@@ -15,8 +15,8 @@ from typing import Optional
 class RewardTerm:
     type: str
     weight: float
-    lhs: Optional[str] = None
-    rhs: Optional[str] = None
+    lhs: Optional[float | str] = None
+    rhs: Optional[float | str] = None
     threshold: Optional[float] = None
     description: str = ""
 

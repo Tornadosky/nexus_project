@@ -96,11 +96,15 @@ class LLMClient:
         elif self.backend == "hf":
             from transformers import pipeline
             
-            self.generator = pipeline(
-                "text-generation",
-                model = self.config.model,
-                device_map = "auto"
-            )
+            pipeline_kwargs = {"model": self.config.model, "device_map": "auto"}
+            try:
+                import torch
+                if torch.cuda.is_available():
+                    pipeline_kwargs["torch_dtype"] = torch.float16
+            except ImportError:
+                pass
+            
+            self.generator = pipeline("text-generation", **pipeline_kwargs)
             
         elif self.backend == "vertex":
             if self.config.model == "Qwen/Qwen2.5-1.5B-Instruct":
@@ -147,12 +151,26 @@ class LLMClient:
                 add_generation_prompt = True
             )
             
-            output = self.generator(
-                prompt,
-                max_new_tokens = self.config.max_tokens,
-                do_sample = False,
-                eos_token_id = self.generator.tokenizer.eos_token_id,
-            )
+            gen_kwargs = {
+                "max_new_tokens": self.config.max_tokens,
+                "eos_token_id": self.generator.tokenizer.eos_token_id,
+                "return_full_text": False,
+            }
+            if self.config.temperature > 0:
+                gen_kwargs["do_sample"] = True
+                gen_kwargs["temperature"] = self.config.temperature
+            else:
+                gen_kwargs["do_sample"] = False
+            
+            # output = self.generator(
+            #     prompt,
+            #     max_new_tokens = self.config.max_tokens,
+            #     do_sample = False,
+            #     eos_token_id = self.generator.tokenizer.eos_token_id,
+            #     return_full_text = False
+            # )
+            
+            output = self.generator(prompt, **gen_kwargs)
             
             text = output[0]["generated_text"]
             
