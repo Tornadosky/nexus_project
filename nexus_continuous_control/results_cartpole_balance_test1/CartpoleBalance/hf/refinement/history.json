@@ -1,0 +1,665 @@
+[
+  {
+    "iteration": 0,
+    "metrics": {
+      "action/action_norm_mean": 0.7231177091598511,
+      "action/noise_norm_mean": 0.012399209663271904,
+      "action/original_action_norm_mean": 0.7266380190849304,
+      "debug/host_time_token": 0.0,
+      "env/nonfinite_reward": 0.0,
+      "env/original_reward": 0.1404670625925064,
+      "env/returned_episode_lengths": 1000.0,
+      "env/returned_episode_returns": 204.4371337890625,
+      "env_step": 9699328.0,
+      "episode/done_fraction": 0.0,
+      "loss/actor": 201.15670776367188,
+      "loss/critic": 4.1632208824157715,
+      "loss/meta": 0.026209931820631027,
+      "mask/violation_rate": 0.0,
+      "mask_available/0_Initial Balance Check": 1.0,
+      "mask_available/1_Pole Locomotion": 0.0,
+      "mask_available/2_Optimal Performance": 0.0,
+      "mask_selected_given_available/0_Initial Balance Check": 1.0,
+      "mask_selected_given_available/1_Pole Locomotion": 0.0,
+      "mask_selected_given_available/2_Optimal Performance": 0.0,
+      "mask_selected_when_available/0_Initial Balance Check": 1.0,
+      "mask_selected_when_available/1_Pole Locomotion": 0.0,
+      "mask_selected_when_available/2_Optimal Performance": 0.0,
+      "mask_violation/0_Initial Balance Check": 0.0,
+      "mask_violation/1_Pole Locomotion": 0.0,
+      "mask_violation/2_Optimal Performance": 0.0,
+      "meta_epsilon": 0.019999999552965164,
+      "noise": 0.019999999552965164,
+      "policy_diag/cartpole/angle_abs_mean": 1.9656150341033936,
+      "policy_diag/cartpole/centered_fraction": 0.3463378846645355,
+      "policy_diag/cartpole/upright_fraction": 0.04423217847943306,
+      "policy_diag/primary_goal_metric": -0.3307836949825287,
+      "policy_diag/primary_success_rate": 2.441406286379788e-05,
+      "returns/env_reward_mean": 0.1404670625925064,
+      "returns/skill_reward_mean": -0.3184433579444885,
+      "rollout/done_fraction": 0.0,
+      "rollout/episode_length": 1000.0,
+      "rollout/episode_return": 204.4371337890625,
+      "schedule/meta_epsilon": 0.019999999552965164,
+      "schedule/noise": 0.019999999552965164,
+      "schedule/skill_epsilon": 0.019999999552965164,
+      "skill_reward/0_Initial Balance Check": 10.69141674041748,
+      "skill_reward/1_Pole Locomotion": -1.0719845294952393,
+      "skill_reward/2_Optimal Performance": -10.574762344360352,
+      "skill_usage/0_Initial Balance Check": 1.0,
+      "skill_usage/1_Pole Locomotion": 0.0,
+      "skill_usage/2_Optimal Performance": 0.0,
+      "train/actor_grad_norm": 0.5430846810340881,
+      "train/actor_loss": 201.15670776367188,
+      "train/actor_penalty": 0.834694504737854,
+      "train/actor_q": -201.1558837890625,
+      "train/critic_abs_td": 4.5407395362854,
+      "train/critic_grad_norm": 41.16108322143555,
+      "train/critic_loss": 4.1632208824157715,
+      "train/critic_target": -200.1526641845703,
+      "train/critic_value": -202.06076049804688,
+      "train/meta_abs_td": 0.1291648894548416,
+      "train/meta_grad_norm": 6.599545955657959,
+      "train/meta_loss": 0.026209931820631027,
+      "train/meta_q": 21.68497085571289,
+      "update": 148.0
+    },
+    "skillset": {
+      "environment": "CartpoleBalance",
+      "observation_schema": "cart_position, pole_angle, cart_velocity, pole_angular_velocity",
+      "skills": [
+        {
+          "name": "Initial Balance Check",
+          "description": "Ensure the pole is balanced and centered.",
+          "activation_rule": "cart_position > 0 && pole_angle < 2 * pi / 3 && pole_angle > -2 * pi / 3",
+          "reward_terms": [
+            {
+              "type": "target_height",
+              "weight": 1.0,
+              "lhs": "pole_angle",
+              "rhs": 0.0,
+              "threshold": 0.0,
+              "description": ""
+            },
+            {
+              "type": "action_penalty",
+              "weight": 0.1,
+              "lhs": "cart_velocity",
+              "rhs": 0.0,
+              "threshold": 0.0,
+              "description": ""
+            }
+          ]
+        },
+        {
+          "name": "Pole Locomotion",
+          "description": "Maintain balance with minimal oscillation.",
+          "activation_rule": "cart_position > 0 && pole_angle < 2 * pi / 3 && pole_angle > -2 * pi / 3",
+          "reward_terms": [
+            {
+              "type": "positive_velocity",
+              "weight": 0.5,
+              "lhs": "cart_velocity",
+              "rhs": 0.0,
+              "threshold": 0.0,
+              "description": ""
+            },
+            {
+              "type": "posture_penalty",
+              "weight": 0.1,
+              "lhs": "pole_angle",
+              "rhs": 0.0,
+              "threshold": 0.0,
+              "description": ""
+            }
+          ]
+        },
+        {
+          "name": "Optimal Performance",
+          "description": "Maximize stability and minimize oscillations.",
+          "activation_rule": "cart_position > 0 && pole_angle < 2 * pi / 3 && pole_angle > -2 * pi / 3",
+          "reward_terms": [
+            {
+              "type": "negative_distance",
+              "weight": 1.0,
+              "lhs": "pole_angle",
+              "rhs": 0.0,
+              "threshold": 0.0,
+              "description": ""
+            },
+            {
+              "type": "binary_bonus",
+              "weight": 0.5,
+              "lhs": "cart_position",
+              "rhs": 0.9,
+              "threshold": 0.0,
+              "description": ""
+            }
+          ]
+        }
+      ],
+      "meta_policy_notes": ""
+    },
+    "refinement_ok": true,
+    "refinement_error": null
+  },
+  {
+    "iteration": 1,
+    "metrics": {
+      "action/action_norm_mean": 0.8962836265563965,
+      "action/noise_norm_mean": 0.010133378207683563,
+      "action/original_action_norm_mean": 0.9021066427230835,
+      "debug/host_time_token": 0.0,
+      "env/nonfinite_reward": 0.0,
+      "env/original_reward": 0.36704081296920776,
+      "env/returned_episode_lengths": 1000.0,
+      "env/returned_episode_returns": 321.6153564453125,
+      "env_step": 9699328.0,
+      "episode/done_fraction": 0.0,
+      "loss/actor": 54.62140655517578,
+      "loss/critic": 9.966252326965332,
+      "loss/meta": 0.11576354503631592,
+      "mask/violation_rate": 0.0,
+      "mask_available/0_Initial Balance Check": 1.0,
+      "mask_available/1_Pole Locomotion": 0.6883636713027954,
+      "mask_available/2_Stability Enhancement": 0.6883636713027954,
+      "mask_selected_given_available/0_Initial Balance Check": 0.4545135498046875,
+      "mask_selected_given_available/1_Pole Locomotion": 0.41763225197792053,
+      "mask_selected_given_available/2_Stability Enhancement": 0.3774368464946747,
+      "mask_selected_when_available/0_Initial Balance Check": 0.4545135498046875,
+      "mask_selected_when_available/1_Pole Locomotion": 0.285064697265625,
+      "mask_selected_when_available/2_Stability Enhancement": 0.2604217529296875,
+      "mask_violation/0_Initial Balance Check": 0.0,
+      "mask_violation/1_Pole Locomotion": 0.0,
+      "mask_violation/2_Stability Enhancement": 0.0,
+      "meta_epsilon": 0.019999999552965164,
+      "noise": 0.019999999552965164,
+      "policy_diag/cartpole/angle_abs_mean": 1.118847131729126,
+      "policy_diag/cartpole/centered_fraction": 0.4654388427734375,
+      "policy_diag/cartpole/upright_fraction": 0.25587767362594604,
+      "policy_diag/primary_goal_metric": 0.32263293862342834,
+      "policy_diag/primary_success_rate": 0.12505798041820526,
+      "returns/env_reward_mean": 0.36704081296920776,
+      "returns/skill_reward_mean": -0.45134180784225464,
+      "rollout/done_fraction": 0.0,
+      "rollout/episode_length": 1000.0,
+      "rollout/episode_return": 321.6153564453125,
+      "schedule/meta_epsilon": 0.019999999552965164,
+      "schedule/noise": 0.019999999552965164,
+      "schedule/skill_epsilon": 0.019999999552965164,
+      "skill_reward/0_Initial Balance Check": 9.750597953796387,
+      "skill_reward/1_Pole Locomotion": -1.1171821355819702,
+      "skill_reward/2_Stability Enhancement": -9.987441062927246,
+      "skill_usage/0_Initial Balance Check": 0.4545135498046875,
+      "skill_usage/1_Pole Locomotion": 0.285064697265625,
+      "skill_usage/2_Stability Enhancement": 0.2604217529296875,
+      "train/actor_grad_norm": 1.0272035598754883,
+      "train/actor_loss": 54.62140655517578,
+      "train/actor_penalty": 1.5572869777679443,
+      "train/actor_q": -54.619850158691406,
+      "train/critic_abs_td": 10.421551704406738,
+      "train/critic_grad_norm": 17.502365112304688,
+      "train/critic_loss": 9.966252326965332,
+      "train/critic_target": -55.158226013183594,
+      "train/critic_value": -55.14921188354492,
+      "train/meta_abs_td": 0.3287631571292877,
+      "train/meta_grad_norm": 5.478478908538818,
+      "train/meta_loss": 0.11576354503631592,
+      "train/meta_q": 37.31471633911133,
+      "update": 148.0
+    },
+    "skillset": {
+      "environment": "CartpoleBalance",
+      "observation_schema": "cart_position, pole_angle, cart_velocity, pole_angular_velocity",
+      "skills": [
+        {
+          "name": "Initial Balance Check",
+          "description": "Ensure the pole is balanced and centered.",
+          "activation_rule": "cart_position > 0 && (pole_angle < 2 * pi / 3 || pole_angle > -2 * pi / 3)",
+          "reward_terms": [
+            {
+              "type": "target_height",
+              "weight": 1.0,
+              "lhs": "pole_angle",
+              "rhs": 0.0,
+              "threshold": 0.0,
+              "description": ""
+            },
+            {
+              "type": "action_penalty",
+              "weight": 0.1,
+              "lhs": "cart_velocity",
+              "rhs": 0.0,
+              "threshold": 0.0,
+              "description": ""
+            }
+          ]
+        },
+        {
+          "name": "Pole Locomotion",
+          "description": "Maintain balance with minimal oscillation.",
+          "activation_rule": "cart_position > 0 && (pole_angle < 2 * pi / 3 || pole_angle > -2 * pi / 3)",
+          "reward_terms": [
+            {
+              "type": "positive_velocity",
+              "weight": 0.5,
+              "lhs": "cart_velocity",
+              "rhs": 0.0,
+              "threshold": 0.0,
+              "description": ""
+            },
+            {
+              "type": "posture_penalty",
+              "weight": 0.1,
+              "lhs": "pole_angle",
+              "rhs": 0.0,
+              "threshold": 0.0,
+              "description": ""
+            }
+          ]
+        },
+        {
+          "name": "Stability Enhancement",
+          "description": "Improve overall stability by reducing oscillations.",
+          "activation_rule": "cart_position > 0 && (pole_angle < 2 * pi / 3 || pole_angle > -2 * pi / 3)",
+          "reward_terms": [
+            {
+              "type": "negative_distance",
+              "weight": 1.0,
+              "lhs": "pole_angle",
+              "rhs": 0.0,
+              "threshold": 0.0,
+              "description": ""
+            },
+            {
+              "type": "binary_bonus",
+              "weight": 0.5,
+              "lhs": "cart_position",
+              "rhs": 0.9,
+              "threshold": 0.0,
+              "description": ""
+            }
+          ]
+        }
+      ],
+      "meta_policy_notes": ""
+    },
+    "refinement_ok": true,
+    "refinement_error": null
+  },
+  {
+    "iteration": 2,
+    "metrics": {
+      "action/action_norm_mean": 0.9784460067749023,
+      "action/noise_norm_mean": 0.00882536917924881,
+      "action/original_action_norm_mean": 0.9856500625610352,
+      "debug/host_time_token": 0.0,
+      "env/nonfinite_reward": 0.0,
+      "env/original_reward": 0.26015159487724304,
+      "env/returned_episode_lengths": 1000.0,
+      "env/returned_episode_returns": 255.9662322998047,
+      "env_step": 9699328.0,
+      "episode/done_fraction": 0.0,
+      "loss/actor": 76.8289794921875,
+      "loss/critic": 43.641387939453125,
+      "loss/meta": 0.020748957991600037,
+      "mask/violation_rate": 0.0,
+      "mask_available/0_Initial Balance Check": 1.0,
+      "mask_available/1_Pole Locomotion": 0.34013062715530396,
+      "mask_available/2_Stability Enhancement": 0.34013062715530396,
+      "mask_available/3_Dynamic Pole Control": 0.34013062715530396,
+      "mask_selected_given_available/0_Initial Balance Check": 0.686279296875,
+      "mask_selected_given_available/1_Pole Locomotion": 0.4509388506412506,
+      "mask_selected_given_available/2_Stability Enhancement": 0.12516732513904572,
+      "mask_selected_given_available/3_Dynamic Pole Control": 0.3469870686531067,
+      "mask_selected_when_available/0_Initial Balance Check": 0.686279296875,
+      "mask_selected_when_available/1_Pole Locomotion": 0.15310363471508026,
+      "mask_selected_when_available/2_Stability Enhancement": 0.0429229736328125,
+      "mask_selected_when_available/3_Dynamic Pole Control": 0.11769409477710724,
+      "mask_violation/0_Initial Balance Check": 0.0,
+      "mask_violation/1_Pole Locomotion": 0.0,
+      "mask_violation/2_Stability Enhancement": 0.0,
+      "mask_violation/3_Dynamic Pole Control": 0.0,
+      "meta_epsilon": 0.019999999552965164,
+      "noise": 0.019999999552965164,
+      "policy_diag/cartpole/angle_abs_mean": 1.2043040990829468,
+      "policy_diag/cartpole/centered_fraction": 0.22066040337085724,
+      "policy_diag/cartpole/upright_fraction": 0.24569091200828552,
+      "policy_diag/primary_goal_metric": 0.25741034746170044,
+      "policy_diag/primary_success_rate": 0.13599547743797302,
+      "returns/env_reward_mean": 0.26015159487724304,
+      "returns/skill_reward_mean": -0.9944872856140137,
+      "rollout/done_fraction": 0.0,
+      "rollout/episode_length": 1000.0,
+      "rollout/episode_return": 255.9662322998047,
+      "schedule/meta_epsilon": 0.019999999552965164,
+      "schedule/noise": 0.019999999552965164,
+      "schedule/skill_epsilon": 0.019999999552965164,
+      "skill_reward/0_Initial Balance Check": 40.0144157409668,
+      "skill_reward/1_Pole Locomotion": -4.051785945892334,
+      "skill_reward/2_Stability Enhancement": -39.940574645996094,
+      "skill_reward/3_Dynamic Pole Control": 0.0,
+      "skill_usage/0_Initial Balance Check": 0.686279296875,
+      "skill_usage/1_Pole Locomotion": 0.15310363471508026,
+      "skill_usage/2_Stability Enhancement": 0.0429229736328125,
+      "skill_usage/3_Dynamic Pole Control": 0.11769409477710724,
+      "train/actor_grad_norm": 0.24893581867218018,
+      "train/actor_loss": 76.8289794921875,
+      "train/actor_penalty": 2.0409064292907715,
+      "train/actor_q": -76.8269271850586,
+      "train/critic_abs_td": 43.971961975097656,
+      "train/critic_grad_norm": 16.40077781677246,
+      "train/critic_loss": 43.641387939453125,
+      "train/critic_target": -77.3309097290039,
+      "train/critic_value": -77.54435729980469,
+      "train/meta_abs_td": 0.08785539865493774,
+      "train/meta_grad_norm": 4.119375705718994,
+      "train/meta_loss": 0.020748957991600037,
+      "train/meta_q": 27.429397583007812,
+      "update": 148.0
+    },
+    "skillset": {
+      "environment": "CartpoleBalance",
+      "observation_schema": "cart_position, pole_angle, cart_velocity, pole_angular_velocity",
+      "skills": [
+        {
+          "name": "Initial Balance Check",
+          "description": "Ensure the pole is balanced and centered.",
+          "activation_rule": "cart_position > 0 && (pole_angle < 2 * pi / 3 || pole_angle > -2 * pi / 3)",
+          "reward_terms": [
+            {
+              "type": "target_height",
+              "weight": 1.0,
+              "lhs": "pole_angle",
+              "rhs": 0.0,
+              "threshold": 0.0,
+              "description": ""
+            },
+            {
+              "type": "action_penalty",
+              "weight": 0.1,
+              "lhs": "cart_velocity",
+              "rhs": 0.0,
+              "threshold": 0.0,
+              "description": ""
+            }
+          ]
+        },
+        {
+          "name": "Pole Locomotion",
+          "description": "Maintain balance with minimal oscillation.",
+          "activation_rule": "cart_position > 0 && (pole_angle < 2 * pi / 3 || pole_angle > -2 * pi / 3)",
+          "reward_terms": [
+            {
+              "type": "positive_velocity",
+              "weight": 0.5,
+              "lhs": "cart_velocity",
+              "rhs": 0.0,
+              "threshold": 0.0,
+              "description": ""
+            },
+            {
+              "type": "posture_penalty",
+              "weight": 0.1,
+              "lhs": "pole_angle",
+              "rhs": 0.0,
+              "threshold": 0.0,
+              "description": ""
+            }
+          ]
+        },
+        {
+          "name": "Stability Enhancement",
+          "description": "Improve overall stability by reducing oscillations.",
+          "activation_rule": "cart_position > 0 && (pole_angle < 2 * pi / 3 || pole_angle > -2 * pi / 3)",
+          "reward_terms": [
+            {
+              "type": "negative_distance",
+              "weight": 1.0,
+              "lhs": "pole_angle",
+              "rhs": 0.0,
+              "threshold": 0.0,
+              "description": ""
+            },
+            {
+              "type": "binary_bonus",
+              "weight": 0.5,
+              "lhs": "cart_position",
+              "rhs": 0.9,
+              "threshold": 0.0,
+              "description": ""
+            }
+          ]
+        },
+        {
+          "name": "Dynamic Pole Control",
+          "description": "Enhance dynamic response to disturbances.",
+          "activation_rule": "cart_position > 0 && (pole_angle < 2 * pi / 3 || pole_angle > -2 * pi / 3)",
+          "reward_terms": [
+            {
+              "type": "dynamic_stiffness",
+              "weight": 0.5,
+              "lhs": "pole_angular_velocity",
+              "rhs": 0.0,
+              "threshold": 0.0,
+              "description": ""
+            },
+            {
+              "type": "disturbance_response",
+              "weight": 0.5,
+              "lhs": "cart_position",
+              "rhs": 0.0,
+              "threshold": 0.0,
+              "description": ""
+            }
+          ]
+        }
+      ],
+      "meta_policy_notes": ""
+    },
+    "refinement_ok": true,
+    "refinement_error": null
+  },
+  {
+    "iteration": 3,
+    "metrics": {
+      "action/action_norm_mean": 0.7645167112350464,
+      "action/noise_norm_mean": 0.012686625123023987,
+      "action/original_action_norm_mean": 0.7678080797195435,
+      "debug/host_time_token": 0.0,
+      "env/nonfinite_reward": 0.0,
+      "env/original_reward": 0.31021109223365784,
+      "env/returned_episode_lengths": 1000.0,
+      "env/returned_episode_returns": 252.22061157226562,
+      "env_step": 9699328.0,
+      "episode/done_fraction": 0.0,
+      "loss/actor": 23.61014747619629,
+      "loss/critic": 10.678868293762207,
+      "loss/meta": 0.1098356619477272,
+      "mask/violation_rate": 0.0,
+      "mask_available/0_Initial Balance Check": 1.0,
+      "mask_available/1_Pole Locomotion": 0.5007995367050171,
+      "mask_available/2_Stability Enhancement": 0.5007995367050171,
+      "mask_available/3_Dynamic Pole Control": 0.5007995367050171,
+      "mask_available/4_Improved Stability": 0.5007995367050171,
+      "mask_selected_given_available/0_Initial Balance Check": 0.6572967767715454,
+      "mask_selected_given_available/1_Pole Locomotion": 0.0944666638970375,
+      "mask_selected_given_available/2_Stability Enhancement": 0.2515483498573303,
+      "mask_selected_given_available/3_Dynamic Pole Control": 0.32070446014404297,
+      "mask_selected_given_available/4_Improved Stability": 0.04228247329592705,
+      "mask_selected_when_available/0_Initial Balance Check": 0.6572967767715454,
+      "mask_selected_when_available/1_Pole Locomotion": 0.04741821438074112,
+      "mask_selected_when_available/2_Stability Enhancement": 0.127593994140625,
+      "mask_selected_when_available/3_Dynamic Pole Control": 0.1451873779296875,
+      "mask_selected_when_available/4_Improved Stability": 0.02250366285443306,
+      "mask_violation/0_Initial Balance Check": 0.0,
+      "mask_violation/1_Pole Locomotion": 0.0,
+      "mask_violation/2_Stability Enhancement": 0.0,
+      "mask_violation/3_Dynamic Pole Control": 0.0,
+      "mask_violation/4_Improved Stability": 0.0,
+      "meta_epsilon": 0.019999999552965164,
+      "noise": 0.019999999552965164,
+      "policy_diag/cartpole/angle_abs_mean": 1.1742855310440063,
+      "policy_diag/cartpole/centered_fraction": 0.3985046446323395,
+      "policy_diag/cartpole/upright_fraction": 0.180694580078125,
+      "policy_diag/primary_goal_metric": 0.2996370494365692,
+      "policy_diag/primary_success_rate": 0.10763855278491974,
+      "returns/env_reward_mean": 0.31021109223365784,
+      "returns/skill_reward_mean": -0.3969038426876068,
+      "rollout/done_fraction": 0.0,
+      "rollout/episode_length": 1000.0,
+      "rollout/episode_return": 252.22061157226562,
+      "schedule/meta_epsilon": 0.019999999552965164,
+      "schedule/noise": 0.019999999552965164,
+      "schedule/skill_epsilon": 0.019999999552965164,
+      "skill_reward/0_Initial Balance Check": 21.662357330322266,
+      "skill_reward/1_Pole Locomotion": -2.167776107788086,
+      "skill_reward/2_Stability Enhancement": -21.47909927368164,
+      "skill_reward/3_Dynamic Pole Control": 0.0,
+      "skill_reward/4_Improved Stability": 0.0,
+      "skill_usage/0_Initial Balance Check": 0.6572967767715454,
+      "skill_usage/1_Pole Locomotion": 0.04741821438074112,
+      "skill_usage/2_Stability Enhancement": 0.127593994140625,
+      "skill_usage/3_Dynamic Pole Control": 0.1451873779296875,
+      "skill_usage/4_Improved Stability": 0.02250366285443306,
+      "train/actor_grad_norm": 0.9549596905708313,
+      "train/actor_loss": 23.61014747619629,
+      "train/actor_penalty": 1.3311960697174072,
+      "train/actor_q": -23.608814239501953,
+      "train/critic_abs_td": 10.946102142333984,
+      "train/critic_grad_norm": 17.914653778076172,
+      "train/critic_loss": 10.678868293762207,
+      "train/critic_target": -24.781415939331055,
+      "train/critic_value": -24.752376556396484,
+      "train/meta_abs_td": 0.2998826205730438,
+      "train/meta_grad_norm": 6.854361534118652,
+      "train/meta_loss": 0.1098356619477272,
+      "train/meta_q": 28.882009506225586,
+      "update": 148.0
+    },
+    "skillset": {
+      "environment": "CartpoleBalance",
+      "observation_schema": "cart_position, pole_angle, cart_velocity, pole_angular_velocity",
+      "skills": [
+        {
+          "name": "Initial Balance Check",
+          "description": "Ensure the pole is balanced and centered.",
+          "activation_rule": "cart_position > 0 && (pole_angle < 2 * pi / 3 || pole_angle > -2 * pi / 3)",
+          "reward_terms": [
+            {
+              "type": "target_height",
+              "weight": 1.0,
+              "lhs": "pole_angle",
+              "rhs": 0.0,
+              "threshold": 0.0,
+              "description": ""
+            },
+            {
+              "type": "action_penalty",
+              "weight": 0.1,
+              "lhs": "cart_velocity",
+              "rhs": 0.0,
+              "threshold": 0.0,
+              "description": ""
+            }
+          ]
+        },
+        {
+          "name": "Pole Locomotion",
+          "description": "Maintain balance with minimal oscillation.",
+          "activation_rule": "cart_position > 0 && (pole_angle < 2 * pi / 3 || pole_angle > -2 * pi / 3)",
+          "reward_terms": [
+            {
+              "type": "positive_velocity",
+              "weight": 0.5,
+              "lhs": "cart_velocity",
+              "rhs": 0.0,
+              "threshold": 0.0,
+              "description": ""
+            },
+            {
+              "type": "posture_penalty",
+              "weight": 0.1,
+              "lhs": "pole_angle",
+              "rhs": 0.0,
+              "threshold": 0.0,
+              "description": ""
+            }
+          ]
+        },
+        {
+          "name": "Stability Enhancement",
+          "description": "Improve overall stability by reducing oscillations.",
+          "activation_rule": "cart_position > 0 && (pole_angle < 2 * pi / 3 || pole_angle > -2 * pi / 3)",
+          "reward_terms": [
+            {
+              "type": "negative_distance",
+              "weight": 1.0,
+              "lhs": "pole_angle",
+              "rhs": 0.0,
+              "threshold": 0.0,
+              "description": ""
+            },
+            {
+              "type": "binary_bonus",
+              "weight": 0.5,
+              "lhs": "cart_position",
+              "rhs": 0.9,
+              "threshold": 0.0,
+              "description": ""
+            }
+          ]
+        },
+        {
+          "name": "Dynamic Pole Control",
+          "description": "Enhance dynamic response to disturbances.",
+          "activation_rule": "cart_position > 0 && (pole_angle < 2 * pi / 3 || pole_angle > -2 * pi / 3)",
+          "reward_terms": [
+            {
+              "type": "dynamic_stiffness",
+              "weight": 0.5,
+              "lhs": "pole_angular_velocity",
+              "rhs": 0.0,
+              "threshold": 0.0,
+              "description": ""
+            },
+            {
+              "type": "disturbance_response",
+              "weight": 0.5,
+              "lhs": "cart_position",
+              "rhs": 0.0,
+              "threshold": 0.0,
+              "description": ""
+            }
+          ]
+        },
+        {
+          "name": "Improved Stability",
+          "description": "Further refine stability without introducing unnecessary complexity.",
+          "activation_rule": "cart_position > 0 && (pole_angle < 2 * pi / 3 || pole_angle > -2 * pi / 3)",
+          "reward_terms": [
+            {
+              "type": "stability_bonus",
+              "weight": 0.3,
+              "lhs": "pole_angle",
+              "rhs": 0.0,
+              "threshold": 0.0,
+              "description": ""
+            },
+            {
+              "type": "smooth_posture",
+              "weight": 0.2,
+              "lhs": "cart_position",
+              "rhs": 0.9,
+              "threshold": 0.0,
+              "description": ""
+            }
+          ]
+        }
+      ],
+      "meta_policy_notes": ""
+    },
+    "refinement_ok": true,
+    "refinement_error": null
+  }
+]

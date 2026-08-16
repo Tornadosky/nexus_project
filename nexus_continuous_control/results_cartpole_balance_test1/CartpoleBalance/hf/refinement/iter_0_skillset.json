@@ -1,0 +1,76 @@
+{
+  "environment": "CartpoleBalance",
+  "observation_schema": "cart_position, pole_angle, cart_velocity, pole_angular_velocity",
+  "skills": [
+    {
+      "name": "Initial Balance Check",
+      "description": "Ensure the pole is balanced and centered.",
+      "activation_rule": "cart_position > 0 && pole_angle < 2 * pi / 3 && pole_angle > -2 * pi / 3",
+      "reward_terms": [
+        {
+          "type": "target_height",
+          "weight": 1.0,
+          "lhs": "pole_angle",
+          "rhs": 0.0,
+          "threshold": 0.0,
+          "description": ""
+        },
+        {
+          "type": "action_penalty",
+          "weight": 0.1,
+          "lhs": "cart_velocity",
+          "rhs": 0.0,
+          "threshold": 0.0,
+          "description": ""
+        }
+      ]
+    },
+    {
+      "name": "Pole Locomotion",
+      "description": "Maintain balance with minimal oscillation.",
+      "activation_rule": "cart_position > 0 && pole_angle < 2 * pi / 3 && pole_angle > -2 * pi / 3",
+      "reward_terms": [
+        {
+          "type": "positive_velocity",
+          "weight": 0.5,
+          "lhs": "cart_velocity",
+          "rhs": 0.0,
+          "threshold": 0.0,
+          "description": ""
+        },
+        {
+          "type": "posture_penalty",
+          "weight": 0.1,
+          "lhs": "pole_angle",
+          "rhs": 0.0,
+          "threshold": 0.0,
+          "description": ""
+        }
+      ]
+    },
+    {
+      "name": "Optimal Performance",
+      "description": "Maximize stability and minimize oscillations.",
+      "activation_rule": "cart_position > 0 && pole_angle < 2 * pi / 3 && pole_angle > -2 * pi / 3",
+      "reward_terms": [
+        {
+          "type": "negative_distance",
+          "weight": 1.0,
+          "lhs": "pole_angle",
+          "rhs": 0.0,
+          "threshold": 0.0,
+          "description": ""
+        },
+        {
+          "type": "binary_bonus",
+          "weight": 0.5,
+          "lhs": "cart_position",
+          "rhs": 0.9,
+          "threshold": 0.0,
+          "description": ""
+        }
+      ]
+    }
+  ],
+  "meta_policy_notes": ""
+}
