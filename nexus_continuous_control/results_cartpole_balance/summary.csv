@@ -1,0 +1,9 @@
+env,backend,kind,metric,mean,std
+CartpoleBalance,-,hand_written,env_reward,0.6096903681755066,0.0919535754029015
+CartpoleBalance,-,hand_written,success_rate,0.3175812602043152,0.053917581809433984
+CartpoleBalance,-,hand_written,goal_metric,0.5411005258560181,0.08550015603884788
+CartpoleBalance,hf,llm,env_reward,0.09561763107776641,0.0383836532094347
+CartpoleBalance,hf,llm,success_rate,0.037725002691149714,0.025804713293945777
+CartpoleBalance,hf,llm,goal_metric,0.006146152317523956,0.34327028500019496
+CartpoleBalance,hf,refined_first_iter,env_reward,0.11997947841882706,
+CartpoleBalance,hf,refined_last_iter,env_reward,0.11997947841882706,
