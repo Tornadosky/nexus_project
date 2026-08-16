@@ -1,0 +1,99 @@
+{
+  "environment": "CheetahRun",
+  "observation_schema": "forward_velocity, torso_pitch, pitch, x_velocity, joint_speed",
+  "skills": [
+    {
+      "name": "Initial Balance",
+      "description": "Maintain balance to prevent falling.",
+      "activation_rule": "forward_velocity > 0 && torso_pitch < 0.2 && pitch < 0.2 && x_velocity < 0.1 && joint_speed < 0.1",
+      "reward_terms": [
+        {
+          "type": "positive_velocity",
+          "weight": 1.0,
+          "lhs": "forward_velocity",
+          "rhs": null,
+          "threshold": 0.0,
+          "description": ""
+        },
+        {
+          "type": "posture_penalty",
+          "weight": 0.5,
+          "lhs": "forward_velocity",
+          "rhs": null,
+          "threshold": 0.0,
+          "description": ""
+        }
+      ]
+    },
+    {
+      "name": "Sideways Movement",
+      "description": "Move sideways at high speed without losing balance.",
+      "activation_rule": "forward_velocity > 0 && torso_pitch < 0.4 && pitch < 0.4 && x_velocity > 0.5 && joint_speed > 0.5",
+      "reward_terms": [
+        {
+          "type": "positive_velocity",
+          "weight": 1.0,
+          "lhs": "x_velocity",
+          "rhs": null,
+          "threshold": 0.0,
+          "description": ""
+        },
+        {
+          "type": "target_height",
+          "weight": 0.5,
+          "lhs": "forward_velocity",
+          "rhs": null,
+          "threshold": 0.0,
+          "description": ""
+        }
+      ]
+    },
+    {
+      "name": "High-Speed Forward Motion",
+      "description": "Maximize speed and efficiency by combining lateral movement with high-speed forward motion.",
+      "activation_rule": "forward_velocity > 0 && torso_pitch < 0.6 && pitch < 0.6 && x_velocity > 0.7 && joint_speed > 0.7",
+      "reward_terms": [
+        {
+          "type": "positive_velocity",
+          "weight": 1.0,
+          "lhs": "forward_velocity",
+          "rhs": null,
+          "threshold": 0.0,
+          "description": ""
+        },
+        {
+          "type": "binary_bonus",
+          "weight": 0.8,
+          "lhs": "forward_velocity",
+          "rhs": null,
+          "threshold": 0.0,
+          "description": ""
+        }
+      ]
+    },
+    {
+      "name": "Steering Maneuver",
+      "description": "Perform precise steering maneuvers while maintaining balance.",
+      "activation_rule": "forward_velocity > 0 && torso_pitch < 0.3 && pitch < 0.3 && x_velocity > 0.3 && joint_speed > 0.3",
+      "reward_terms": [
+        {
+          "type": "steer_accuracy",
+          "weight": 1.0,
+          "lhs": "steering_angle",
+          "rhs": null,
+          "threshold": 0.0,
+          "description": ""
+        },
+        {
+          "type": "balance_stability",
+          "weight": 0.5,
+          "lhs": "forward_velocity",
+          "rhs": null,
+          "threshold": 0.0,
+          "description": ""
+        }
+      ]
+    }
+  ],
+  "meta_policy_notes": ""
+}
