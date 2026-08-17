@@ -40,12 +40,16 @@ Headline numbers:
   | WalkerWalk      | (not distilled)          | —                    | ~0.40 reward/step  |
   | HopperHop       | (not distilled)          | —                    | ~0.00 (FAILS)      |
 
-*** READ F7a BEFORE PRESENTING THE IN-LOOP COLUMN. *** An ablation run on
-2026-08-17 shows the in-loop CARTPOLE actor ignores its pixels: freezing,
-scrambling or blanking the image leaves behaviour unchanged, and a constant
-action per skill scores BETTER. On that env the score comes from the privileged
-meta-policy, not from vision. The distillation column is unaffected and remains
-verified. CheetahRun is queued.
+*** THE IN-LOOP COLUMN IS ENV-DEPENDENT -- READ F7a AND F7b. *** Ablations on
+2026-08-17/18 measured whether the in-loop actor actually uses its camera:
+  * CheetahRun  -> YES, decisively. Blanking the image drops performance 99.8%
+                   (0.498 -> 0.001 reward/step) and a constant action per skill
+                   drops it 99.7%. In-loop pixel RL genuinely works here.
+  * CartpoleBalance -> NO. Freezing/scrambling/blanking the image changes
+                   nothing, and a constant action per skill scores BETTER. The
+                   privileged meta-policy solves that task alone.
+The distinction is task difficulty: when the state-based meta can solve the task
+by itself, the encoder never has to learn. Distillation is unaffected throughout.
 
 Three findings worth remembering:
   1. Distillation retains ~50% of privileged performance and does so EQUALLY for
@@ -440,11 +444,12 @@ F2. Cloning is near-exact; the loss is in CLOSED LOOP.
     grayscale stack carries coarser velocity information than exact state. This
     is a property of open-loop imitation, not a bug in the vision model.
 
-F3. *** RETRACTED FOR CARTPOLE (2026-08-17 ablation, see F7a) *** The raw scores
-    below are real, but on CartpoleBalance they are NOT produced by vision: the
-    in-loop actor is effectively blind and the state-based meta does the work.
-    Do NOT present F3 as an in-loop-beats-distillation claim until the CheetahRun
-    ablation has run.
+F3. *** VERIFIED FOR CHEETAH, RETRACTED FOR CARTPOLE (see F7a / F7b). *** On
+    CheetahRun the in-loop win is real AND is produced by vision: the ablation
+    shows performance collapsing 99.8% without pixels, so "in-loop beats
+    distillation" (0.50 vs 0.16 reward/step) stands and is now evidence-backed.
+    On CartpoleBalance the raw score is real but is NOT produced by vision, so
+    the in-loop-beats-distillation claim must NOT be made for that env.
 
 F3. IN-LOOP PIXEL RL BEATS DISTILLATION — on both envs where we ran both.
     cartpole 0.64 vs 0.52 upright; cheetah ~0.42 vs 0.16 reward/step. Reason:
@@ -543,6 +548,38 @@ F7a. ABLATION RESULT (2026-08-17, CartpoleBalance, in-loop, 128 envs / 250
      FIXES TO TRY: many more updates; higher actor LR; the deferred shared CNN
      encoder; an auxiliary pixel->state regression loss (P6); and raising
      META_DECISION_INTERVAL so the meta cannot compensate every step.
+
+F7b. CHEETAH ABLATION (2026-08-18): THE IN-LOOP CHEETAH ACTOR *DOES* USE ITS
+     PIXELS -- decisively. Same protocol as F7a (128 envs / 250 updates, final
+     training return 101.3, 5 episodes per condition):
+
+       condition                                reward/step   drop
+       intact (real pixels)                     0.498         --
+       frozen_first (t=0 image forever)         0.008         98.5%
+       random_replay (wrong-timestep frames)    0.012         97.5%
+       shuffle_frames (motion destroyed)        0.200         59.9%
+       zeros (blank image)                      0.001         99.8%
+       const_action (no pixels; fixed action)   0.001         99.7%
+
+     Remove the camera and the cheetah stops running. Crucially const_action --
+     the exact "meta + bang-bang switching" mechanism that DOES explain cartpole
+     -- collapses 99.7% here, so it is decisively refuted for locomotion. The
+     60% cost of merely shuffling frame ORDER shows the policy reads motion, not
+     just a static pose.
+
+     WHY THE TWO ENVS DIFFER (the real finding): it is task difficulty, not a
+     code difference -- both runs used identical code and budget. CartpoleBalance
+     is solvable by the privileged meta alone (3 skills, switch every step, and a
+     bang-bang controller balances a pole), so the encoder is never under
+     pressure to learn. Locomotion cannot be faked that way: a gait needs
+     continuous, state-dependent, coordinated 6-DoF actions, so the ONLY way to
+     get reward is to actually see. The asymmetric/privileged-critic design
+     therefore learns perception exactly when the privileged shortcut is
+     insufficient -- a sharper and more useful claim than "in-loop works".
+
+     PRESENTATION GUIDANCE: lead with cheetah (in-loop pixel RL genuinely works
+     and beats distillation 0.50 vs 0.16), then give cartpole as the instructive
+     failure and the shortcut-learning explanation. Both are measured, not argued.
 
 F8. The infrastructure claim: in-loop pixel rendering is NOT a research blocker.
     We previously believed MJWarp in-loop rendering was unusable (it consistently

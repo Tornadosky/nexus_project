@@ -61,6 +61,11 @@ run_one() {
     # shellcheck disable=SC1091
     source .venv/bin/activate
     export XLA_PYTHON_CLIENT_PREALLOCATE=false   # never grab the whole shared card
+    # Unbuffered: with the default buffering nothing reaches the log until the
+    # run ends, which defeats the point of the train/rgb/pixel_sensitivity
+    # monitor -- a blind encoder should be visible (and killable) within minutes
+    # instead of after a 45-minute job.
+    export PYTHONUNBUFFERED=1
     python -m nexus_continuous.scripts.rgb_pixel_ablation \
       --config "$config" --meta "$meta" --seed 0 \
       --updates "$UPDATES" --num-envs "$NUM_ENVS" --episodes "$EPISODES" \
