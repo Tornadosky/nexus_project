@@ -89,6 +89,9 @@ def _fake_bundle(_config):
         action_high=jnp.ones((1,), dtype=jnp.float32),
         action_dim=1,
         episode_length=6,
+        # Privileged-state width the auxiliary pixel->state head predicts; the
+        # real adapter reads this off the MuJoCo model as nq+nv.
+        actor_obs_dim=_PROPRIO,
     )
 
 
@@ -210,3 +213,38 @@ def test_use_rgb_train_smoke(monkeypatch, rgb_augment):
     for key, value in output.metrics.items():
         if key.startswith("train/") and "loss" in key:
             assert bool(jnp.all(jnp.isfinite(value))), f"non-finite {key}"
+
+
+def test_aux_state_head_and_sensitivity_monitor(monkeypatch):
+    """The fix for the 2026-08-17 'blind encoder' finding must actually run.
+
+    Exercises the paths that only activate with RGB_AUX_STATE_COEF > 0: the
+    aux-enabled parameter tree (an extra Dense head inside every skill actor),
+    the return_aux=True vmapped apply in the actor loss, and the pixel-
+    sensitivity monitor. All of it must stay finite.
+    """
+    monkeypatch.setattr(alg, "build_playground_env", _fake_bundle)
+    config = _smoke_config(RGB_AUX_STATE_COEF=1.0, RGB_MONITOR_SENSITIVITY=True)
+
+    output = run_training(config)
+
+    assert int(output.runner_state[0].actor.n_updates) == 2
+    assert bool(jnp.isfinite(output.eval_metrics["episode_return_mean"]))
+
+    # The aux head exists in every skill actor's parameters.
+    actor_params = output.runner_state[0].actor.params
+    assert "aux_state" in actor_params, f"no aux head; got {list(actor_params)}"
+
+    # Both new metrics were logged and stayed finite.
+    for name in ("rgb/aux_state_loss", "rgb/pixel_sensitivity"):
+        matches = [k for k in output.metrics if name in k]
+        assert matches, f"{name} not logged; metrics: {sorted(output.metrics)[:20]}"
+        for k in matches:
+            assert bool(jnp.all(jnp.isfinite(output.metrics[k]))), f"non-finite {k}"
+
+
+def test_aux_head_absent_when_disabled(monkeypatch):
+    """Default (coef 0) must leave the parameter tree byte-identical to before."""
+    monkeypatch.setattr(alg, "build_playground_env", _fake_bundle)
+    output = run_training(_smoke_config())
+    assert "aux_state" not in output.runner_state[0].actor.params

@@ -19,6 +19,10 @@ class PlaygroundEnvBundle:
     action_high: Any
     action_dim: int
     episode_length: int
+    # Width of the privileged state vector the vision wrapper reconstructs
+    # (qpos+qvel). Only set in RGB mode; needed by the optional auxiliary
+    # pixel->state head, which must size its output layer before the first reset.
+    actor_obs_dim: int | None = None
 
 
 @dataclass(frozen=True)
@@ -653,6 +657,15 @@ def build_playground_env(config: dict[str, Any]) -> PlaygroundEnvBundle:
                 "(ported) are supported."
             )
     env = _vision_env if _vision_env is not None else registry.load(config["ENV_NAME"], env_config)
+    # Privileged-state width, read off the model before the wrappers hide it.
+    # Matches _proprio_from_state's concat(qpos, qvel).
+    actor_obs_dim = None
+    if config.get("USE_RGB", False):
+        _mjm = getattr(env, "mj_model", None)
+        if _mjm is None:
+            _mjm = getattr(env, "_mj_model", None)
+        if _mjm is not None:
+            actor_obs_dim = int(_mjm.nq) + int(_mjm.nv)
     env = wrap_for_brax_training(
         env,
         episode_length=env_config.episode_length,
@@ -675,6 +688,7 @@ def build_playground_env(config: dict[str, Any]) -> PlaygroundEnvBundle:
         action_high=action_space.high,
         action_dim=int(action_space.shape[0]),
         episode_length=int(getattr(env, "episode_length", config.get("EPISODE_LENGTH", 1000))),
+        actor_obs_dim=actor_obs_dim,
     )
 
 

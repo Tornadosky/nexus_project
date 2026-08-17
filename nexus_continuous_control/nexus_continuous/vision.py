@@ -57,15 +57,45 @@ class RGBEncoder(nn.Module):
 
 
 class VisionSkillActor(nn.Module):
+    """Pixel skill actor, optionally with an auxiliary pixel->state head.
+
+    ``aux_state_dim > 0`` adds a linear head that regresses the privileged state
+    (qpos+qvel) from the CNN latent. This exists because the in-loop ablation of
+    2026-08-17 showed the encoder receives too weak a signal to learn perception:
+    trained only by the deterministic policy gradient through the privileged
+    critic, the actor's output varied by 0.005-0.151% of the action range across
+    completely different frames -- effectively blind, with the state-based meta
+    doing the control. The aux head gives the encoder the same DENSE supervised
+    signal that makes the distillation arm reach r ~ 0.99 on identical inputs,
+    but inside the RL loop. Predicting state (not reconstructing pixels) is the
+    cheaper, control-relevant choice.
+    """
+
     action_dim: int
     action_scale: jnp.ndarray
     action_bias: jnp.ndarray
     hidden_sizes: Sequence[int] = (256, 256)
     embedding_dim: int = 128
+    aux_state_dim: int = 0
 
     @nn.compact
-    def __call__(self, pixels: jnp.ndarray, proprioception: jnp.ndarray) -> jnp.ndarray:
+    def __call__(
+        self,
+        pixels: jnp.ndarray,
+        proprioception: jnp.ndarray,
+        return_aux: bool = False,
+    ) -> jnp.ndarray | tuple[jnp.ndarray, jnp.ndarray | None]:
         z = RGBEncoder(self.embedding_dim)(pixels)
         x = jnp.concatenate([z, proprioception], axis=-1)
         x = MLP(self.hidden_sizes, self.action_dim, output_scale=0.01)(x)
-        return jnp.tanh(x) * self.action_scale + self.action_bias
+        action = jnp.tanh(x) * self.action_scale + self.action_bias
+        # Built whenever enabled -- NOT only when return_aux is set -- so the
+        # parameter tree is identical between init and every apply call.
+        state_pred = (
+            nn.Dense(self.aux_state_dim, name="aux_state")(z)
+            if self.aux_state_dim > 0
+            else None
+        )
+        if return_aux:
+            return action, state_pred
+        return action

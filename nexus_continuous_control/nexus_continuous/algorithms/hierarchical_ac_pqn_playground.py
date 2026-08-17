@@ -98,6 +98,18 @@ def _select_rows(x: jnp.ndarray, indices: jnp.ndarray) -> jnp.ndarray:
     return x[jnp.arange(indices.shape[0]), indices]
 
 
+def _require_aux_dim(env_bundle: Any) -> int:
+    """Width of the privileged state the aux pixel->state head must predict."""
+    dim = getattr(env_bundle, "actor_obs_dim", None)
+    if not dim:
+        raise ValueError(
+            "RGB_AUX_STATE_COEF > 0 needs the privileged-state width, but the env "
+            "bundle has no actor_obs_dim (it is only set in RGB mode, from the "
+            "MuJoCo model's nq+nv). Set USE_RGB and use a vision-capable env."
+        )
+    return int(dim)
+
+
 def _drop_actor_pixels(obs: Any) -> Any:
     """Strip the heavy pixel tensor from an observation dict.
 
@@ -294,6 +306,13 @@ def make_train(config: dict[str, Any]) -> Callable[[jax.Array], NexusTrainOutput
         offsets = jax.random.randint(rng, (b, 2), 0, 2 * rgb_aug_pad + 1)
         crop = lambda img, off: jax.lax.dynamic_slice(img, (off[0], off[1], 0), (h, w, c))
         return jax.vmap(crop)(padded, offsets)
+    # Auxiliary pixel->state regression on the CNN latent. Off by default (0.0).
+    # See VisionSkillActor: the policy gradient alone leaves the encoder blind.
+    rgb_aux_coef = float(config.get("RGB_AUX_STATE_COEF", 0.0)) if use_rgb else 0.0
+    # Cheap in-training blindness monitor: how much does the action move when the
+    # pixels change? Logged as rgb/pixel_sensitivity so a blind run is visible at
+    # update ~20 instead of after a 45-minute job.
+    rgb_monitor = use_rgb and bool(config.get("RGB_MONITOR_SENSITIVITY", True))
     if use_rgb:
         actor = VisionSkillActor(
             action_dim=action_dim,
@@ -301,6 +320,7 @@ def make_train(config: dict[str, Any]) -> Callable[[jax.Array], NexusTrainOutput
             action_bias=action_bias,
             hidden_sizes=tuple(config.get("ACTOR_HIDDEN_SIZES", (256, 256))),
             embedding_dim=int(config.get("RGB_EMBED_DIM", 128)),
+            aux_state_dim=(_require_aux_dim(env_bundle) if rgb_aux_coef > 0 else 0),
         )
     else:
         actor = SkillActor(
@@ -973,7 +993,24 @@ def make_train(config: dict[str, Any]) -> Callable[[jax.Array], NexusTrainOutput
                     )
 
                     def actor_loss_fn(actor_params):
-                        all_actions = _actor_apply(actor_params, obs_actor_mb, obs_pixels_mb)  # [N, B, A]
+                        aux_loss = jnp.asarray(0.0)
+                        if rgb_aux_coef > 0:
+                            # Dense supervised signal for the CNN: predict the
+                            # privileged state from the latent. Target is the
+                            # (normalized) actor obs, shared by all skills.
+                            proprio = _actor_proprio(obs_actor_mb)
+                            all_actions, state_pred = jax.vmap(
+                                lambda p: actor.apply(
+                                    {"params": p}, obs_pixels_mb, proprio, return_aux=True
+                                )
+                            )(actor_params)  # [N,B,A], [N,B,D]
+                            aux_loss = jnp.mean(
+                                jnp.square(state_pred - obs_actor_mb[None, ...])
+                            )
+                        else:
+                            all_actions = _actor_apply(
+                                actor_params, obs_actor_mb, obs_pixels_mb
+                            )  # [N, B, A]
 
                         def one_skill_q(skill_idx, action_i):
                             skill_params = jax.tree_util.tree_map(
@@ -1002,9 +1039,25 @@ def make_train(config: dict[str, Any]) -> Callable[[jax.Array], NexusTrainOutput
                             penalty = jnp.mean(jnp.square(action_diff))
                         else:
                             penalty = jnp.asarray(0.0)
-                        return rl_loss + coeff * penalty, {
+                        # Blindness monitor (no gradient): how far does the action
+                        # move when the pixels are swapped for other real frames?
+                        # A blind encoder scores ~0. Cheap early-warning signal.
+                        if rgb_monitor:
+                            rolled = jnp.roll(jax.lax.stop_gradient(obs_pixels_mb), 1, axis=0)
+                            other = jax.lax.stop_gradient(
+                                _actor_apply(actor_params, obs_actor_mb, rolled)
+                            )
+                            span = jnp.mean(jnp.abs(action_scale)) * 2.0
+                            sensitivity = jnp.mean(
+                                jnp.abs(jax.lax.stop_gradient(all_actions) - other)
+                            ) / jnp.maximum(span, 1e-8)
+                        else:
+                            sensitivity = jnp.asarray(0.0)
+                        return rl_loss + coeff * penalty + rgb_aux_coef * aux_loss, {
                             "actor_q": jnp.mean(q_by_skill),
                             "actor_penalty": penalty,
+                            "rgb/aux_state_loss": aux_loss,
+                            "rgb/pixel_sensitivity": sensitivity,
                         }
 
                     (actor_loss, actor_info), actor_grads = jax.value_and_grad(
@@ -1057,6 +1110,14 @@ def make_train(config: dict[str, Any]) -> Callable[[jax.Array], NexusTrainOutput
                         "train/critic_grad_norm": critic_grad_norm,
                         "train/meta_grad_norm": meta_grad_norm,
                     }
+                    if use_rgb:
+                        # Watch perception develop (or not) during training:
+                        # pixel_sensitivity ~ 0 means the encoder is blind, which
+                        # is what the 2026-08-17 ablation found post hoc.
+                        losses["train/rgb/aux_state_loss"] = actor_info["rgb/aux_state_loss"]
+                        losses["train/rgb/pixel_sensitivity"] = actor_info[
+                            "rgb/pixel_sensitivity"
+                        ]
                     return (new_state, rng), losses
 
                 (train_state, rng), losses = jax.lax.scan(
