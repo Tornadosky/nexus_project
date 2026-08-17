@@ -581,6 +581,36 @@ F7b. CHEETAH ABLATION (2026-08-18): THE IN-LOOP CHEETAH ACTOR *DOES* USE ITS
      and beats distillation 0.50 vs 0.16), then give cartpole as the instructive
      failure and the shortcut-learning explanation. Both are measured, not argued.
 
+F7c. THE FIX WORKS (2026-08-18, cartpole_aux). Same env, same budget, same
+     ablation protocol -- but trained with the auxiliary pixel->state loss
+     (RGB_AUX_STATE_COEF 1.0), META_DECISION_INTERVAL 4, and LR 3e-4:
+
+       condition                        BLIND run      FIXED run
+       intact (upright fraction)        0.514          1.000   <- perfect balance
+       frozen_first                     0.514          0.575   (-42.5%)
+       random_replay                    0.516          0.650   (-35.0%)
+       shuffle_frames                   0.514          0.833   (-16.7%)
+       zeros                            0.517          0.482   (-51.8%)
+       const_action                     0.606 (BETTER) 0.732   (-26.8%)
+       training return                  8.15           24.42
+
+     Two things changed at once, both in the right direction: the actor now
+     USES its camera (corrupting the image costs 35-52%, versus 0.9% before),
+     and task performance DOUBLED to a perfect 1.000 upright fraction. The
+     const_action control flipped sign -- dropping the actor for a constant
+     action used to be an IMPROVEMENT (+18%) and is now a 27% loss.
+
+     HONEST CAVEAT: the fix changed three things simultaneously, so this run
+     cannot attribute the gain to any single one. A factorial follow-up
+     (aux-only / interval-only / LR-only) would separate them; the aux loss is
+     the theoretically motivated component, the meta interval removes the
+     shortcut, and the LR addresses an encoder that would not move.
+
+     Combined story for the report: in-loop pixel RL works on locomotion out of
+     the box (cheetah), fails silently on a task the privileged meta can solve
+     alone (cartpole), and that failure is REPAIRABLE by giving the encoder a
+     dense supervised signal and denying the meta its per-step shortcut.
+
 F8. The infrastructure claim: in-loop pixel rendering is NOT a research blocker.
     We previously believed MJWarp in-loop rendering was unusable (it consistently
     crashed on Colab). It turned out to be a version desync. With mujoco-warp

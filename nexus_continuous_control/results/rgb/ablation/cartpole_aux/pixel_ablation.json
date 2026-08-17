@@ -1,0 +1,101 @@
+{
+  "env": "CartpoleBalance",
+  "meta": "neural",
+  "seed": 0,
+  "updates": 250,
+  "num_envs": 128,
+  "episodes": 5,
+  "eval_steps": 250,
+  "rgb_proprio": "none",
+  "final_train_return": 24.417343139648438,
+  "performance_drop_fraction": {
+    "frozen_first": 0.42479999999999996,
+    "random_replay": 0.35039999999999993,
+    "shuffle_frames": 0.16720000000000002,
+    "zeros": 0.5176000000000001,
+    "const_action": 0.268
+  },
+  "actor_uses_pixels": true,
+  "actor_variation_needed": false,
+  "motion_sensitive": true,
+  "results": {
+    "intact": {
+      "reward_per_step_mean": 0.09845185246467589,
+      "reward_per_step_std": 0.00030330896083902094,
+      "per_episode": [
+        0.0987327079474926,
+        0.09878731217980385,
+        0.09821698832511902,
+        0.09852632024884224,
+        0.0979959336221218
+      ],
+      "upright_fraction_mean": 1.0,
+      "upright_fraction_std": 0.0
+    },
+    "frozen_first": {
+      "reward_per_step_mean": 0.006986821491643787,
+      "reward_per_step_std": 0.012343731933796762,
+      "per_episode": [
+        -0.0025405373424291612,
+        -0.005860375240445137,
+        0.026298243284225465,
+        0.0005060493275523186,
+        0.016530727429315446
+      ],
+      "upright_fraction_mean": 0.5752,
+      "upright_fraction_std": 0.03686949958976931
+    },
+    "random_replay": {
+      "reward_per_step_mean": 0.03811698560463265,
+      "reward_per_step_std": 0.00910873135247438,
+      "per_episode": [
+        0.03448092592414469,
+        0.03412353086844087,
+        0.04178047186462209,
+        0.0535979717951268,
+        0.026602027570828794
+      ],
+      "upright_fraction_mean": 0.6496000000000001,
+      "upright_fraction_std": 0.011757550765359266
+    },
+    "shuffle_frames": {
+      "reward_per_step_mean": 0.06962533550895751,
+      "reward_per_step_std": 0.022162146965366114,
+      "per_episode": [
+        0.04128578347340226,
+        0.04452597057633102,
+        0.0889997836202383,
+        0.0924511958360672,
+        0.08086394403874875
+      ],
+      "upright_fraction_mean": 0.8328,
+      "upright_fraction_std": 0.0874308869908112
+    },
+    "zeros": {
+      "reward_per_step_mean": -0.0042914892166852955,
+      "reward_per_step_std": 0.016075182104338413,
+      "per_episode": [
+        -0.014092192396521569,
+        0.019366293761879205,
+        -0.01835785879008472,
+        0.010619037374854088,
+        -0.01899272603355348
+      ],
+      "upright_fraction_mean": 0.4824,
+      "upright_fraction_std": 0.05716502427183949
+    },
+    "const_action": {
+      "reward_per_step_mean": 0.04138943159580231,
+      "reward_per_step_std": 0.014259773242886563,
+      "per_episode": [
+        0.03303496235609055,
+        0.03368336160480976,
+        0.06980298241227866,
+        0.036608754605054854,
+        0.03381709700077772
+      ],
+      "upright_fraction_mean": 0.732,
+      "upright_fraction_std": 0.0694665387074957
+    }
+  }
+}

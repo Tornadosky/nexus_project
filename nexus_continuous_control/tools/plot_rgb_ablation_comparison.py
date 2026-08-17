@@ -47,6 +47,7 @@ def main(argv: list[str] | None = None) -> None:
     for tag, label, color in [
         ("cheetah", "CheetahRun — actor SEES", "#4C72B0"),
         ("cartpole", "CartpoleBalance — actor BLIND", "#C44E52"),
+        ("cartpole_aux", "CartpoleBalance + FIX — actor SEES", "#55A868"),
     ]:
         path = runs / tag / "pixel_ablation.json"
         if not path.exists():
@@ -67,7 +68,7 @@ def main(argv: list[str] | None = None) -> None:
         raise SystemExit("no ablation results found")
 
     x = np.arange(len(CONDITIONS))
-    width = 0.38
+    width = 0.27
     fig, ax = plt.subplots(figsize=(11, 5))
     for i, (label, color, vals, key, base) in enumerate(series):
         off = (i - (len(series) - 1) / 2) * width
@@ -92,7 +93,8 @@ def main(argv: list[str] | None = None) -> None:
              "Cheetah collapses without pixels -> vision is doing the control.   "
              "Cartpole is unchanged, and is even BETTER with no actor at all (118%) ->\n"
              "the privileged meta-policy alone solves that task, so the encoder was never "
-             "under pressure to learn.   128 envs / 250 updates, 5 episodes per condition, single seed.",
+             "under pressure to learn.   The FIX (aux pixel->state loss + META_DECISION_INTERVAL 4 + LR 3e-4) makes it see AND doubles\n"
+             "performance: 0.514 -> 1.000 upright.   128 envs / 250 updates, 5 episodes per condition, single seed.",
              ha="center", va="top", fontsize=8.5,
              bbox=dict(boxstyle="round", fc="#F5F5F5", ec="#CCCCCC"))
     fig.tight_layout()

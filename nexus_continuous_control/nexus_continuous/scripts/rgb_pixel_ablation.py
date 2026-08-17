@@ -381,7 +381,8 @@ def main(argv: list[str] | None = None) -> None:
     print(f"\n  actor USES the pixels          : {'YES' if uses_pixels else 'NO -- claim unsupported'}"
           "   (all pixel corruptions cost >30%)")
     print(f"  pixel-conditioned variation is : {'NECESSARY' if needs_variation else 'NOT necessary'}"
-          "   (meta + constant actions is not enough)")
+          f"   (dropping the actor for a constant action costs "
+          f"{100 * drops['const_action']:.1f}%)")
     print(f"  uses MOTION, not just a pose   : {'YES' if verdict['motion_sensitive'] else 'weak/no'}"
           "   (frame-shuffle costs >15%)")
 
