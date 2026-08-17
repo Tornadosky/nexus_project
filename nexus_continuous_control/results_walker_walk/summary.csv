@@ -1,0 +1,9 @@
+env,backend,kind,metric,mean,std
+WalkerWalk,-,hand_written,env_reward,0.9291361093521118,0.011268844569896873
+WalkerWalk,-,hand_written,success_rate,0.996875,0.0038273277230987156
+WalkerWalk,-,hand_written,goal_metric,6.299366188049317,0.5233492397261033
+WalkerWalk,hf,llm,env_reward,0.1988191559910774,0.07765924583657129
+WalkerWalk,hf,llm,success_rate,0.009375,0.01875
+WalkerWalk,hf,llm,goal_metric,4.120092248916626,0.7594144758343113
+WalkerWalk,hf,refined_first_iter,env_reward,0.6374319791793823,
+WalkerWalk,hf,refined_last_iter,env_reward,0.4070952832698822,
