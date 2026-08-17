@@ -1,0 +1,107 @@
+{
+  "environment": "Go1JoystickFlatTerrain",
+  "observation_schema": "base_height height lin_vel_x lin_vel_y x_velocity y_velocity yaw_rate ang_vel_yaw",
+  "skills": [
+    {
+      "name": "SafeDistanceFromObstacles",
+      "description": "Maintain a safe distance from obstacles.",
+      "activation_rule": "base_height > 0.2",
+      "reward_terms": [
+        {
+          "type": "positive_velocity",
+          "weight": 1.0,
+          "lhs": "base_height",
+          "rhs": 0.8,
+          "threshold": 0.0,
+          "description": ""
+        },
+        {
+          "type": "negative_velocity",
+          "weight": 0.5,
+          "lhs": "base_height",
+          "rhs": 0.6,
+          "threshold": 0.0,
+          "description": ""
+        }
+      ]
+    },
+    {
+      "name": "AvoidCollisions",
+      "description": "Ensure lateral movement is controlled to avoid collisions.",
+      "activation_rule": "abs(x_velocity) < 0.5 && abs(y_velocity) < 0.5",
+      "reward_terms": [
+        {
+          "type": "positive_velocity",
+          "weight": 1.0,
+          "lhs": "x_velocity",
+          "rhs": 0.4,
+          "threshold": 0.0,
+          "description": ""
+        },
+        {
+          "type": "positive_velocity",
+          "weight": 1.0,
+          "lhs": "y_velocity",
+          "rhs": 0.4,
+          "threshold": 0.0,
+          "description": ""
+        }
+      ]
+    },
+    {
+      "name": "EfficientLanding",
+      "description": "Achieve optimal landing parameters for smooth transitions.",
+      "activation_rule": "height > 0.5 && (lin_vel_x * lin_vel_y) > 0.05",
+      "reward_terms": [
+        {
+          "type": "target_height",
+          "weight": 1.0,
+          "lhs": "height",
+          "rhs": 0.9,
+          "threshold": 0.0,
+          "description": ""
+        },
+        {
+          "type": "binary_bonus",
+          "weight": 0.7,
+          "lhs": "lin_vel_x",
+          "rhs": 0.8,
+          "threshold": 0.0,
+          "description": ""
+        },
+        {
+          "type": "binary_bonus",
+          "weight": 0.7,
+          "lhs": "lin_vel_y",
+          "rhs": 0.8,
+          "threshold": 0.0,
+          "description": ""
+        }
+      ]
+    },
+    {
+      "name": "SmoothSwinging",
+      "description": "Ensure swinging motion is smooth and controlled.",
+      "activation_rule": "ang_vel_yaw > 0.1",
+      "reward_terms": [
+        {
+          "type": "smoothness",
+          "weight": 1.0,
+          "lhs": "ang_vel_yaw",
+          "rhs": 0.9,
+          "threshold": 0.0,
+          "description": ""
+        },
+        {
+          "type": "binary_bonus",
+          "weight": 0.7,
+          "lhs": "ang_vel_yaw",
+          "rhs": 0.8,
+          "threshold": 0.0,
+          "description": ""
+        }
+      ]
+    }
+  ],
+  "meta_policy_notes": ""
+}

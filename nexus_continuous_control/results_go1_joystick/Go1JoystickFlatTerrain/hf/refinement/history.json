@@ -1,0 +1,730 @@
+[
+  {
+    "iteration": 0,
+    "metrics": {
+      "action/action_norm_mean": 1.1001083850860596,
+      "action/noise_norm_mean": 0.06740200519561768,
+      "action/original_action_norm_mean": 1.098297119140625,
+      "debug/host_time_token": 0.0,
+      "env/nonfinite_reward": 0.0,
+      "env/original_reward": 0.0062332614324986935,
+      "env/returned_episode_lengths": 713.0694580078125,
+      "env/returned_episode_returns": 6.478537559509277,
+      "env_step": 19660800.0,
+      "episode/done_fraction": 0.0028717040549963713,
+      "loss/actor": -83.3824691772461,
+      "loss/critic": 0.5456276535987854,
+      "loss/meta": 0.0014733743155375123,
+      "mask/violation_rate": 0.0,
+      "mask_available/0_BaseHeightSafety": 0.999066174030304,
+      "mask_available/1_LateralMovementControl": 0.921142578125,
+      "mask_available/2_OptimalGait": 0.09617920219898224,
+      "mask_selected_given_available/0_BaseHeightSafety": 0.8776898384094238,
+      "mask_selected_given_available/1_LateralMovementControl": 0.049266036599874496,
+      "mask_selected_given_available/2_OptimalGait": 0.8081599473953247,
+      "mask_selected_when_available/0_BaseHeightSafety": 0.8768707513809204,
+      "mask_selected_when_available/1_LateralMovementControl": 0.0453948974609375,
+      "mask_selected_when_available/2_OptimalGait": 0.07773437350988388,
+      "mask_violation/0_BaseHeightSafety": 0.0,
+      "mask_violation/1_LateralMovementControl": 0.0,
+      "mask_violation/2_OptimalGait": 0.0,
+      "meta_epsilon": 0.019999999552965164,
+      "noise": 0.02000001259148121,
+      "policy_diag/go1/no_fall_rate": 0.9818130731582642,
+      "policy_diag/go1/tracking_success_rate": 0.2973342835903168,
+      "policy_diag/go1/velocity_tracking_error_mean": 0.7460116147994995,
+      "policy_diag/go1/yaw_tracking_error_mean": 0.4869099259376526,
+      "policy_diag/primary_goal_metric": -0.9894664883613586,
+      "policy_diag/primary_success_rate": 0.2973342835903168,
+      "returns/env_reward_mean": 0.0062332614324986935,
+      "returns/skill_reward_mean": 0.14253051578998566,
+      "rollout/done_fraction": 0.0028717040549963713,
+      "rollout/episode_length": 713.0694580078125,
+      "rollout/episode_return": 6.478537559509277,
+      "schedule/meta_epsilon": 0.019999999552965164,
+      "schedule/noise": 0.02000001259148121,
+      "schedule/skill_epsilon": 0.019999999552965164,
+      "skill_reward/0_BaseHeightSafety": -0.545907199382782,
+      "skill_reward/1_LateralMovementControl": 0.06546464562416077,
+      "skill_reward/2_OptimalGait": 0.9080341458320618,
+      "skill_usage/0_BaseHeightSafety": 0.8768707513809204,
+      "skill_usage/1_LateralMovementControl": 0.0453948974609375,
+      "skill_usage/2_OptimalGait": 0.07773437350988388,
+      "train/actor_grad_norm": 0.5033429265022278,
+      "train/actor_loss": -83.3824691772461,
+      "train/actor_penalty": 0.3750923275947571,
+      "train/actor_q": 83.38265228271484,
+      "train/critic_abs_td": 0.8389765620231628,
+      "train/critic_grad_norm": 1.4527769088745117,
+      "train/critic_loss": 0.5456276535987854,
+      "train/critic_target": 80.79609680175781,
+      "train/critic_value": 80.86714172363281,
+      "train/meta_abs_td": 0.024297935888171196,
+      "train/meta_grad_norm": 0.01870814338326454,
+      "train/meta_loss": 0.0014733743155375123,
+      "train/meta_q": 0.7094281315803528,
+      "update": 150.0
+    },
+    "skillset": {
+      "environment": "Go1JoystickFlatTerrain",
+      "observation_schema": "base_height height lin_vel_x lin_vel_y x_velocity y_velocity yaw_rate ang_vel_yaw",
+      "skills": [
+        {
+          "name": "BaseHeightSafety",
+          "description": "Maintain a safe distance from obstacles.",
+          "activation_rule": "base_height > 0.2",
+          "reward_terms": [
+            {
+              "type": "positive_velocity",
+              "weight": 1.0,
+              "lhs": "base_height",
+              "rhs": 0.8,
+              "threshold": 0.0,
+              "description": ""
+            },
+            {
+              "type": "action_penalty",
+              "weight": 0.5,
+              "lhs": "base_height",
+              "rhs": 0.6,
+              "threshold": 0.0,
+              "description": ""
+            }
+          ]
+        },
+        {
+          "name": "LateralMovementControl",
+          "description": "Ensure lateral movement is controlled to avoid collisions.",
+          "activation_rule": "abs(x_velocity) < 0.5 && abs(y_velocity) < 0.5",
+          "reward_terms": [
+            {
+              "type": "positive_velocity",
+              "weight": 1.0,
+              "lhs": "x_velocity",
+              "rhs": 0.4,
+              "threshold": 0.0,
+              "description": ""
+            },
+            {
+              "type": "positive_velocity",
+              "weight": 1.0,
+              "lhs": "y_velocity",
+              "rhs": 0.4,
+              "threshold": 0.0,
+              "description": ""
+            }
+          ]
+        },
+        {
+          "name": "OptimalGait",
+          "description": "Achieve optimal gait parameters for efficient locomotion.",
+          "activation_rule": "(lin_vel_x * lin_vel_y) > 0.05",
+          "reward_terms": [
+            {
+              "type": "target_height",
+              "weight": 1.0,
+              "lhs": "height",
+              "rhs": 0.9,
+              "threshold": 0.0,
+              "description": ""
+            },
+            {
+              "type": "binary_bonus",
+              "weight": 0.7,
+              "lhs": "lin_vel_x",
+              "rhs": 0.8,
+              "threshold": 0.0,
+              "description": ""
+            },
+            {
+              "type": "binary_bonus",
+              "weight": 0.7,
+              "lhs": "lin_vel_y",
+              "rhs": 0.8,
+              "threshold": 0.0,
+              "description": ""
+            }
+          ]
+        }
+      ],
+      "meta_policy_notes": ""
+    },
+    "refinement_ok": true,
+    "refinement_error": null
+  },
+  {
+    "iteration": 1,
+    "metrics": {
+      "action/action_norm_mean": 2.9225895404815674,
+      "action/noise_norm_mean": 0.058760903775691986,
+      "action/original_action_norm_mean": 2.9349958896636963,
+      "debug/host_time_token": 0.0,
+      "env/nonfinite_reward": 0.0,
+      "env/original_reward": 4.1654811866465025e-07,
+      "env/returned_episode_lengths": 785.2896118164062,
+      "env/returned_episode_returns": 0.00026335258735343814,
+      "env_step": 19660800.0,
+      "episode/done_fraction": 0.0021774291526526213,
+      "loss/actor": -95.63182830810547,
+      "loss/critic": 0.4733724594116211,
+      "loss/meta": 3.303232887219565e-08,
+      "mask/violation_rate": 0.0,
+      "mask_available/0_SafeDistanceFromObstacles": 0.9977051019668579,
+      "mask_available/1_AvoidCollisions": 0.48123931884765625,
+      "mask_available/2_EfficientLanding": 0.0008605957264080644,
+      "mask_available/3_SmoothSwinging": 0.931225597858429,
+      "mask_selected_given_available/0_SafeDistanceFromObstacles": 0.3896716237068176,
+      "mask_selected_given_available/1_AvoidCollisions": 0.11537691205739975,
+      "mask_selected_given_available/2_EfficientLanding": 0.09644655138254166,
+      "mask_selected_given_available/3_SmoothSwinging": 0.5760706663131714,
+      "mask_selected_when_available/0_SafeDistanceFromObstacles": 0.38845521211624146,
+      "mask_selected_when_available/1_AvoidCollisions": 0.05457153171300888,
+      "mask_selected_when_available/2_EfficientLanding": 6.561279587913305e-05,
+      "mask_selected_when_available/3_SmoothSwinging": 0.5569076538085938,
+      "mask_violation/0_SafeDistanceFromObstacles": 0.0,
+      "mask_violation/1_AvoidCollisions": 0.0,
+      "mask_violation/2_EfficientLanding": 0.0,
+      "mask_violation/3_SmoothSwinging": 0.0,
+      "meta_epsilon": 0.019999999552965164,
+      "noise": 0.02000001259148121,
+      "policy_diag/go1/no_fall_rate": 0.7156723141670227,
+      "policy_diag/go1/tracking_success_rate": 0.011119079776108265,
+      "policy_diag/go1/velocity_tracking_error_mean": 0.96221923828125,
+      "policy_diag/go1/yaw_tracking_error_mean": 2.6174025535583496,
+      "policy_diag/primary_goal_metric": -2.270920991897583,
+      "policy_diag/primary_success_rate": 0.011119079776108265,
+      "returns/env_reward_mean": 4.1654811866465025e-07,
+      "returns/skill_reward_mean": 0.6663881540298462,
+      "rollout/done_fraction": 0.0021774291526526213,
+      "rollout/episode_length": 785.2896118164062,
+      "rollout/episode_return": 0.00026335258735343814,
+      "schedule/meta_epsilon": 0.019999999552965164,
+      "schedule/noise": 0.02000001259148121,
+      "schedule/skill_epsilon": 0.019999999552965164,
+      "skill_reward/0_SafeDistanceFromObstacles": 0.3409438729286194,
+      "skill_reward/1_AvoidCollisions": 0.3643282353878021,
+      "skill_reward/2_EfficientLanding": 1.3075474500656128,
+      "skill_reward/3_SmoothSwinging": 0.6527330279350281,
+      "skill_usage/0_SafeDistanceFromObstacles": 0.38845521211624146,
+      "skill_usage/1_AvoidCollisions": 0.05457153171300888,
+      "skill_usage/2_EfficientLanding": 6.561279587913305e-05,
+      "skill_usage/3_SmoothSwinging": 0.5569076538085938,
+      "train/actor_grad_norm": 0.2010309249162674,
+      "train/actor_loss": -95.63182830810547,
+      "train/actor_penalty": 0.719933807849884,
+      "train/actor_q": 95.63218688964844,
+      "train/critic_abs_td": 0.6894212365150452,
+      "train/critic_grad_norm": 0.7377197742462158,
+      "train/critic_loss": 0.4733724594116211,
+      "train/critic_target": 94.65534210205078,
+      "train/critic_value": 94.76197052001953,
+      "train/meta_abs_td": 3.8657435652567074e-05,
+      "train/meta_grad_norm": 0.00011323332000756636,
+      "train/meta_loss": 3.303232887219565e-08,
+      "train/meta_q": 0.000610507617238909,
+      "update": 150.0
+    },
+    "skillset": {
+      "environment": "Go1JoystickFlatTerrain",
+      "observation_schema": "base_height height lin_vel_x lin_vel_y x_velocity y_velocity yaw_rate ang_vel_yaw",
+      "skills": [
+        {
+          "name": "SafeDistanceFromObstacles",
+          "description": "Maintain a safe distance from obstacles.",
+          "activation_rule": "base_height > 0.2",
+          "reward_terms": [
+            {
+              "type": "positive_velocity",
+              "weight": 1.0,
+              "lhs": "base_height",
+              "rhs": 0.8,
+              "threshold": 0.0,
+              "description": ""
+            },
+            {
+              "type": "negative_velocity",
+              "weight": 0.5,
+              "lhs": "base_height",
+              "rhs": 0.6,
+              "threshold": 0.0,
+              "description": ""
+            }
+          ]
+        },
+        {
+          "name": "AvoidCollisions",
+          "description": "Ensure lateral movement is controlled to avoid collisions.",
+          "activation_rule": "abs(x_velocity) < 0.5 && abs(y_velocity) < 0.5",
+          "reward_terms": [
+            {
+              "type": "positive_velocity",
+              "weight": 1.0,
+              "lhs": "x_velocity",
+              "rhs": 0.4,
+              "threshold": 0.0,
+              "description": ""
+            },
+            {
+              "type": "positive_velocity",
+              "weight": 1.0,
+              "lhs": "y_velocity",
+              "rhs": 0.4,
+              "threshold": 0.0,
+              "description": ""
+            }
+          ]
+        },
+        {
+          "name": "EfficientLanding",
+          "description": "Achieve optimal landing parameters for smooth transitions.",
+          "activation_rule": "height > 0.5 && (lin_vel_x * lin_vel_y) > 0.05",
+          "reward_terms": [
+            {
+              "type": "target_height",
+              "weight": 1.0,
+              "lhs": "height",
+              "rhs": 0.9,
+              "threshold": 0.0,
+              "description": ""
+            },
+            {
+              "type": "binary_bonus",
+              "weight": 0.7,
+              "lhs": "lin_vel_x",
+              "rhs": 0.8,
+              "threshold": 0.0,
+              "description": ""
+            },
+            {
+              "type": "binary_bonus",
+              "weight": 0.7,
+              "lhs": "lin_vel_y",
+              "rhs": 0.8,
+              "threshold": 0.0,
+              "description": ""
+            }
+          ]
+        },
+        {
+          "name": "SmoothSwinging",
+          "description": "Ensure swinging motion is smooth and controlled.",
+          "activation_rule": "ang_vel_yaw > 0.1",
+          "reward_terms": [
+            {
+              "type": "smoothness",
+              "weight": 1.0,
+              "lhs": "ang_vel_yaw",
+              "rhs": 0.9,
+              "threshold": 0.0,
+              "description": ""
+            },
+            {
+              "type": "binary_bonus",
+              "weight": 0.7,
+              "lhs": "ang_vel_yaw",
+              "rhs": 0.8,
+              "threshold": 0.0,
+              "description": ""
+            }
+          ]
+        }
+      ],
+      "meta_policy_notes": ""
+    },
+    "refinement_ok": true,
+    "refinement_error": null
+  },
+  {
+    "iteration": 2,
+    "metrics": {
+      "action/action_norm_mean": 2.9646754264831543,
+      "action/noise_norm_mean": 0.05833909660577774,
+      "action/original_action_norm_mean": 2.9781875610351562,
+      "debug/host_time_token": 0.0,
+      "env/nonfinite_reward": 0.0,
+      "env/original_reward": 1.1241450920351781e-05,
+      "env/returned_episode_lengths": 820.9035034179688,
+      "env/returned_episode_returns": 0.006984928157180548,
+      "env_step": 19660800.0,
+      "episode/done_fraction": 0.001068115234375,
+      "loss/actor": -98.57344055175781,
+      "loss/critic": 0.3219917416572571,
+      "loss/meta": 3.3461520843047765e-07,
+      "mask/violation_rate": 0.0,
+      "mask_available/0_SafeDistanceFromObstacles": 0.9993896484375,
+      "mask_available/1_AvoidCollisions": 0.2796463072299957,
+      "mask_available/2_OptimalLandingParameters": 0.00020904540724586695,
+      "mask_available/3_SmoothSwinging": 0.8795364499092102,
+      "mask_selected_given_available/0_SafeDistanceFromObstacles": 0.8259168863296509,
+      "mask_selected_given_available/1_AvoidCollisions": 0.09331376850605011,
+      "mask_selected_given_available/2_OptimalLandingParameters": 0.022153209894895554,
+      "mask_selected_given_available/3_SmoothSwinging": 0.17222054302692413,
+      "mask_selected_when_available/0_SafeDistanceFromObstacles": 0.8254165649414062,
+      "mask_selected_when_available/1_AvoidCollisions": 0.02216034010052681,
+      "mask_selected_when_available/2_OptimalLandingParameters": 4.57763690064894e-06,
+      "mask_selected_when_available/3_SmoothSwinging": 0.15241852402687073,
+      "mask_violation/0_SafeDistanceFromObstacles": 0.0,
+      "mask_violation/1_AvoidCollisions": 0.0,
+      "mask_violation/2_OptimalLandingParameters": 0.0,
+      "mask_violation/3_SmoothSwinging": 0.0,
+      "meta_epsilon": 0.019999999552965164,
+      "noise": 0.02000001259148121,
+      "policy_diag/go1/no_fall_rate": 0.8683059811592102,
+      "policy_diag/go1/tracking_success_rate": 0.011616515927016735,
+      "policy_diag/go1/velocity_tracking_error_mean": 1.0385103225708008,
+      "policy_diag/go1/yaw_tracking_error_mean": 2.3364956378936768,
+      "policy_diag/primary_goal_metric": -2.2067580223083496,
+      "policy_diag/primary_success_rate": 0.011616515927016735,
+      "returns/env_reward_mean": 1.1241450920351781e-05,
+      "returns/skill_reward_mean": 0.6639788746833801,
+      "rollout/done_fraction": 0.001068115234375,
+      "rollout/episode_length": 820.9035034179688,
+      "rollout/episode_return": 0.006984928157180548,
+      "schedule/meta_epsilon": 0.019999999552965164,
+      "schedule/noise": 0.02000001259148121,
+      "schedule/skill_epsilon": 0.019999999552965164,
+      "skill_reward/0_SafeDistanceFromObstacles": 0.36693036556243896,
+      "skill_reward/1_AvoidCollisions": 0.3999926447868347,
+      "skill_reward/2_OptimalLandingParameters": 1.2674070596694946,
+      "skill_reward/3_SmoothSwinging": 0.6215853095054626,
+      "skill_usage/0_SafeDistanceFromObstacles": 0.8254165649414062,
+      "skill_usage/1_AvoidCollisions": 0.02216034010052681,
+      "skill_usage/2_OptimalLandingParameters": 4.57763690064894e-06,
+      "skill_usage/3_SmoothSwinging": 0.15241852402687073,
+      "train/actor_grad_norm": 0.18488016724586487,
+      "train/actor_loss": -98.57344055175781,
+      "train/actor_penalty": 0.8006386756896973,
+      "train/actor_q": 98.57384490966797,
+      "train/critic_abs_td": 0.5357584357261658,
+      "train/critic_grad_norm": 0.63925701379776,
+      "train/critic_loss": 0.3219917416572571,
+      "train/critic_target": 97.56916809082031,
+      "train/critic_value": 97.62093353271484,
+      "train/meta_abs_td": 0.0002731290296651423,
+      "train/meta_grad_norm": 0.00047079334035515785,
+      "train/meta_loss": 3.3461520843047765e-07,
+      "train/meta_q": 0.0024140409659594297,
+      "update": 150.0
+    },
+    "skillset": {
+      "environment": "Go1JoystickFlatTerrain",
+      "observation_schema": "base_height height lin_vel_x lin_vel_y x_velocity y_velocity yaw_rate ang_vel_yaw",
+      "skills": [
+        {
+          "name": "SafeDistanceFromObstacles",
+          "description": "Maintain a safe distance from obstacles.",
+          "activation_rule": "base_height > 0.2",
+          "reward_terms": [
+            {
+              "type": "positive_velocity",
+              "weight": 1.0,
+              "lhs": "base_height",
+              "rhs": 0.8,
+              "threshold": 0.0,
+              "description": ""
+            },
+            {
+              "type": "negative_velocity",
+              "weight": 0.5,
+              "lhs": "base_height",
+              "rhs": 0.6,
+              "threshold": 0.0,
+              "description": ""
+            }
+          ]
+        },
+        {
+          "name": "AvoidCollisions",
+          "description": "Ensure lateral movement is controlled to avoid collisions.",
+          "activation_rule": "abs(x_velocity) < 0.5 && abs(y_velocity) < 0.5",
+          "reward_terms": [
+            {
+              "type": "positive_velocity",
+              "weight": 1.0,
+              "lhs": "x_velocity",
+              "rhs": 0.4,
+              "threshold": 0.0,
+              "description": ""
+            },
+            {
+              "type": "positive_velocity",
+              "weight": 1.0,
+              "lhs": "y_velocity",
+              "rhs": 0.4,
+              "threshold": 0.0,
+              "description": ""
+            }
+          ]
+        },
+        {
+          "name": "OptimalLandingParameters",
+          "description": "Achieve optimal landing parameters for smooth transitions.",
+          "activation_rule": "height > 0.5 && (lin_vel_x * lin_vel_y) > 0.05",
+          "reward_terms": [
+            {
+              "type": "target_height",
+              "weight": 1.0,
+              "lhs": "height",
+              "rhs": 0.9,
+              "threshold": 0.0,
+              "description": ""
+            },
+            {
+              "type": "binary_bonus",
+              "weight": 0.7,
+              "lhs": "lin_vel_x",
+              "rhs": 0.8,
+              "threshold": 0.0,
+              "description": ""
+            },
+            {
+              "type": "binary_bonus",
+              "weight": 0.7,
+              "lhs": "lin_vel_y",
+              "rhs": 0.8,
+              "threshold": 0.0,
+              "description": ""
+            }
+          ]
+        },
+        {
+          "name": "SmoothSwinging",
+          "description": "Ensure swinging motion is smooth and controlled.",
+          "activation_rule": "ang_vel_yaw > 0.1",
+          "reward_terms": [
+            {
+              "type": "smoothness",
+              "weight": 1.0,
+              "lhs": "ang_vel_yaw",
+              "rhs": 0.9,
+              "threshold": 0.0,
+              "description": ""
+            },
+            {
+              "type": "binary_bonus",
+              "weight": 0.7,
+              "lhs": "ang_vel_yaw",
+              "rhs": 0.8,
+              "threshold": 0.0,
+              "description": ""
+            }
+          ]
+        }
+      ],
+      "meta_policy_notes": ""
+    },
+    "refinement_ok": true,
+    "refinement_error": null
+  },
+  {
+    "iteration": 3,
+    "metrics": {
+      "action/action_norm_mean": 3.014798164367676,
+      "action/noise_norm_mean": 0.05780981108546257,
+      "action/original_action_norm_mean": 3.0284061431884766,
+      "debug/host_time_token": 0.0,
+      "env/nonfinite_reward": 0.0,
+      "env/original_reward": 5.871008397662081e-06,
+      "env/returned_episode_lengths": 757.10546875,
+      "env/returned_episode_returns": 0.0037978552281856537,
+      "env_step": 19660800.0,
+      "episode/done_fraction": 0.0013015747535973787,
+      "loss/actor": -86.43809509277344,
+      "loss/critic": 0.48915228247642517,
+      "loss/meta": 1.7334544111236028e-07,
+      "mask/violation_rate": 0.0,
+      "mask_available/0_SafeDistanceFromObstacles": 0.9977371096611023,
+      "mask_available/1_AvoidCollisions": 0.3806045651435852,
+      "mask_available/2_OptimalLandingParameters": 0.0026290894020348787,
+      "mask_available/3_SmoothSwinging": 0.8904479742050171,
+      "mask_available/4_StabilizeBaseHeight": 0.9114288091659546,
+      "mask_selected_given_available/0_SafeDistanceFromObstacles": 0.67261803150177,
+      "mask_selected_given_available/1_AvoidCollisions": 0.09622389078140259,
+      "mask_selected_given_available/2_OptimalLandingParameters": 0.0645795613527298,
+      "mask_selected_given_available/3_SmoothSwinging": 0.17583739757537842,
+      "mask_selected_given_available/4_StabilizeBaseHeight": 0.15130957961082458,
+      "mask_selected_when_available/0_SafeDistanceFromObstacles": 0.6712997555732727,
+      "mask_selected_when_available/1_AvoidCollisions": 0.03947601467370987,
+      "mask_selected_when_available/2_OptimalLandingParameters": 0.0001617431698832661,
+      "mask_selected_when_available/3_SmoothSwinging": 0.15633392333984375,
+      "mask_selected_when_available/4_StabilizeBaseHeight": 0.13272857666015625,
+      "mask_violation/0_SafeDistanceFromObstacles": 0.0,
+      "mask_violation/1_AvoidCollisions": 0.0,
+      "mask_violation/2_OptimalLandingParameters": 0.0,
+      "mask_violation/3_SmoothSwinging": 0.0,
+      "mask_violation/4_StabilizeBaseHeight": 0.0,
+      "meta_epsilon": 0.019999999552965164,
+      "noise": 0.02000001259148121,
+      "policy_diag/go1/no_fall_rate": 0.7704879641532898,
+      "policy_diag/go1/tracking_success_rate": 0.01729888841509819,
+      "policy_diag/go1/velocity_tracking_error_mean": 1.0198816061019897,
+      "policy_diag/go1/yaw_tracking_error_mean": 2.7094833850860596,
+      "policy_diag/primary_goal_metric": -2.3746235370635986,
+      "policy_diag/primary_success_rate": 0.01729888841509819,
+      "returns/env_reward_mean": 5.871008397662081e-06,
+      "returns/skill_reward_mean": 0.5681721568107605,
+      "rollout/done_fraction": 0.0013015747535973787,
+      "rollout/episode_length": 757.10546875,
+      "rollout/episode_return": 0.0037978552281856537,
+      "schedule/meta_epsilon": 0.019999999552965164,
+      "schedule/noise": 0.02000001259148121,
+      "schedule/skill_epsilon": 0.019999999552965164,
+      "skill_reward/0_SafeDistanceFromObstacles": 0.35816553235054016,
+      "skill_reward/1_AvoidCollisions": 0.05353482812643051,
+      "skill_reward/2_OptimalLandingParameters": 1.1027945280075073,
+      "skill_reward/3_SmoothSwinging": 0.6277572512626648,
+      "skill_reward/4_StabilizeBaseHeight": 0.6986085772514343,
+      "skill_usage/0_SafeDistanceFromObstacles": 0.6712997555732727,
+      "skill_usage/1_AvoidCollisions": 0.03947601467370987,
+      "skill_usage/2_OptimalLandingParameters": 0.0001617431698832661,
+      "skill_usage/3_SmoothSwinging": 0.15633392333984375,
+      "skill_usage/4_StabilizeBaseHeight": 0.13272857666015625,
+      "train/actor_grad_norm": 0.18227902054786682,
+      "train/actor_loss": -86.43809509277344,
+      "train/actor_penalty": 0.8686323165893555,
+      "train/actor_q": 86.43852233886719,
+      "train/critic_abs_td": 0.6977580785751343,
+      "train/critic_grad_norm": 0.6867822408676147,
+      "train/critic_loss": 0.48915228247642517,
+      "train/critic_target": 85.52189636230469,
+      "train/critic_value": 85.62435150146484,
+      "train/meta_abs_td": 0.00016668223543092608,
+      "train/meta_grad_norm": 0.0004211495688650757,
+      "train/meta_loss": 1.7334544111236028e-07,
+      "train/meta_q": 0.0014380684588104486,
+      "update": 150.0
+    },
+    "skillset": {
+      "environment": "Go1JoystickFlatTerrain",
+      "observation_schema": "base_height height lin_vel_x lin_vel_y x_velocity y_velocity yaw_rate ang_vel_yaw",
+      "skills": [
+        {
+          "name": "SafeDistanceFromObstacles",
+          "description": "Maintain a safe distance from obstacles.",
+          "activation_rule": "base_height > 0.2",
+          "reward_terms": [
+            {
+              "type": "positive_velocity",
+              "weight": 1.0,
+              "lhs": "base_height",
+              "rhs": 0.8,
+              "threshold": 0.0,
+              "description": ""
+            },
+            {
+              "type": "negative_velocity",
+              "weight": 0.5,
+              "lhs": "base_height",
+              "rhs": 0.6,
+              "threshold": 0.0,
+              "description": ""
+            }
+          ]
+        },
+        {
+          "name": "AvoidCollisions",
+          "description": "Ensure lateral movement is controlled to avoid collisions.",
+          "activation_rule": "abs(x_velocity) < 0.5 && abs(y_velocity) < 0.5",
+          "reward_terms": [
+            {
+              "type": "positive_velocity",
+              "weight": 1.0,
+              "lhs": "x_velocity",
+              "rhs": 0.4,
+              "threshold": 0.0,
+              "description": ""
+            },
+            {
+              "type": "positive_velocity",
+              "weight": 1.0,
+              "lhs": "y_velocity",
+              "rhs": 0.4,
+              "threshold": 0.0,
+              "description": ""
+            }
+          ]
+        },
+        {
+          "name": "OptimalLandingParameters",
+          "description": "Achieve optimal landing parameters for smooth transitions.",
+          "activation_rule": "height > 0.5 && (lin_vel_x * lin_vel_y) > 0.05",
+          "reward_terms": [
+            {
+              "type": "target_height",
+              "weight": 1.0,
+              "lhs": "height",
+              "rhs": 0.9,
+              "threshold": 0.0,
+              "description": ""
+            },
+            {
+              "type": "binary_bonus",
+              "weight": 0.7,
+              "lhs": "lin_vel_x",
+              "rhs": 0.8,
+              "threshold": 0.0,
+              "description": ""
+            },
+            {
+              "type": "binary_bonus",
+              "weight": 0.7,
+              "lhs": "lin_vel_y",
+              "rhs": 0.8,
+              "threshold": 0.0,
+              "description": ""
+            }
+          ]
+        },
+        {
+          "name": "SmoothSwinging",
+          "description": "Ensure swinging motion is smooth and controlled.",
+          "activation_rule": "ang_vel_yaw > 0.1",
+          "reward_terms": [
+            {
+              "type": "smoothness",
+              "weight": 1.0,
+              "lhs": "ang_vel_yaw",
+              "rhs": 0.9,
+              "threshold": 0.0,
+              "description": ""
+            },
+            {
+              "type": "binary_bonus",
+              "weight": 0.7,
+              "lhs": "ang_vel_yaw",
+              "rhs": 0.8,
+              "threshold": 0.0,
+              "description": ""
+            }
+          ]
+        },
+        {
+          "name": "StabilizeBaseHeight",
+          "description": "Maintain stable base height during movements.",
+          "activation_rule": "base_height > 0.3",
+          "reward_terms": [
+            {
+              "type": "stable_base_height",
+              "weight": 1.0,
+              "lhs": "base_height",
+              "rhs": 0.9,
+              "threshold": 0.0,
+              "description": ""
+            },
+            {
+              "type": "binary_bonus",
+              "weight": 0.7,
+              "lhs": "base_height",
+              "rhs": 0.8,
+              "threshold": 0.0,
+              "description": ""
+            }
+          ]
+        }
+      ],
+      "meta_policy_notes": ""
+    },
+    "refinement_ok": true,
+    "refinement_error": null
+  }
+]

@@ -1,0 +1,76 @@
+{
+  "environment": "Go1JoystickFlatTerrain",
+  "observation_schema": "base_height, height, lin_vel_x, lin_vel_y, x_velocity, y_velocity, yaw_rate, ang_vel_yaw",
+  "skills": [
+    {
+      "name": "BaseHeightSafety",
+      "description": "Maintain a safe distance from obstacles.",
+      "activation_rule": "base_height > 0.2",
+      "reward_terms": [
+        {
+          "type": "positive_velocity",
+          "weight": 1.0,
+          "lhs": "base_height",
+          "rhs": 0.8,
+          "threshold": 0.0,
+          "description": ""
+        },
+        {
+          "type": "posture_penalty",
+          "weight": 0.5,
+          "lhs": "base_height",
+          "rhs": 0.6,
+          "threshold": 0.0,
+          "description": ""
+        }
+      ]
+    },
+    {
+      "name": "LateralMovementControl",
+      "description": "Ensure lateral movement is controlled to avoid collisions.",
+      "activation_rule": "abs(lin_vel_x) < 0.5 && abs(lin_vel_y) < 0.5",
+      "reward_terms": [
+        {
+          "type": "positive_velocity",
+          "weight": 1.0,
+          "lhs": "lin_vel_x",
+          "rhs": 0.4,
+          "threshold": 0.0,
+          "description": ""
+        },
+        {
+          "type": "action_penalty",
+          "weight": 0.5,
+          "lhs": "lin_vel_x",
+          "rhs": -0.2,
+          "threshold": 0.0,
+          "description": ""
+        }
+      ]
+    },
+    {
+      "name": "OptimalGait",
+      "description": "Achieve optimal gait parameters for efficient locomotion.",
+      "activation_rule": "(lin_vel_x * lin_vel_y) > 0.1",
+      "reward_terms": [
+        {
+          "type": "target_height",
+          "weight": 1.0,
+          "lhs": "height",
+          "rhs": 0.9,
+          "threshold": 0.0,
+          "description": ""
+        },
+        {
+          "type": "binary_bonus",
+          "weight": 0.5,
+          "lhs": "height",
+          "rhs": 0.7,
+          "threshold": 0.0,
+          "description": ""
+        }
+      ]
+    }
+  ],
+  "meta_policy_notes": ""
+}
