@@ -1,0 +1,122 @@
+{
+  "environment": "WalkerWalk",
+  "observation_schema": "torso_height, height, torso_pitch, pitch, x_velocity, forward_velocity, joint_speed",
+  "skills": [
+    {
+      "name": "Initial Balance Check",
+      "description": "Ensure the walker is standing upright.",
+      "activation_rule": "height < 0.2 || torso_pitch > 0.4",
+      "reward_terms": [
+        {
+          "type": "target_height",
+          "weight": 1.0,
+          "lhs": "height",
+          "rhs": 0.8,
+          "threshold": 0.0,
+          "description": ""
+        },
+        {
+          "type": "posture_penalty",
+          "weight": 0.5,
+          "lhs": "torso_pitch",
+          "rhs": 0.4,
+          "threshold": 0.0,
+          "description": ""
+        }
+      ]
+    },
+    {
+      "name": "Steady Walking",
+      "description": "Maintain consistent walking posture without swaying.",
+      "activation_rule": "forward_velocity > 0 && torso_pitch < 0.6",
+      "reward_terms": [
+        {
+          "type": "positive_velocity",
+          "weight": 1.0,
+          "lhs": "forward_velocity",
+          "rhs": 0.1,
+          "threshold": 0.0,
+          "description": ""
+        },
+        {
+          "type": "binary_bonus",
+          "weight": 0.5,
+          "lhs": "joint_speed",
+          "rhs": 0.9,
+          "threshold": 0.0,
+          "description": ""
+        }
+      ]
+    },
+    {
+      "name": "Smooth Locomotion",
+      "description": "Achieve smooth movement with minimal jerks.",
+      "activation_rule": "forward_velocity > 0 && torso_pitch < 0.7",
+      "reward_terms": [
+        {
+          "type": "positive_velocity",
+          "weight": 1.0,
+          "lhs": "forward_velocity",
+          "rhs": 0.2,
+          "threshold": 0.0,
+          "description": ""
+        },
+        {
+          "type": "action_penalty",
+          "weight": 0.5,
+          "lhs": "joint_speed",
+          "rhs": 0.8,
+          "threshold": 0.0,
+          "description": ""
+        }
+      ]
+    },
+    {
+      "name": "Dynamic Stance",
+      "description": "Adjust stance dynamically to maintain balance under varying conditions.",
+      "activation_rule": "forward_velocity > 0 && torso_pitch < 0.8",
+      "reward_terms": [
+        {
+          "type": "dynamic_balance",
+          "weight": 1.0,
+          "lhs": "forward_velocity",
+          "rhs": 0.1,
+          "threshold": 0.0,
+          "description": ""
+        },
+        {
+          "type": "balance_penalty",
+          "weight": 0.5,
+          "lhs": "torso_pitch",
+          "rhs": 0.8,
+          "threshold": 0.0,
+          "description": ""
+        }
+      ]
+    },
+    {
+      "name": "Stealthy Movement",
+      "description": "Move stealthily while maintaining balance.",
+      "activation_rule": "forward_velocity > 0 && torso_pitch < 0.9",
+      "reward_terms": [
+        {
+          "type": "stealthiness",
+          "weight": 1.0,
+          "lhs": "forward_velocity",
+          "rhs": 0.1,
+          "threshold": 0.0,
+          "description": ""
+        },
+        {
+          "type": "balance_penalty",
+          "weight": 0.5,
+          "lhs": "torso_pitch",
+          "rhs": 0.9,
+          "threshold": 0.0,
+          "description": ""
+        }
+      ]
+    }
+  ],
+  "meta_policy_notes": ""
+}
