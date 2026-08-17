@@ -1,0 +1,697 @@
+================================================================================
+NEXUS CONTINUOUS CONTROL — RGB SKILL-AGENT EXTENSION
+Team briefing: setup, implementation, experiments, findings
+================================================================================
+Author:  Rosela Berberi
+Repo:    nexus_project/nexus_continuous_control  (branch: rosela)
+Status:  COMPLETE — two working methods, 4 environments, results committed
+Results: results/rgb/   (figures, videos, JSON, README)
+Date of this summary: 2026-08-17
+
+
+--------------------------------------------------------------------------------
+0. THE 60-SECOND VERSION (say this first in the meeting)
+--------------------------------------------------------------------------------
+The task was: "let the NEXUS skill agents act from RGB camera input instead of
+privileged simulator state."
+
+We did it in TWO independent ways, and both work:
+
+  (A) DISTILLATION  — train the normal state-based NEXUS hierarchy, then
+      behaviour-clone each skill into a CNN policy that sees only 64x64 pixels.
+      (Learning-by-Cheating, Chen et al. 2020.)
+
+  (B) IN-LOOP PIXEL RL — train the skill actors directly from pixels rendered
+      inside the RL loop by the MuJoCo-Warp batch renderer. No teacher.
+
+Key design choice in both: only the SKILL ACTORS become pixel-based. The
+meta-policy (the interpretable neuro-symbolic layer), the critics and the
+symbolic rules keep reading privileged state. This is the standard
+"asymmetric actor-critic / privileged critic" design (Pinto et al. 2017), and it
+means the NEXUS interpretability story is untouched — only low-level execution
+becomes visual.
+
+Headline numbers:
+
+  | env             | privileged state teacher | (A) distilled pixels | (B) in-loop pixels |
+  |-----------------|--------------------------|----------------------|--------------------|
+  | CartpoleBalance | 1.00 upright fraction    | 0.52 upright         | 0.64 eval success  |
+  | CheetahRun      | 0.62 reward/step         | 0.16 reward/step     | ~0.42 reward/step  |
+  | WalkerWalk      | (not distilled)          | —                    | ~0.40 reward/step  |
+  | HopperHop       | (not distilled)          | —                    | ~0.00 (FAILS)      |
+
+*** READ F7a BEFORE PRESENTING THE IN-LOOP COLUMN. *** An ablation run on
+2026-08-17 shows the in-loop CARTPOLE actor ignores its pixels: freezing,
+scrambling or blanking the image leaves behaviour unchanged, and a constant
+action per skill scores BETTER. On that env the score comes from the privileged
+meta-policy, not from vision. The distillation column is unaffected and remains
+verified. CheetahRun is queued.
+
+Three findings worth remembering:
+  1. Distillation retains ~50% of privileged performance and does so EQUALLY for
+     all three meta-policy variants (nesy / neural / symbolic) -> the RGB
+     extension is META-AGNOSTIC. It rides on the shared skill actors.
+  2. In-loop pixel RL BEATS distillation on every env where both were run,
+     because it learns perception and control jointly instead of inheriting
+     behaviour-cloning's covariate shift.
+  3. Difficulty ordering from pixels: balance < walk/run << hop. HopperHop is an
+     honest negative result — the render is correct, the policy just never
+     learns at this budget.
+
+
+--------------------------------------------------------------------------------
+1. WHAT PROBLEM THE EXTENSION SOLVES
+--------------------------------------------------------------------------------
+Baseline NEXUS (continuous version) is a 2-level hierarchy on MuJoCo Playground:
+
+    meta-policy(state / symbols) -> picks skill k        (nesy | neural | symbolic)
+    skill_actor_k(state) -> continuous action
+    skill_critic_k(state, action) -> Q_k
+
+Everything reads the simulator's privileged state vector. That is unrealistic for
+a real robot, which only has cameras. The extension answers: "can the
+disentangled NEXUS skills still execute when they only see pixels, and how much
+performance does that cost?"
+
+Architecture after the extension (both methods share it):
+
+    actor_k(pixels, proprio) -> action        <-- CHANGED: VisionSkillActor (CNN)
+    critic_k(state, action)  -> Q_k           <-- unchanged, privileged state
+    meta-policy(state/symbols) -> skill k     <-- unchanged, privileged state
+    symbolic masks / skill rewards            <-- unchanged, privileged state
+
+Why asymmetric and not "everything from pixels":
+  * It is the standard, published setup (Pinto et al. 2017, "Asymmetric
+    Actor Critic"; also used for RSS-2024 agile flight from pixels). Critics are
+    only used at TRAINING time, so giving them privileged state costs nothing at
+    deployment.
+  * It keeps NEXUS's selling point — the interpretable symbolic meta-layer —
+    intact and comparable to the state-based results.
+  * It isolates the scientific question to exactly one variable: can the low-level
+    skills execute from images?
+
+Literature the design follows:
+  * Pinto et al. 2017 — asymmetric actor-critic (privileged critic).
+  * Chen et al. 2020 — Learning by Cheating (privileged teacher -> vision student).
+  * Ross et al. 2011 — DAgger / compounding error under covariate shift.
+  * Yarats et al. DrQ & DrQ-v2 — random-shift image augmentation, encoder
+    conventions (orthogonal init, LayerNorm->tanh trunk, 1e-4 LR).
+
+
+--------------------------------------------------------------------------------
+2. HOW THE CODE IS ORGANIZED (file map)
+--------------------------------------------------------------------------------
+Everything sits behind ONE config flag, USE_RGB (default false). With the flag
+off, the state-based training path is byte-identical to before — no risk to the
+main deliverable.
+
+CORE MODULES
+  nexus_continuous/vision.py                      (71 lines)
+      RGBEncoder        — 3-layer CNN (32/64/64 channels, stride 2, 3x3),
+                          dtype-driven normalization (uint8 -> /255-0.5, float
+                          passes through), orthogonal init (gain sqrt(2)),
+                          Dense -> LayerNorm -> tanh bounded 128-d embedding.
+      VisionSkillActor  — RGBEncoder + concat(proprio) + MLP -> tanh-squashed
+                          action scaled to the env's action box. This is the ONE
+                          network used by BOTH methods (distilled into, or
+                          trained in-loop).
+
+  nexus_continuous/envs/playground_adapter.py     (727 lines; RGB parts)
+      _PlaygroundVecWrapper.vision                — detects vision mode
+      _proprio_from_state()                       — rebuilds the privileged state
+                                                    (qpos+qvel) for critic/meta,
+                                                    because in vision mode the env
+                                                    obs is pixels-only
+      _get_obs() vision branch                    — emits the observation contract:
+                                                    {actor, critic, raw_actor,
+                                                     raw_critic, actor_pixels,
+                                                     policy_info}
+      _NormalizeVecObservation                    — normalizes proprio ONLY; pixels
+                                                    pass through untouched
+      build_playground_env()                      — turns on vision, sets render
+                                                    nworld = NUM_ENVS, applies the
+                                                    two runtime shims, routes the
+                                                    locomotion envs to our ported
+                                                    vision classes
+      ensure_mjwarp_graphmode()                   — shim #1 (see §4)
+      ensure_mjx_render_compat()                  — shim #2 (see §4)
+      get_actor_pixels(obs)                       — helper used by the trainer
+
+  nexus_continuous/envs/dm_control_vision.py      (132 lines)  ** our port **
+      The framework only implements in-loop rendering for CartpoleBalance;
+      CheetahRun / WalkerWalk / HopperHop raise NotImplementedError for
+      vision=True. This file ports cartpole's MJWarp pipeline to all three:
+        create_render_context -> refit_bvh -> render -> get_rgb -> grayscale,
+        3-frame stack, inline in reset()/step() so the existing vec wrapper
+        batches them exactly like cartpole.
+      CheetahRunVision / WalkerWalkVision / HopperHopVision + VISION_ENVS registry.
+      Two non-obvious fixes live here: impl="warp" is forced (refit_bvh has no
+      JAX implementation) and _arrayify() coerces scalar leaves (e.g. cheetah's
+      time=0.0 python float) so MJWarp's broadcast-to-nworld works.
+
+  nexus_continuous/algorithms/hierarchical_ac_pqn_playground.py  (1201 lines; RGB parts)
+      use_rgb flag; actor becomes VisionSkillActor
+      _actor_apply(params, proprio, pixels)       — vmapped over skills, raises if
+                                                    pixels are missing in RGB mode
+      _actor_proprio()                            — implements RGB_PROPRIO
+                                                    (none | indices | full)
+      _augment_pixels()                           — DrQ random shift (edge-pad 4 +
+                                                    random crop), actor loss ONLY
+      _drop_actor_pixels()                        — memory fix: next_obs no longer
+                                                    stores a 2nd [T,E,H,W,C] buffer
+      pixels threaded through: action selection, both bootstrap sites, the actor
+      loss minibatch scan, network init, and the deterministic eval path
+      RENDER_NWORLD is set to eval_num_envs for eval (render context batch size
+      must match the eval env count, not NUM_ENVS)
+
+CONFIG
+  configs/cartpole_balance_nesy_rgb.yaml
+      USE_RGB: true, PLAYGROUND_IMPL: warp, RGB_EMBED_DIM 128,
+      RGB_EPISODE_LENGTH 250, RGB_PROPRIO none, RGB_AUGMENT true, RGB_AUG_PAD 4,
+      LR 1e-4 (DrQ-v2 scale), NUM_ENVS 256, 200 updates.
+      (For the other envs the in-loop scripts force USE_RGB on top of the normal
+      state config, so no extra yaml is needed.)
+
+SCRIPTS (all runnable end-to-end)
+  scripts/rgb_distill_nexus.py     (456)  METHOD A — the report-grade pipeline:
+                                          train teacher -> record -> BC -> closed-
+                                          loop pixel-vs-state eval. Any env.
+  scripts/rgb_report.py            (91)   aggregates the per-meta runs into the
+                                          combined figure + markdown table.
+  scripts/rgb_visualize.py         (407)  METHOD A qualitative artifacts: annotated
+                                          video, observation filmstrip, skill
+                                          timeline, teacher-vs-student scatter.
+  scripts/rgb_inloop_visualize.py  (239)  METHOD B: trains in-loop, saves the
+                                          learning curve, then rolls the pixel
+                                          policy out greedily and writes the
+                                          video / filmstrip / skill+reward timeline.
+
+TESTS (CPU, no GPU needed — this is the correctness gate)
+  tests/test_vision_shapes.py             shapes/ranges of RGBEncoder and
+                                          VisionSkillActor, incl. vmap over skills.
+  tests/test_vision_rgb_smoke.py   (212)  full run_training() with USE_RGB against
+                                          a FAKE pixel env (monkeypatched
+                                          build_playground_env): 2 updates + eval,
+                                          asserts everything stays finite. Covers
+                                          the RGB actor-apply branch, RGB init,
+                                          augmentation, the (train_state, rng)
+                                          scan carry, the dropped-pixels next_obs
+                                          and the eval pixel path.
+
+RESULTS TREE (results/rgb/)
+  README.md                         consolidated two-method write-up
+  comparison.png                    grouped state-vs-pixel bars, 3 meta variants
+  {nesy,neural,symbolic}_state_vs_pixel.png    per-variant figures
+  results_table.md / combined.json  cartpole distillation, upright metric, per-seed
+  multienv/*.json                   reward-metric distillation (cartpole + cheetah)
+  viz/ , viz_cheetah/               distillation videos/filmstrips/timelines/scatter
+  inloop/cartpole_inloop.json+png   in-loop curve + eval metrics
+  inloop/cheetah_inloop.json+png    in-loop curve
+  inloop/cheetah_render_probe.png   proof the tracking camera frames the robot
+  inloop/viz_{cartpole,cheetah,walker,hopper}/   in-loop video + filmstrip +
+                                    skill/reward timeline (+ curve for walker/hopper)
+
+
+--------------------------------------------------------------------------------
+3. THE PIXEL OBSERVATION (identical contract in both methods)
+--------------------------------------------------------------------------------
+  * 64 x 64 pixels, single camera (cartpole: fixed cam; locomotion: the tracking
+    "side" camera, cam_active=(True, False)).
+  * Converted to GRAYSCALE (mean over RGB channels) and centered to ~[-0.5, 0.5].
+  * 3-FRAME STACK in the channel axis -> tensor [B, 64, 64, 3]. The stack is what
+    supplies velocity information; a single frame is not Markov.
+  * Textures and shadows off, geom groups [0,1,2] (cheap, deterministic render).
+  * The actor gets NO state by default (RGB_PROPRIO: none, i.e. width-0 proprio).
+    This matters: an earlier version passed full qpos+qvel to the actor, which
+    LEAKED the pole angle the camera is supposed to infer. Fixed. Options
+    "indices" (robot self-sensing only) and "full" (discouraged) still exist.
+
+Gotcha to mention if someone compares numbers to the state-based report:
+enabling vision on CartpoleBalance forces episode_length=250, ctrl_dt=0.02 and a
+different dense vision reward, so vision-cartpole returns live on a ~0-30 scale,
+NOT the ~1000 of the state task. Never compare those two return numbers directly
+— compare upright fraction / reward-per-step instead.
+
+
+--------------------------------------------------------------------------------
+4. SETUP AND INFRASTRUCTURE (the part that took the most time)
+--------------------------------------------------------------------------------
+Hardware / software actually used for the committed results:
+    TU student pool machine "mlsp2", NVIDIA RTX 2080 Ti (11 GB)
+    jax 0.11 (CUDA), mujoco 3.11 + mujoco-mjx 3.11, mujoco-warp 3.11.0,
+    warp-lang 1.16.0, MuJoCo Playground, brax wrappers
+
+Two rendering paths, two different problems, both solved:
+
+(1) OFFLINE rendering for distillation — "no display, no root" problem.
+    The pool has no accessible /dev/dri and no sudo, and modern conda-forge
+    mesalib (26.x) has DROPPED classic libOSMesa, so the two usual headless
+    recipes both fail. Solution: SOFTWARE EGL (llvmpipe) — a pure-CPU offscreen
+    GL context that happily coexists with JAX on the GPU in the same process:
+
+        micromamba create -n mesa -c conda-forge mesalib -y
+        M=$HOME/micromamba/envs/mesa
+        export MUJOCO_GL=egl LD_LIBRARY_PATH=$M/lib:$LD_LIBRARY_PATH
+        export LIBGL_DRIVERS_PATH=$M/lib/dri MESA_LOADER_DRIVER_OVERRIDE=llvmpipe
+        export __EGL_VENDOR_LIBRARY_DIRS=$M/share/glvnd/egl_vendor.d
+        export EGL_PLATFORM=surfaceless
+
+    (Saved on the pool as ~/mesa_env.sh and documented in the repo README.)
+
+(2) IN-LOOP rendering for pixel RL — MuJoCo-Warp version hell.
+    MuJoCo Playground renders pixels IN-LOOP, in pure MJX via the MJWarp batch
+    renderer. (Important correction to an earlier internal doc: Madrona is NOT
+    needed, and no hand-rolled renderer is needed.) But the warp stack is Beta and
+    version-sensitive. What we hit and how it was fixed:
+      * `AttributeError: type object 'int' has no attribute 'WARP'` on any
+        warp-backed env load. ROOT CAUSE: warp-lang / mujoco-warp / mujoco-mjx
+        version DESYNC (not a fundamental limitation, which is what we believed
+        for a while). FIX: install the version-aligned mujoco-warp==3.11.0 next
+        to mujoco 3.11; plus a defensive runtime shim
+        ensure_mjwarp_graphmode() that restores the real GraphMode enum. The shim
+        is a no-op on a correct install and is called inside build_playground_env,
+        so it also reaches the training SUBPROCESS (a notebook monkeypatch does not).
+      * mujoco-mjx 3.11 API drift: mjx.render(m, d, ctx) now returns a 2-tuple
+        (rgb, depth), but the installed dm_control_suite vision code still reads
+        out[2] for data -> IndexError. FIX: ensure_mjx_render_compat() wraps
+        mjx.render and appends the unchanged data when len(out)==2. Idempotent.
+      * Rendering requires the "warp" physics backend; the "jax" backend has no
+        in-loop renderer (refit_bvh does not exist there).
+      * Memory: NUM_ENVS=256 OOMs the 11 GB 2080 Ti with the renderer attached;
+        128 envs is the working setting (96 for walker/hopper).
+
+Operational gotcha worth mentioning to the team: on the pool, `git pull` inside
+the launcher scripts can silently ABORT if untracked result files collide with
+incoming commits (the in-loop scripts write results/rgb/inloop/* as untracked).
+`git stash` does not catch untracked files — move them aside first.
+
+
+--------------------------------------------------------------------------------
+5. METHOD A — DISTILLATION (rgb_distill_nexus.py)
+--------------------------------------------------------------------------------
+Pipeline, per seed:
+
+  [1] Train the REAL state NEXUS hierarchy with the normal trainer.
+      Meta variant selectable: --meta nesy (flagship neuro-symbolic: learned
+      meta-Q masked by hand-written skill preconditions) | neural (unmasked
+      learned meta-Q) | symbolic (rule-based selection). Skill actors are trained
+      identically in all three. Each variant uses its own tuned config.
+  [2] Roll the trained hierarchy out (default 4000 steps), rendering a 64x64
+      frame on the fly from the sim state, and record
+          (3-frame pixel stack, meta-selected skill index, teacher action).
+  [3] Behaviour-clone: one VisionSkillActor per skill, trained with Adam(3e-4),
+      40 epochs, batch 128, MSE against the teacher's action. Skills with fewer
+      than --min-samples (64) recorded uses are NOT distilled; they keep the
+      privileged teacher and are reported as the "pixel-fallback fraction" —
+      this is the honesty check that the comparison is genuinely pixel-driven.
+  [4] Closed-loop eval, 250 steps: the UNCHANGED meta-policy selects the skill
+      from privileged state, and the PIXEL student produces the action. Compared
+      against the same loop with the state teacher acting (the privileged upper
+      bound). Metrics: mean per-step task reward (env-agnostic) and, for
+      cartpole, the interpretable upright rate (|theta| < 0.25 rad AND |x| < 1.0).
+
+Why this method exists at all: it renders OFFLINE with the standard
+mujoco.Renderer, so it needs no MJWarp and runs on ANY env with a camera. It was
+built while the in-loop path was blocked, and it is still the most robust,
+most reproducible deliverable (3 seeds x 3 meta variants x 2 envs).
+
+An optional DAgger stage (--dagger-iters, with beta mixing and periodic resets)
+is implemented but DEFAULTS TO 0 — see §8, it did not robustly help.
+
+
+--------------------------------------------------------------------------------
+6. METHOD B — IN-LOOP PIXEL RL (USE_RGB)
+--------------------------------------------------------------------------------
+No teacher, no cloning: the skill actors are trained by the normal hierarchical
+AC/PQN update, but their observation is the MJWarp-rendered pixel stack, produced
+inside the training loop for all NUM_ENVS parallel environments simultaneously.
+Critic / meta-Q / symbolic masks keep the privileged state reconstructed from
+qpos+qvel by the adapter.
+
+Implementation details that mattered:
+  * DrQ random-shift augmentation on the actor loss only (pad 4 + random crop),
+    rng threaded through the minibatch scan; guarded so the non-RGB path stays
+    byte-identical.
+  * LR 1e-4 instead of 3e-4 — a deterministic policy gradient that also has to
+    train a CNN encoder is unstable at the state-task LR (DrQ-v2 convention).
+  * Encoder trunk is bounded (LayerNorm -> tanh). In this asymmetric design the
+    CNN's ONLY learning signal is the policy gradient through the privileged
+    critic's Q — there is no reconstruction or auxiliary loss — so that lone
+    gradient must stay well-conditioned. (Note: DrQ/SAC+AE stop the actor's
+    gradient into the encoder, but only because they SHARE the encoder with a
+    pixel critic. Here the critic is state-only, so the actor gradient is the
+    correct and only signal. This was checked against the literature explicitly.)
+  * next_obs no longer stores its pixel tensor (a dead second [T,E,H,W,C] buffer
+    that was a likely OOM source).
+  * Eval builds its own render context sized to the eval env count.
+  * Envs: CartpoleBalance uses the framework's vision path; CheetahRun,
+    WalkerWalk and HopperHop use OUR ported vision classes in dm_control_vision.py.
+
+Budgets actually run: cartpole and cheetah = 128 envs x 64 steps x 250 updates
+(~2.05 M env steps each); walker and hopper = 96 envs x 64 steps x 200 updates
+(~1.23 M env steps each). All single-seed.
+
+
+--------------------------------------------------------------------------------
+7. WHAT WE TESTED — EXPERIMENT MATRIX
+--------------------------------------------------------------------------------
+  method        env               meta variants        seeds   metric
+  ------------  ----------------  -------------------  ------  ----------------------
+  distillation  CartpoleBalance   nesy, neural, symb.  0,1,2   upright fraction
+  distillation  CartpoleBalance   neural               0,1,2   mean reward/step
+  distillation  CheetahRun        nesy, neural         0,1,2   mean reward/step
+  in-loop RL    CartpoleBalance   neural               1       greedy eval success
+  in-loop RL    CheetahRun        neural               1       training return
+  in-loop RL    WalkerWalk        (state config)       1       training return
+  in-loop RL    HopperHop         (state config)       1       training return
+  code gate     fake pixel env    —                    —       pytest, CPU
+
+Plus qualitative artifacts (video + filmstrip + skill timeline) for:
+  distillation: cartpole, cheetah
+  in-loop:      cartpole, cheetah, walker, hopper
+
+RESULTS — (A) DISTILLATION, CartpoleBalance, upright-fraction metric, 3 seeds
+  (source: results/rgb/results_table.md, combined.json, comparison.png)
+
+  meta      | state success  | pixel success  | retention | pixel-fallback
+  ----------|----------------|----------------|-----------|---------------
+  nesy      | 0.743 +- 0.221 | 0.345 +- 0.092 | 0.46      | 0.008
+  neural    | 1.000 +- 0.000 | 0.520 +- 0.038 | 0.52      | 0.008
+  symbolic  | 0.311 +- 0.260 | 0.157 +- 0.094 | 0.51      | 0.023
+
+  Per-skill behaviour-cloning MSE for well-sampled skills: 1e-4 to 2e-3.
+  Pixel-fallback below 2.5% everywhere -> the pixel policy really is acting.
+
+RESULTS — (A) DISTILLATION, reward-per-step metric (cross-env comparison, 3 seeds)
+  (source: results/rgb/multienv/*.json)
+
+  env / meta               | state rew/step | pixel rew/step | retention
+  -------------------------|----------------|----------------|----------
+  CartpoleBalance neural   | 0.982          | 0.829          | 0.84
+  CheetahRun      neural   | 0.618          | 0.155          | 0.25
+  CheetahRun      nesy     | 0.555          | 0.097          | 0.17
+
+  NOTE ON THE TWO METRICS: cartpole retention is 0.84 under mean-reward but ~0.5
+  under the stricter upright-fraction metric, because the reward gives partial
+  credit to a pole that is up but drifting. Both are reported; the ORDERING
+  (balancing >> locomotion) is what is stable.
+
+RESULTS — (B) IN-LOOP PIXEL RL (single seed each)
+  (source: results/rgb/inloop/*.json and viz_*/inloop_curve.json)
+
+  env              | budget            | outcome
+  -----------------|-------------------|--------------------------------------------
+  CartpoleBalance  | 128 envs, 250 upd | greedy eval: upright fraction 0.639,
+                   |                   | cart-centered fraction 1.000,
+                   |                   | episode return 5.26 +- 2.96,
+                   |                   | mean episode length 142.8 (128 eval episodes)
+  CheetahRun       | 128 envs, 250 upd | training return 0 -> ~104 (peak 111)
+                   |                   | ~0.42 reward/step
+  WalkerWalk       |  96 envs, 200 upd | training return 0 -> ~90 (peak 94)
+                   |                   | ~0.36-0.40 reward/step
+  HopperHop        |  96 envs, 200 upd | training return ~1.4 (peak 1.8)
+                   |                   | ~0.005 reward/step -> FAILED TO LEARN
+
+  Self-check on the visualization rollouts (greedy, 1 env, so the videos are not
+  cherry-picked): cartpole 0.074 reward/step, cheetah 0.259, walker 0.404,
+  hopper 0.000 — all consistent with the corresponding training curves.
+
+CODE-CORRECTNESS TESTS (run on CPU, no GPU, no renderer):
+  JAX_PLATFORMS=cpu pytest tests/test_vision_rgb_smoke.py tests/test_vision_shapes.py
+  These drive the full USE_RGB training path on a synthetic pixel env and check
+  shapes/ranges of the encoder and actor, including the vmap-over-skills case.
+
+
+--------------------------------------------------------------------------------
+8. FINDINGS (the part to discuss)
+--------------------------------------------------------------------------------
+F1. The RGB extension is META-AGNOSTIC.
+    Distillation retains ~50% of privileged closed-loop success for nesy (0.46),
+    neural (0.52) AND symbolic (0.51) — three very different high-level policies,
+    the same retention. That is expected under the design (the pixel change lives
+    entirely in the shared skill actors) but it is a real empirical confirmation
+    and it is the cleanest single sentence for the report.
+
+F2. Cloning is near-exact; the loss is in CLOSED LOOP.
+    Per-skill BC MSE is 1e-4..2e-3 and held-out teacher-vs-student action
+    correlation is r ~ 0.99. So the vision network CAN reproduce a skill. The
+    ~50% drop is compounding error plus partial observability (Ross et al. 2011):
+    small per-step action errors accumulate over 250 steps, and a 3-frame 64x64
+    grayscale stack carries coarser velocity information than exact state. This
+    is a property of open-loop imitation, not a bug in the vision model.
+
+F3. *** RETRACTED FOR CARTPOLE (2026-08-17 ablation, see F7a) *** The raw scores
+    below are real, but on CartpoleBalance they are NOT produced by vision: the
+    in-loop actor is effectively blind and the state-based meta does the work.
+    Do NOT present F3 as an in-loop-beats-distillation claim until the CheetahRun
+    ablation has run.
+
+F3. IN-LOOP PIXEL RL BEATS DISTILLATION — on both envs where we ran both.
+    cartpole 0.64 vs 0.52 upright; cheetah ~0.42 vs 0.16 reward/step. Reason:
+    in-loop learns perception and control JOINTLY and never leaves its own state
+    distribution, whereas BC is capped by the teacher's distribution. Practical
+    consequence: for future work, prefer in-loop; keep distillation as the
+    portable/robust fallback and as the meta-agnosticism experiment.
+
+F4. Task difficulty from pixels orders as: BALANCE < WALK/RUN << HOP.
+    Distillation retention: cartpole 0.84 vs cheetah 0.25 on the same metric.
+    In-loop: cartpole 0.64, cheetah 0.42, walker 0.40, hopper 0.00.
+    Locomotion needs precise gait timing that a coarse grayscale stack recovers
+    poorly; hopping additionally has an unstable single-leg balance whose reward
+    (standing x hopping) is exactly 0 whenever the robot falls, giving almost no
+    gradient signal at this budget.
+
+F5. HopperHop is an honest NEGATIVE result, and we can defend it.
+    The render is verified correct (the fallen hopper is clearly visible in
+    inloop/viz_hopper/), the pipeline is identical to walker's, the policy simply
+    does not learn. We report it rather than hiding it. It bounds the claim: "in-
+    loop pixel skills work for balancing and for statically-forgiving locomotion;
+    highly unstable dynamics need more budget / better exploration."
+
+F6. Teacher strength orders as expected and explains the variance.
+    neural (1.00 state success) >= nesy (0.74) >> symbolic (0.31). The rule-based
+    symbolic meta collapses skill usage onto recover_balance (~96% of steps),
+    which is why it is weakest and has the highest seed variance. Retention is
+    still ~0.5 for it — the extension does not care how bad the teacher is.
+
+F7. The pixel policy is genuinely pixel-driven — PROVEN for distillation,
+    UNDER TEST for in-loop.
+    Structural guarantee (both methods): RGB_PROPRIO=none makes the actor's
+    non-pixel input literally width-0, so no state can reach the actor. An earlier
+    version leaked qpos+qvel into the actor; found and fixed before any result was
+    produced. Distillation adds a second guard: pixel-fallback < 2.5%, and the
+    held-out teacher-vs-student action correlation r ~ 0.99 (viz/action_tracking.png)
+    — a network ignoring its input would score r ~ 0, so the CNN demonstrably
+    decodes state from the image.
+    OPEN POINT for the in-loop arm: the hierarchy still receives privileged state
+    through the meta-policy, which re-selects a skill EVERY step
+    (META_DECISION_INTERVAL defaults to 1, and is not overridden in any config).
+    So in principle a CNN that ignored its pixels — emitting one constant action
+    per skill — plus a state-driven meta switching between them could act as a
+    bang-bang controller. Locomotion results make that unlikely, but the current
+    experiments do not exclude it, so IT MUST NOT BE CLAIMED AS PROVEN until the
+    ablation below is run. Decisive test, no retraining needed:
+        nexus_continuous/scripts/rgb_pixel_ablation.py
+    It re-evaluates the SAME frozen weights while corrupting only the actor's
+    pixel input (frozen first frame / in-distribution frames replayed from the
+    wrong timestep / shuffled frame order / zeros) plus a `const_action` control
+    that replaces the actor's output with each skill's mean action. If intact
+    performance >> every corrupted condition, the pixel claim is proven; if not,
+    the meta was doing the work and the claim must be dropped.
+
+F7a. ABLATION RESULT (2026-08-17, CartpoleBalance, in-loop, 128 envs / 250
+     updates, 5 episodes per condition). THE IN-LOOP CARTPOLE ACTOR DOES NOT USE
+     ITS PIXELS. Measured, not argued:
+
+       condition                                upright   reward/step
+       intact (real pixels)                     0.514     -0.011
+       frozen_first (t=0 image forever)         0.514     -0.011
+       shuffle_frames (motion destroyed)        0.514     -0.011
+       random_replay (wrong-timestep frames)    0.516     -0.009
+       zeros (blank image)                      0.517     -0.008
+       const_action (no pixels; fixed action)   0.606     +0.014
+
+     intact / frozen_first / shuffle_frames agree to FOUR DECIMALS per episode,
+     and replacing the actor with one constant action per skill is BETTER than
+     the real actor. Confirmed open-loop by rgb_pixel_sensitivity.py on the same
+     saved weights:
+       * render is alive (frame range [-0.368, 0.500], per-pixel temporal std
+         0.0095) -> the flat ablation is NOT a broken-renderer artifact;
+       * across 128 genuinely different real frames the actor's action varies by
+         0.005-0.151% of the action range -> effectively a constant;
+       * that tiny variation nevertheless correlates with the pole angle
+         (r=+0.90 recover_balance, +0.59 center_cart) -> the CNN learned a
+         correctly-signed feature, roughly 1000x too weak to influence control.
+
+     INTERPRETATION (not a bug — a real failure mode of the design at this
+     budget): the actor's ONLY learning signal is the deterministic policy
+     gradient through the privileged state critic. At 250 updates, LR 1e-4 and a
+     0.01 output-scale init, the CNN barely moves, while the discrete meta-Q
+     learns quickly and compensates by switching skills every step
+     (META_DECISION_INTERVAL=1). The hierarchy reaches a decent score WITHOUT the
+     perception ever being learned. The config's own comment already warned this
+     budget is "DIAGNOSTIC / FEASIBILITY ONLY ... expected to be UNDERTRAINED".
+     Note this does NOT touch the distillation arm, whose pixel actors are
+     trained by direct supervision on (frame -> action) pairs and verified at
+     r ~ 0.99 held-out fidelity.
+
+     STILL OPEN: CheetahRun (queued). Locomotion needs an oscillatory gait, which
+     constant-per-skill actions explain far less easily, so cheetah may well come
+     out pixel-driven. Also, the exact weights behind the committed 0.639 run were
+     never saved, so this is a same-config replication (which reached 0.514
+     greedy), not the identical checkpoint.
+     FIXES TO TRY: many more updates; higher actor LR; the deferred shared CNN
+     encoder; an auxiliary pixel->state regression loss (P6); and raising
+     META_DECISION_INTERVAL so the meta cannot compensate every step.
+
+F8. The infrastructure claim: in-loop pixel rendering is NOT a research blocker.
+    We previously believed MJWarp in-loop rendering was unusable (it consistently
+    crashed on Colab). It turned out to be a version desync. With mujoco-warp
+    pinned to 3.11.0 plus two small runtime shims, it runs natively on the pool.
+    Worth flagging to anyone else in the group who wants pixels.
+
+
+--------------------------------------------------------------------------------
+9. THINGS THAT DID NOT WORK / DEAD ENDS (useful, saves the team time)
+--------------------------------------------------------------------------------
+  * DAgger did NOT robustly beat plain BC on CartpoleBalance. It is fully
+    implemented (beta-mixing, expert relabelling, periodic resets) but the
+    default is --dagger-iters 0. Do not expect it to close the covariate-shift
+    gap for free at this scale.
+  * MJWarp on Colab T4: even with a "correct" install the training process died
+    on the first step (Beta CUDA-graph/FFI issue). Colab is not a viable host for
+    in-loop pixel RL; the student pool is.
+  * OSMesa is gone from modern conda-forge mesalib — do not follow old headless
+    MuJoCo tutorials. Software EGL + llvmpipe is the working recipe.
+  * "Madrona is required for pixel rendering" — FALSE for our stack. Playground's
+    MJX/MJWarp batch renderer is enough.
+  * NUM_ENVS=256 with the in-loop renderer OOMs an 11 GB 2080 Ti.
+  * A notebook-level monkeypatch of the warp GraphMode does NOT reach the
+    training subprocess — that is why the shim lives in build_playground_env.
+  * Deliberately NOT done: a SHARED CNN encoder across skills. Today every skill
+    has its own encoder (vmapped). That is correct but less sample-efficient than
+    the DrQ/SAC+AE shared-encoder setup. It was deferred because it is invasive
+    (splits actor params into encoder + heads) and is a pure efficiency
+    optimization. This is the single most promising next improvement.
+
+
+--------------------------------------------------------------------------------
+10. CAVEATS / HONEST SCOPE (state these before someone asks)
+--------------------------------------------------------------------------------
+  * In-loop results are SINGLE SEED per env. Distillation results are 3 seeds.
+  * For cheetah/walker/hopper the in-loop configs have no greedy-eval stage, so
+    the reported number is TRAINING return (per-update episode return), not a
+    deterministic eval. Cartpole in-loop does have a proper greedy eval (0.639).
+  * Absolute numbers vary run to run (GPU nondeterminism in teacher training);
+    the ORDERINGS are the stable claims.
+  * Vision cartpole uses a different reward and horizon than state cartpole —
+    never compare the raw returns across those two settings.
+  * The meta-policy stays state-based BY DESIGN. This is not "NEXUS from pixels
+    end to end"; it is "NEXUS skills from pixels, interpretable high level intact".
+    If someone wants full end-to-end vision, that is a separate project (the meta
+    would need its own encoder and the symbolic masks would need visual grounding).
+  * The in-loop path depends on a Beta component (mujoco-warp). It works at the
+    pinned versions; treat upgrades with suspicion.
+  * Minor doc debt: README.md still says in one bullet "only CartpoleBalance has a
+    vision pipeline in Playground" — true of the FRAMEWORK, but out of date now
+    that dm_control_vision.py ports cheetah/walker/hopper. Worth a one-line fix.
+
+
+--------------------------------------------------------------------------------
+11. WHAT TO SHOW IN THE MEETING (suggested order, 10 minutes)
+--------------------------------------------------------------------------------
+  1. results/rgb/comparison.png
+     -> state vs pixel bars for all three meta variants. Makes F1 visible in one
+        slide.
+  2. results/rgb/viz/observation_filmstrip.png
+     -> "this 64x64 grayscale strip is ALL the skill actor sees." Sets expectations
+        for why ~50% is a good number.
+  3. results/rgb/inloop/viz_cheetah/rollout_inloop.mp4
+     -> a cheetah running, driven from pixels, with the active skill name printed
+        on each frame. The single most convincing artifact.
+  4. results/rgb/inloop/cheetah_inloop_curve.png (and cartpole_inloop_curve.png)
+     -> learning happens in-loop, from scratch, from images.
+  5. results/rgb/inloop/viz_hopper/rollout_inloop.gif
+     -> the honest failure; leads into the difficulty-ordering finding (F4/F5).
+  6. results/rgb/viz_cheetah/skill_timeline.png
+     -> skill activation vs reward: the disentangled skills are still visible
+        when execution is visual.
+  7. results/rgb/README.md — the consolidated write-up, if anyone wants detail.
+
+
+--------------------------------------------------------------------------------
+12. HOW TO REPRODUCE (exact commands)
+--------------------------------------------------------------------------------
+  # 0. Correctness gate — CPU, seconds, no GPU/renderer needed
+  JAX_PLATFORMS=cpu pytest tests/test_vision_rgb_smoke.py tests/test_vision_shapes.py
+
+  # 1. Headless render env (once per shell, pool machines) — see §4
+  source ~/mesa_env.sh
+
+  # 2. METHOD A: distillation, all three meta variants, 3 seeds
+  for META in nesy neural symbolic; do
+    python -m nexus_continuous.scripts.rgb_distill_nexus \
+      --config configs/cartpole_balance_${META}.yaml --meta ${META} \
+      --seeds 0,1,2 --out runs/rgb_nexus_${META}
+  done
+  python -m nexus_continuous.scripts.rgb_report --runs runs \
+    --metas nesy,neural,symbolic --out runs/rgb_report      # -> comparison.png + table
+
+  # 2b. Second env (cheetah), same pipeline
+  python -m nexus_continuous.scripts.rgb_distill_nexus \
+    --config configs/cheetah_run_neural.yaml --meta neural \
+    --seeds 0,1,2 --out runs/rgb_cheetah_neural
+
+  # 2c. Distillation qualitative artifacts (video/filmstrip/timeline/scatter)
+  python -m nexus_continuous.scripts.rgb_visualize \
+    --config configs/cheetah_run_neural.yaml --meta neural --seed 0 \
+    --out runs/rgb_viz_cheetah
+
+  # 3. METHOD B: in-loop pixel RL (needs mujoco-warp==3.11.0 on a CUDA GPU)
+  pip install mujoco-warp==3.11.0        # version-aligned with mujoco/mjx 3.11
+  python -m nexus_continuous.scripts.rgb_inloop_visualize \
+    --config configs/cartpole_balance_nesy_rgb.yaml --meta neural --seed 0 \
+    --updates 250 --num-envs 128 --out runs/rgb_inloop_cartpole
+  # locomotion: pass the normal state config; the script forces USE_RGB and the
+  # adapter routes the env to our ported vision class
+  python -m nexus_continuous.scripts.rgb_inloop_visualize \
+    --config configs/cheetah_run_neural.yaml --meta neural --seed 0 \
+    --updates 250 --num-envs 128 --out runs/rgb_inloop_cheetah
+  # (walker/hopper: same, with walker_walk_nesy.yaml / hopper_hop_nesy.yaml,
+  #  --num-envs 96 --updates 200)
+
+
+--------------------------------------------------------------------------------
+13. PROPOSED NEXT STEPS (for discussion)
+--------------------------------------------------------------------------------
+  P0. RUN FIRST — the pixel-dependence ablation (see F7). Minutes of GPU time,
+      no retraining if a policy is saved with --save-policy. It converts the
+      in-loop pixel claim from "argued" to "measured", and it is the single most
+      likely question from the room:
+        python -m nexus_continuous.scripts.rgb_pixel_ablation \
+          --config configs/cartpole_balance_nesy_rgb.yaml --meta neural --seed 0 \
+          --updates 250 --num-envs 128 --episodes 5 \
+          --save-policy runs/abl_cartpole.pkl --out results/rgb/ablation/cartpole
+        python -m nexus_continuous.scripts.rgb_pixel_ablation \
+          --config configs/cheetah_run_neural.yaml --meta neural --seed 0 \
+          --updates 250 --num-envs 128 --episodes 5 \
+          --save-policy runs/abl_cheetah.pkl --out results/rgb/ablation/cheetah
+      -> results/rgb/ablation/*/pixel_ablation.{json,png} (bar chart + verdict).
+
+  P1. Seeds: rerun in-loop cartpole + cheetah with 3 seeds so both methods are
+      reported with error bars. Cheapest credibility win.
+  P2. Add a greedy deterministic eval stage to the locomotion in-loop configs so
+      all in-loop numbers are eval numbers, not training returns.
+  P3. Shared CNN encoder across skills (DrQ/SAC+AE style). Expected to be the
+      biggest sample-efficiency gain; would also cut memory, enabling more envs.
+  P4. Matched-budget comparison: state-based vs in-loop pixel at the SAME number
+      of updates, to quantify "the cost of vision" in sample efficiency terms.
+  P5. HopperHop retry with a larger budget and/or a state-based warm start, to
+      test whether F5 is a budget limit or a structural limit.
+  P6. Optional, only if pixels stall: an auxiliary pixel->state regression head
+      (predict qpos/qvel from the CNN latent). Chosen over reconstruction because
+      it is cheaper and better matched to control. Explicitly NOT needed so far.
+
+================================================================================
+END
+================================================================================
