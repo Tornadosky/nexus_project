@@ -9,6 +9,21 @@ The pipeline LLM generation + training is run per backend.
 Results on: `output/<env>/...`.
 `output/manifest.json` and `output/<env>_summary.json` are produced for 
 collect_llm_results.py and help it turn the results into a report.
+
+To run (env config specified on DEFAULT_ENV_CONFIGS below):
+
+python -m nexus_continuous.scripts.run_llm_full_suite \
+    --envs CartpoleBalance \    
+    --backends hf \    
+    --seeds 0 1 2 3 4 \     
+    --refine-iterations 4 \    
+    --output results_cartpole_balance \     
+    --override EVAL_AFTER_TRAIN=True \    
+    --override EVAL_NUM_ENVS=128 \    
+    --override EVAL_NUM_EPISODES=128 \
+
+python -m nexus_continuous.scripts.collect_llm_results \ 
+    --results results_cartpole_balance \
 """
 
 from __future__ import annotations 
