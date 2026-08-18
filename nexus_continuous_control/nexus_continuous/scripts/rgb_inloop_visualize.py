@@ -40,6 +40,9 @@ def main(argv: list[str] | None = None) -> None:
     ap.add_argument("--eval-steps", type=int, default=250)
     ap.add_argument("--upscale", type=int, default=256, help="video frame size (upscaled 64x64)")
     ap.add_argument("--fps", type=int, default=25)
+    ap.add_argument("--load-policy", default=None,
+                    help="reuse a policy saved by rgb_pixel_ablation --save-policy "
+                         "instead of retraining (seconds instead of ~20 minutes)")
     args = ap.parse_args(argv)
 
     import numpy as np
@@ -79,11 +82,22 @@ def main(argv: list[str] | None = None) -> None:
     cfg["TOTAL_TIMESTEPS"] = args.num_envs * cfg.get("NUM_STEPS", 64) * args.updates
     env_name = cfg["ENV_NAME"]
     print(f"jax {jax.__version__} {jax.devices()} | env {env_name} | meta {args.meta} | in-loop {args.updates}u")
-    output = run_training(cfg)
-    train_state = output.runner_state[0]
-    actor_params = train_state.actor.params            # vmapped over skills [N, ...]
-    meta_params = None if args.meta == "symbolic" else train_state.meta.params
-    stats = output.normalization_stats
+    if args.load_policy:
+        import pickle as _pickle
+        print(f"[1] loading saved in-loop policy from {args.load_policy} (no retraining)")
+        _blob = _pickle.loads(Path(args.load_policy).read_bytes())
+        output = None
+        actor_params = jax.tree_util.tree_map(jnp.asarray, _blob["actor_params"])
+        meta_params = (None if _blob["meta_params"] is None
+                       else jax.tree_util.tree_map(jnp.asarray, _blob["meta_params"]))
+        stats = jax.tree_util.tree_map(jnp.asarray, _blob["normalization_stats"])
+    else:
+        output = run_training(cfg)
+    if output is not None:
+        train_state = output.runner_state[0]
+        actor_params = train_state.actor.params        # vmapped over skills [N, ...]
+        meta_params = None if args.meta == "symbolic" else train_state.meta.params
+        stats = output.normalization_stats
     policy_module = load_policy_module(cfg.get("POLICY", env_name))
     num_skills = int(policy_module.NUM_SKILLS)
     skill_names = list(getattr(policy_module, "SKILL_NAMES", [f"skill{i}" for i in range(num_skills)]))
@@ -91,7 +105,7 @@ def main(argv: list[str] | None = None) -> None:
 
     # save the in-loop learning curve (training episode return per update)
     import json as _json
-    _m = output.metrics or {}
+    _m = (output.metrics or {}) if output is not None else {}
     _c = np.asarray(_m["env/returned_episode_returns"]) if "env/returned_episode_returns" in _m else None
     if _c is not None and _c.size > 1:
         _c = _c.reshape(_c.shape[0], -1).mean(1) if _c.ndim > 1 else _c.reshape(-1)

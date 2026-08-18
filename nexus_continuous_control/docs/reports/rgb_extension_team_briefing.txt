@@ -4,9 +4,10 @@ Team briefing: setup, implementation, experiments, findings
 ================================================================================
 Author:  Rosela Berberi
 Repo:    nexus_project/nexus_continuous_control  (branch: rosela)
-Status:  COMPLETE — two working methods, 4 environments, results committed
+Status:  COMPLETE + VERIFIED — two methods, 4 envs, pixel-dependence ablated,
+         one failure mode found AND fixed
 Results: results/rgb/   (figures, videos, JSON, README)
-Date of this summary: 2026-08-17
+Date of this summary: 2026-08-18 (ablation campaign included)
 
 
 --------------------------------------------------------------------------------
@@ -611,6 +612,28 @@ F7c. THE FIX WORKS (2026-08-18, cartpole_aux). Same env, same budget, same
      alone (cartpole), and that failure is REPAIRABLE by giving the encoder a
      dense supervised signal and denying the meta its per-step shortcut.
 
+F7d. ENCODER RESPONSIVENESS, the mechanism in one number (2026-08-18).
+     rgb_pixel_sensitivity.py feeds each trained skill actor 128 genuinely
+     different real frames and measures how far its action moves, as a share of
+     the action range (a blind network is a constant, so ~0%):
+
+       policy                          per-skill action spread      verdict
+       CartpoleBalance (original)      0.005% / 0.115% / 0.151%     BLIND
+       CartpoleBalance + FIX           7.8%  / 26.0%  / 11.3%       responsive
+       CheetahRun                      37.3% / 30.3%  / 38.1%       responsive
+
+     The fix moved cartpole ~170x, into the same regime as cheetah -- which got
+     there on the policy gradient alone because its task left no shortcut. Render
+     health was confirmed in every case (per-pixel temporal std 0.005-0.090), so
+     none of these numbers is a renderer artifact. Figure:
+     results/rgb/ablation/pixel_responsiveness.png
+
+     Qualitative artifacts now exist for the ablated policies too (video,
+     64x64 filmstrip, skill+reward timeline), generated from the SAVED weights
+     via `rgb_inloop_visualize.py --load-policy` -- seconds instead of a 20
+     minute retrain. Self-checks: fixed cartpole rollout 0.100 reward/step
+     (its ablation baseline was 0.0985), cheetah rollout 0.532 (baseline 0.498).
+
 F8. The infrastructure claim: in-loop pixel rendering is NOT a research blocker.
     We previously believed MJWarp in-loop rendering was unusable (it consistently
     crashed on Colab). It turned out to be a version desync. With mujoco-warp
@@ -667,26 +690,56 @@ F8. The infrastructure claim: in-loop pixel rendering is NOT a research blocker.
 --------------------------------------------------------------------------------
 11. WHAT TO SHOW IN THE MEETING (suggested order, 10 minutes)
 --------------------------------------------------------------------------------
-  1. results/rgb/comparison.png
-     -> state vs pixel bars for all three meta variants. Makes F1 visible in one
-        slide.
-  2. results/rgb/viz/observation_filmstrip.png
-     -> "this 64x64 grayscale strip is ALL the skill actor sees." Sets expectations
-        for why ~50% is a good number.
-  3. results/rgb/inloop/viz_cheetah/rollout_inloop.mp4
-     -> a cheetah running, driven from pixels, with the active skill name printed
-        on each frame. The single most convincing artifact.
-  4. results/rgb/inloop/cheetah_inloop_curve.png (and cartpole_inloop_curve.png)
-     -> learning happens in-loop, from scratch, from images.
-  5. results/rgb/inloop/viz_hopper/rollout_inloop.gif
-     -> the honest failure; leads into the difficulty-ordering finding (F4/F5).
-  6. results/rgb/viz_cheetah/skill_timeline.png
-     -> skill activation vs reward: the disentangled skills are still visible
-        when execution is visual.
-  7. results/rgb/README.md — the consolidated write-up, if anyone wants detail.
+  1. results/rgb/ablation/method_comparison.png
+     -> THE performance slide. Two panels: how well each method controls the
+        robot vs the privileged upper bound. Cheetah: in-loop 0.498 vs distilled
+        0.155 vs privileged 0.618. Cartpole: the fix restores a perfect 1.000.
+  2. results/rgb/ablation/cheetah/viz/rollout_inloop.mp4
+     -> a cheetah running, driven from 64x64 pixels, skill-annotated. The single
+        most convincing artifact (rollout 0.532 reward/step, matches its eval).
+  3. results/rgb/ablation/comparison.png
+     -> the credibility slide: corrupt ONLY the actor's image. Cheetah collapses
+        to 0-2%; the original cartpole is untouched at 100% (118% with no actor
+        at all); the fixed cartpole drops 35-52% like it should.
+  4. results/rgb/ablation/pixel_responsiveness.png
+     -> the mechanism, in one number per skill: how far the action moves across
+        128 different real frames. 0.005-0.151% (blind) vs 7.8-26.0% (fixed) vs
+        30.3-38.1% (cheetah). Log scale, ~170x improvement from the fix.
+  5. results/rgb/comparison.png + results/rgb/viz/action_tracking.png
+     -> the distillation arm: ~50% retention across all three meta variants
+        (meta-agnostic) and r ~ 0.99 held-out teacher-vs-student fidelity.
+  6. results/rgb/ablation/cartpole_aux/viz/skill_timeline.png
+     -> the fixed cartpole hierarchy: skill activation against reward.
+  7. results/rgb/inloop/viz_hopper/rollout_inloop.gif
+     -> the honest failure (hopper never learns), for the difficulty ordering.
 
-
+FIGURE INDEX (what exists and what each one proves)
 --------------------------------------------------------------------------------
+  ABLATION CAMPAIGN (2026-08-17/18), results/rgb/ablation/
+    method_comparison.png        performance of every method vs privileged bound
+    comparison.png               pixel-dependence, all three runs, normalized
+    pixel_responsiveness.png     per-skill encoder responsiveness (log scale)
+    cartpole/pixel_ablation.png       the blind run, six conditions
+    cartpole/pixel_sensitivity.json   open-loop proof of blindness + render check
+    cartpole_aux/pixel_ablation.png   the fixed run, six conditions
+    cartpole_aux/viz/               video + filmstrip + skill/reward timeline
+    cheetah/pixel_ablation.png        cheetah, six conditions
+    cheetah/viz/                    video + filmstrip + skill/reward timeline
+    */pixel_ablation.json           every number, per condition and per episode
+
+  EARLIER RGB WORK, results/rgb/
+    comparison.png, {nesy,neural,symbolic}_state_vs_pixel.png, results_table.md
+    viz/, viz_cheetah/              distillation videos, filmstrips, timelines,
+                                    teacher-vs-student action scatter
+    inloop/*_curve.png              in-loop learning curves (cartpole, cheetah)
+    inloop/viz_{cartpole,cheetah,walker,hopper}/   in-loop rollout artifacts
+    inloop/cheetah_render_probe.png tracking camera verified in-frame
+
+  NOTE: the three ablation runs did not save their own learning curves (the
+  ablation script only kept the final training return). The curves in
+  results/rgb/inloop/ come from the earlier runs of the SAME configuration and
+  budget, so they are representative but are not the identical checkpoints.
+
 12. HOW TO REPRODUCE (exact commands)
 --------------------------------------------------------------------------------
   # 0. Correctness gate — CPU, seconds, no GPU/renderer needed
