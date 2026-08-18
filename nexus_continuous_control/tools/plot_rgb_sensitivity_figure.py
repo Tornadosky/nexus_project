@@ -6,13 +6,14 @@ each skill actor 128 genuinely different real frames and measure the spread of
 its output action, as a percentage of the action range. A blind network is a
 constant -> ~0%.
 
-    blind cartpole   0.005-0.151%   (encoder never learned)
-    fixed cartpole   7.8-26.0%      (aux pixel->state loss + committed meta)
-    cheetah          30.3-38.1%     (learned from the policy gradient alone)
-
 Log scale, because the interesting range spans four orders of magnitude.
 
-    python tools/plot_rgb_sensitivity_figure.py
+    python tools/plot_rgb_sensitivity_figure.py \
+        --tags cartpole,cartpole_aux,cheetah \
+        --out results/rgb/ablation/pixel_responsiveness.png
+    python tools/plot_rgb_sensitivity_figure.py \
+        --tags cartpole_nesy,cartpole_aux_nesy,cheetah_nesy,walker_nesy \
+        --out results/rgb/ablation/pixel_responsiveness_nesy.png
 """
 
 from __future__ import annotations
@@ -21,11 +22,14 @@ import argparse
 import json
 from pathlib import Path
 
+PALETTE = ["#C44E52", "#55A868", "#4C72B0", "#8172B2", "#CCB974", "#64B5CD"]
+
 
 def main(argv: list[str] | None = None) -> None:
     ap = argparse.ArgumentParser(description=__doc__,
                                  formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("--root", default="results/rgb/ablation")
+    ap.add_argument("--tags", default="cartpole,cartpole_aux,cheetah")
     ap.add_argument("--out", default="results/rgb/ablation/pixel_responsiveness.png")
     args = ap.parse_args(argv)
 
@@ -35,29 +39,38 @@ def main(argv: list[str] | None = None) -> None:
     import matplotlib.pyplot as plt
 
     root = Path(args.root)
-    runs = [
-        ("cartpole", "CartpoleBalance (original) - BLIND", "#C44E52"),
-        ("cartpole_aux", "CartpoleBalance + FIX", "#55A868"),
-        ("cheetah", "CheetahRun", "#4C72B0"),
-    ]
+    runs = []
+    tags = [t for t in args.tags.split(",") if t]
+    for i, tag in enumerate(tags):
+        sp = root / tag / "pixel_sensitivity.json"
+        ap_ = root / tag / "pixel_ablation.json"
+        if not sp.exists():
+            print(f"[skip] {sp} missing")
+            continue
+        env = json.loads(sp.read_text()).get("env", tag)
+        meta = json.loads(sp.read_text()).get("meta", "")
+        verdict = None
+        if ap_.exists():
+            verdict = json.loads(ap_.read_text()).get("actor_uses_pixels")
+        tag_note = " (inconclusive)" if verdict is None else ""
+        variant = " + FIX" if "aux" in tag else ""
+        runs.append((tag, f"{env}{variant} ({meta}){tag_note}" if meta else f"{tag}{tag_note}",
+                    PALETTE[i % len(PALETTE)]))
+
     series = []
     for tag, label, color in runs:
         p = root / tag / "pixel_sensitivity.json"
-        if not p.exists():
-            print(f"[skip] {p} missing")
-            continue
         d = json.loads(p.read_text())
         vals = [(k, 100.0 * v["relative_to_action_range"])
                 for k, v in d["actor_sensitivity"].items()]
         series.append((label, color, vals))
 
-    fig, ax = plt.subplots(figsize=(10, 5.4))
+    fig, ax = plt.subplots(figsize=(max(10, 1.9 * sum(len(v) for _, _, v in series)), 5.4))
     xticks, xlabels, pos, handles, labels = [], [], 0, [], []
     for label, color, vals in series:
         bar = None
         for name, v in vals:
             bar = ax.bar(pos, max(v, 3e-3), color=color, width=0.75)
-            # 0.005% must not render as "0.00%": keep 3 decimals below 0.01.
             txt = f"{v:.3f}%" if v < 0.01 else (f"{v:.2f}%" if v < 1 else f"{v:.1f}%")
             ax.text(pos, max(v, 3e-3) * 1.18, txt, ha="center", va="bottom", fontsize=8)
             xticks.append(pos)
@@ -77,16 +90,10 @@ def main(argv: list[str] | None = None) -> None:
     ax.set_ylabel("action spread across 128 different real frames"
                   "\n(% of action range, log scale)")
     ax.set_title("Does the trained encoder actually respond to what it sees?"
-                 "\none bar per skill actor -- a blind network outputs a constant (~0%)",
-                 fontsize=12)
-    ax.legend(handles, labels, loc="upper left", fontsize=9, ncol=3, framealpha=0.95)
-    fig.text(0.5, -0.08,
-             "The original cartpole actor moves 0.005-0.151% of its action range across totally "
-             "different images -- effectively a constant."
-             "\nThe fix raises that ~170x, into the same regime as cheetah, which learned to see "
-             "from the policy gradient alone.",
-             ha="center", va="top", fontsize=8.5,
-             bbox=dict(boxstyle="round", fc="#F5F5F5", ec="#CCCCCC"))
+                "\none bar per skill actor -- a blind network outputs a constant (~0%)",
+                fontsize=12)
+    ax.legend(handles, labels, loc="upper left", fontsize=8.5,
+              ncol=min(3, len(labels)), framealpha=0.95)
     fig.tight_layout()
     out = Path(args.out)
     fig.savefig(out, dpi=140, bbox_inches="tight")

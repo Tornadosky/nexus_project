@@ -1,15 +1,18 @@
-"""One figure for the whole pixel-dependence story: cartpole vs cheetah.
+"""One figure for the whole pixel-dependence story, for any set of ablated runs.
 
-Each environment's conditions are normalized to ITS OWN intact baseline, so two
-different metrics (cartpole = upright fraction, cheetah = reward/step) sit on one
+Each run's conditions are normalized to ITS OWN intact baseline, so different
+metrics (cartpole = upright fraction, locomotion = reward/step) sit on one
 comparable axis: "how much performance survives when we corrupt the image".
 
-  CheetahRun       -> everything collapses  => the actor really uses its camera
-  CartpoleBalance  -> nothing changes       => the actor is blind and the
-                                               privileged meta does the work
+Labels and colors are derived automatically from each run's rescored verdict
+(tools/rescore_rgb_ablation.py must have been run first): green = SEES,
+red = BLIND, grey = INCONCLUSIVE (near-zero baseline, e.g. hopper).
 
+    python tools/plot_rgb_ablation_comparison.py --tags cheetah,cartpole,cartpole_aux \
+        --out results/rgb/ablation/comparison.png
     python tools/plot_rgb_ablation_comparison.py \
-        --runs results/rgb/ablation --out results/rgb/ablation/comparison.png
+        --tags cheetah_nesy,walker_nesy,cartpole_nesy,cartpole_aux_nesy \
+        --out results/rgb/ablation/comparison_nesy.png
 """
 
 from __future__ import annotations
@@ -27,13 +30,16 @@ NICE = {
     "zeros": "blank\nimage",
     "const_action": "no actor\n(constant action)",
 }
+VERDICT_COLOR = {True: "#55A868", False: "#C44E52", None: "#8C8C8C"}
 
 
 def main(argv: list[str] | None = None) -> None:
     ap = argparse.ArgumentParser(description=__doc__,
                                  formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("--runs", default="results/rgb/ablation")
+    ap.add_argument("--tags", default="cheetah,cartpole,cartpole_aux")
     ap.add_argument("--out", default="results/rgb/ablation/comparison.png")
+    ap.add_argument("--title", default="Does the in-loop pixel actor actually use its camera?")
     args = ap.parse_args(argv)
 
     import numpy as np
@@ -43,60 +49,55 @@ def main(argv: list[str] | None = None) -> None:
     import matplotlib.pyplot as plt
 
     runs = Path(args.runs)
-    series = []
-    for tag, label, color in [
-        ("cheetah", "CheetahRun — actor SEES", "#4C72B0"),
-        ("cartpole", "CartpoleBalance — actor BLIND", "#C44E52"),
-        ("cartpole_aux", "CartpoleBalance + FIX — actor SEES", "#55A868"),
-    ]:
+    series, notes = [], []
+    for tag in [t for t in args.tags.split(",") if t]:
         path = runs / tag / "pixel_ablation.json"
         if not path.exists():
             print(f"[skip] {path} missing")
             continue
         d = json.loads(path.read_text())
-        # Cartpole reports a bounded upright fraction; locomotion reports mean
-        # reward/step. Each is normalized to its own intact run, so the bars mean
-        # "fraction of normal performance retained".
         key = "upright_fraction_mean" if "upright_fraction_mean" in d["results"]["intact"] \
             else "reward_per_step_mean"
         base = d["results"]["intact"][key]
+        if d.get("inconclusive"):
+            notes.append(f"{d['env']} ({d['meta']}) omitted: intact score is "
+                         f"indistinguishable from zero -- not measurable, not a verdict.")
+            continue
+        verdict = "SEES" if d.get("actor_uses_pixels") else "BLIND"
+        # Same env+meta can appear twice (original vs the aux/fix run) -- the tag
+        # is the only thing that disambiguates them, so fold it into the label.
+        variant = " + FIX" if "aux" in tag else ""
+        label = f"{d['env']}{variant} ({d['meta']}) -- actor {verdict}"
+        color = VERDICT_COLOR[d.get("actor_uses_pixels")]
         vals = [100.0 * d["results"][c][key] / base if c in d["results"] else np.nan
                 for c in CONDITIONS]
-        series.append((label, color, vals, key, base))
+        series.append((label, color, vals))
 
     if not series:
         raise SystemExit("no ablation results found")
 
     x = np.arange(len(CONDITIONS))
-    width = 0.27
-    fig, ax = plt.subplots(figsize=(11, 5))
-    for i, (label, color, vals, key, base) in enumerate(series):
+    width = min(0.75 / len(series), 0.30)
+    fig, ax = plt.subplots(figsize=(max(11, 2.2 * len(series) + 6), 5))
+    for i, (label, color, vals) in enumerate(series):
         off = (i - (len(series) - 1) / 2) * width
         bars = ax.bar(x + off, vals, width, label=label, color=color)
         for b, v in zip(bars, vals):
             ax.text(b.get_x() + b.get_width() / 2, v + 2, f"{v:.0f}%",
-                    ha="center", va="bottom", fontsize=8.5)
+                    ha="center", va="bottom", fontsize=7.5)
 
     ax.axhline(100, ls="--", lw=1, color="grey", zorder=0)
     ax.set_xticks(x)
     ax.set_xticklabels([NICE[c] for c in CONDITIONS], fontsize=9)
     ax.set_ylabel("performance retained\n(% of intact run)")
     ax.set_ylim(0, 150)
-    ax.set_title(
-        "Does the in-loop pixel actor actually use its camera?\n"
-        "Same code, same budget — only the task differs. Corrupting ONLY the actor's image input.",
-        fontsize=11,
-    )
-    ax.legend(loc="upper left", fontsize=9.5, framealpha=0.95)
-    # Caption goes BELOW the axes: inside the plot it covered the bars it explains.
-    fig.text(0.5, -0.09,
-             "Cheetah collapses without pixels -> vision is doing the control.   "
-             "Cartpole is unchanged, and is even BETTER with no actor at all (118%) ->\n"
-             "the privileged meta-policy alone solves that task, so the encoder was never "
-             "under pressure to learn.   The FIX (aux pixel->state loss + META_DECISION_INTERVAL 4 + LR 3e-4) makes it see AND doubles\n"
-             "performance: 0.514 -> 1.000 upright.   128 envs / 250 updates, 5 episodes per condition, single seed.",
-             ha="center", va="top", fontsize=8.5,
-             bbox=dict(boxstyle="round", fc="#F5F5F5", ec="#CCCCCC"))
+    ax.set_title(f"{args.title}\n"
+                "Same ablation protocol, corrupting ONLY the actor's image input.",
+                fontsize=11)
+    ax.legend(loc="upper left", fontsize=8.5, framealpha=0.95, ncol=1)
+    if notes:
+        fig.text(0.5, -0.06, "  ".join(notes), ha="center", va="top", fontsize=8.5,
+                bbox=dict(boxstyle="round", fc="#F5F5F5", ec="#CCCCCC"))
     fig.tight_layout()
     out = Path(args.out)
     out.parent.mkdir(parents=True, exist_ok=True)

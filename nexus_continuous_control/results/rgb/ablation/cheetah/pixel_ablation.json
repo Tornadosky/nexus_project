@@ -89,5 +89,6 @@
   "actor_uses_pixels_strict": true,
   "pixel_drop_median": 0.9850063775663863,
   "pixel_drop_min": 0.9307933616718754,
-  "verdict_rule": "median of {frozen_first, random_replay, zeros} performance drop > 30%"
+  "verdict_rule": "median of {frozen_first, random_replay, zeros} performance drop > 30%; INCONCLUSIVE if the intact score is not distinguishable from zero (|mean| < 2*std)",
+  "inconclusive": false
 }

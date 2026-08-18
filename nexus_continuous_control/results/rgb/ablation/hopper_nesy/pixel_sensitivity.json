@@ -1,0 +1,46 @@
+{
+  "env": "HopperHop",
+  "meta": "nesy",
+  "policy": "runs/abl_hopper_nesy.pkl",
+  "train_return": 1.5652579069137573,
+  "render": {
+    "temporal_std": 0.08444573730230331,
+    "frame_diff": 0.005045118276029825,
+    "alive": true
+  },
+  "actor_sensitivity": {
+    "stand_recover": {
+      "action_std_over_frames": 0.0,
+      "relative_to_action_range": 0.0,
+      "shift_vs_blank_image": 0.0
+    },
+    "hop_forward": {
+      "action_std_over_frames": 0.47815456986427307,
+      "relative_to_action_range": 0.23907728493213654,
+      "shift_vs_blank_image": 0.23974819481372833
+    },
+    "stabilize_landing": {
+      "action_std_over_frames": 0.01951160840690136,
+      "relative_to_action_range": 0.00975580420345068,
+      "shift_vs_blank_image": 0.021425709128379822
+    },
+    "energy_efficient": {
+      "action_std_over_frames": 0.19024398922920227,
+      "relative_to_action_range": 0.09512199461460114,
+      "shift_vs_blank_image": 0.454228937625885
+    }
+  },
+  "actor_responsive": true,
+  "action_state_correlation": {
+    "stand_recover": NaN,
+    "hop_forward": 0.40942093388882095,
+    "stabilize_landing": 0.6987756888700098,
+    "energy_efficient": 0.8770090440534409
+  },
+  "skill_histogram": [
+    14,
+    136,
+    28,
+    72
+  ]
+}

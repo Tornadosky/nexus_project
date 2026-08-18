@@ -52,13 +52,26 @@ def main(argv: list[str] | None = None) -> None:
         drops = d["performance_drop_fraction"]
         px = [drops[c] for c in PIXEL_CONDS]
         median_drop = float(sorted(px)[len(px) // 2])
-        uses = bool(median_drop > 0.30)
-        d["actor_uses_pixels_strict"] = bool(min(px) > 0.30)
+
+        # Baseline-magnitude guard: a "% drop" from a near-zero intact score is
+        # noise, not a finding (e.g. hopper_nesy: intact 0.012 +/- 0.023 reward/
+        # step -- the confidence interval includes zero). Below this the run is
+        # INCONCLUSIVE, not a verdict either way.
+        intact_key = ("upright_fraction_mean" if "upright_fraction_mean" in d["results"]["intact"]
+                      else "reward_per_step_mean")
+        intact_val = d["results"]["intact"][intact_key]
+        intact_std = d["results"]["intact"].get(intact_key.replace("_mean", "_std"), 0.0)
+        inconclusive = bool(abs(intact_val) < max(2 * intact_std, 1e-6))
+
+        uses = None if inconclusive else bool(median_drop > 0.30)
+        d["actor_uses_pixels_strict"] = None if inconclusive else bool(min(px) > 0.30)
         d["actor_uses_pixels"] = uses
+        d["inconclusive"] = inconclusive
         d["pixel_drop_median"] = median_drop
         d["pixel_drop_min"] = float(min(px))
         d["verdict_rule"] = ("median of {frozen_first, random_replay, zeros} "
-                             "performance drop > 30%")
+                             "performance drop > 30%; INCONCLUSIVE if the intact "
+                             "score is not distinguishable from zero (|mean| < 2*std)")
         path.write_text(json.dumps(d, indent=2))
 
         key = ("upright_fraction_mean" if "upright_fraction_mean" in d["results"]["intact"]
@@ -73,16 +86,17 @@ def main(argv: list[str] | None = None) -> None:
             plt.text(i, v, f"{v:.3f}", ha="center", va="bottom", fontsize=8)
         plt.xticks(range(len(CONDITIONS)), CONDITIONS, rotation=20, ha="right", fontsize=9)
         plt.ylabel(ylab)
+        verdict_str = "INCONCLUSIVE (intact score ~ 0)" if inconclusive else ("YES" if uses else "NO")
         plt.title(f"Does the in-loop pixel actor use its pixels? "
                   f"{d['env']} ({d['meta']}, {d['episodes']} episodes)\n"
-                  f"{'YES' if uses else 'NO'} - corrupting the image costs "
+                  f"{verdict_str} - corrupting the image costs "
                   f"{100 * min(px):.0f}-{100 * max(px):.0f}% "
                   f"(median {100 * median_drop:.0f}%)")
         fig.savefig(Path(args.root) / tag / "pixel_ablation.png", dpi=130,
                     bbox_inches="tight")
         plt.close(fig)
-        print(f"{tag:14} median {100 * median_drop:5.1f}%  min {100 * min(px):5.1f}%  "
-              f"-> uses_pixels={uses} (strict rule said {d['actor_uses_pixels_strict']})")
+        label = "INCONCLUSIVE" if inconclusive else f"uses_pixels={uses}"
+        print(f"{tag:16} median {100 * median_drop:6.1f}%  min {100 * min(px):6.1f}%  -> {label}")
 
 
 if __name__ == "__main__":
