@@ -105,4 +105,6 @@ run_one cartpole_nesy     configs/cartpole_balance_nesy_rgb.yaml     nesy
 run_one cartpole_aux_nesy configs/cartpole_balance_nesy_rgb_aux.yaml nesy
 run_one walker_nesy       configs/walker_walk_nesy.yaml              nesy
 run_one hopper_nesy       configs/hopper_hop_nesy.yaml               nesy
+# Fix rescued cartpole; testing it on walker where 3/4 skills were saturated.
+run_one walker_aux_nesy   configs/walker_walk_nesy_rgb_aux.yaml      nesy
 log "campaign done"

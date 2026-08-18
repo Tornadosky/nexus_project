@@ -759,6 +759,49 @@ F7f. *** THE CAMPAIGN RE-RUN ON THE PROJECT'S OWN META (nesy) ***
      is designed to prevent. Worth testing whether RGB_AUX_STATE_COEF fixes
      walker's other three skills the same way it fixed cartpole -- not yet run.
 
+F7g. *** THE FIX ALSO RESCUES WALKER'S SATURATED SKILLS *** (2026-08-18,
+     walker_aux_nesy). F7f found walker's SEES verdict was carried by only ONE
+     of its four skills (energy_efficient); the other three (stand_recover,
+     walk_forward, stabilize_gait) had tanh-saturated, image-independent output.
+     Applied the SAME fix that rescued cartpole (RGB_AUX_STATE_COEF 1.0,
+     META_DECISION_INTERVAL 4; walker's base LR was already 0.0003, no change
+     needed there) -- config configs/walker_walk_nesy_rgb_aux.yaml.
+
+     RESULT: full recovery, not partial.
+
+       skill              before fix   after fix
+       stand_recover      0.000%       38.1%
+       walk_forward       0.000%       36.9%
+       stabilize_gait     0.000%       32.7%
+       energy_efficient   33.9%        34.1%   (already fine, unaffected)
+
+     All four skills now sit in the same 33-38% band -- no more saturation, no
+     outlier. Task performance improved dramatically alongside it, not just the
+     seeing property:
+
+       metric                    before fix    after fix
+       intact reward/step        0.326         0.730
+       training return           99.3          192.2
+       median pixel-drop          63.9%         94.3%
+       frozen_first drop          38.3%         93.5%
+       blank-image drop           73.8%         94.7%
+       const_action drop          62.5%         96.3%
+
+     This run clears even the STRICT all-conditions rule (min drop 93.5% > 30%),
+     unlike the original walker_nesy which only cleared the median rule. So the
+     fix did not just add a fourth seeing skill on top of three saturated ones --
+     it turned a policy that was mostly coasting on one skill into one where
+     every skill is genuinely, similarly pixel-driven, and that shows up directly
+     in reward (+124% return).
+
+     TAKEAWAY: the fix is not a cartpole-specific patch. Two out of two attempts
+     (cartpole, walker) show the SAME failure mode (encoder starved of a direct
+     supervised signal + a decision-maker that can compensate) and the SAME
+     remedy repairing it completely. That is meaningfully stronger evidence for
+     the general fix than either result alone -- it now reads as "this failure
+     mode and this repair generalize across environments," not "we found one
+     bug and patched it."
+
 F8. The infrastructure claim: in-loop pixel rendering is NOT a research blocker.
     We previously believed MJWarp in-loop rendering was unusable (it consistently
     crashed on Colab). It turned out to be a version desync. With mujoco-warp
@@ -832,6 +875,9 @@ F8. The infrastructure claim: in-loop pixel rendering is NOT a research blocker.
         +-1, one at 33.9% -- see F7f's walker nuance).
   5. results/rgb/ablation/cartpole_aux_nesy/viz/skill_timeline.png
      -> the fixed cartpole hierarchy under nesy: skill activation vs reward.
+  5b. results/rgb/ablation/pixel_responsiveness_nesy.png (walker before/after)
+     -> the fix generalizes: applied to walker's 3 saturated skills, ALL FOUR
+        jump to 33-38% responsiveness and training return improves 99->192.
   6. results/rgb/comparison.png + results/rgb/viz/action_tracking.png
      -> the distillation arm: ~50% retention across all three meta variants
         (meta-agnostic) and r ~ 0.99 held-out teacher-vs-student fidelity.
@@ -848,9 +894,11 @@ FIGURE INDEX (what exists and what each one proves)
 --------------------------------------------------------------------------------
   HEADLINE: nesy CAMPAIGN (2026-08-18), results/rgb/ablation/
     method_comparison_nesy.png    performance of every method vs privileged bound
-    comparison_nesy.png           pixel-dependence, 4 conclusive nesy runs, normalized
-    pixel_responsiveness_nesy.png per-skill encoder responsiveness (log scale)
-    cheetah_nesy/, walker_nesy/, cartpole_nesy/, cartpole_aux_nesy/, hopper_nesy/
+    comparison_nesy.png           pixel-dependence, 5 conclusive nesy runs, normalized
+    pixel_responsiveness_nesy.png per-skill encoder responsiveness (log scale) --
+                                  includes walker before/after the fix (F7g)
+    cheetah_nesy/, walker_nesy/, walker_aux_nesy/, cartpole_nesy/, cartpole_aux_nesy/,
+    hopper_nesy/
        each has: pixel_ablation.json/.png (six-condition ablation + verdict),
        pixel_sensitivity.json (open-loop responsiveness + render-health check),
        training_curves.json/.png (return + pixel sensitivity + aux loss per
