@@ -1,0 +1,39 @@
+{
+  "env": "CartpoleBalance",
+  "meta": "nesy",
+  "policy": "runs/abl_cartpole_aux_nesy_s1.pkl",
+  "train_return": 24.429243087768555,
+  "render": {
+    "temporal_std": 0.015363401733338833,
+    "frame_diff": 0.0004903447697870433,
+    "alive": true
+  },
+  "actor_sensitivity": {
+    "recover_balance": {
+      "action_std_over_frames": 0.506406843662262,
+      "relative_to_action_range": 0.253203421831131,
+      "shift_vs_blank_image": 0.7404765486717224
+    },
+    "center_cart": {
+      "action_std_over_frames": 0.45008954405784607,
+      "relative_to_action_range": 0.22504477202892303,
+      "shift_vs_blank_image": 1.4501776695251465
+    },
+    "damp_motion": {
+      "action_std_over_frames": 0.6330557465553284,
+      "relative_to_action_range": 0.3165278732776642,
+      "shift_vs_blank_image": 0.11512498557567596
+    }
+  },
+  "actor_responsive": true,
+  "action_state_correlation": {
+    "recover_balance": 0.7694181961537108,
+    "center_cart": -0.647352458310998,
+    "damp_motion": -0.4004075741672457
+  },
+  "skill_histogram": [
+    0,
+    43,
+    207
+  ]
+}

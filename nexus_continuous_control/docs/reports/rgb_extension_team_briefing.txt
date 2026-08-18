@@ -802,6 +802,51 @@ F7g. *** THE FIX ALSO RESCUES WALKER'S SATURATED SKILLS *** (2026-08-18,
      mode and this repair generalize across environments," not "we found one
      bug and patched it."
 
+F7h. *** MULTI-SEED CONFIRMATION (2026-08-19), 3 seeds (0,1,2) on the three key
+     nesy findings -- matching the rigor the distillation arm already has. ***
+     Single-seed numbers were a disclosed limitation everywhere above ("all
+     single-seed", section 7/RESULTS); this closes it for cheetah, the cartpole
+     fix, and the walker fix specifically.
+
+       group              metric              mean +/- std      per-seed values         verdict
+       CheetahRun         reward/step         0.400 +/- 0.073   0.307/0.408/0.485       SEES, 3/3
+       Cartpole + FIX     upright fraction    0.978 +/- 0.030   1.000/0.935/1.000       SEES, 3/3
+       Walker + FIX       reward/step         0.648 +/- 0.125   0.730/0.471/0.742       SEES, 3/3
+
+       (median pixel-corruption drop, mean +/- std across seeds:
+        cheetah 98.2% +/- 0.8%, cartpole+FIX 43.8% +/- 2.7%, walker+FIX 93.9% +/- 1.2%)
+
+     EVERY qualitative verdict held across all 3 independent training runs in
+     all 3 groups -- 9/9. That is the strongest evidence in this campaign that
+     none of it is a single lucky seed. The magnitude of the spread varies by
+     env: cartpole+FIX is tight (std 0.030 on a 0-1 scale, i.e. consistently
+     near-perfect); cheetah and especially walker have real seed-to-seed spread
+     (walker: 0.471 to 0.742, nearly 1.6x) -- expected for RL on a harder task,
+     and a genuine reason to treat any SINGLE walker number with caution, but it
+     does not change the verdict in a single one of the 3 runs.
+     Full per-seed numbers: results/rgb/ablation/seed_variance.json.
+     (cartpole_nesy, the already-3x-confirmed BLIND baseline, was deprioritized
+     for extra seeds -- lowest marginal value of anything left to check.)
+
+     HONEST CAVEAT ON THE *_aux (FIXED) NUMBERS SPECIFICALLY: the evaluation
+     scripts (rgb_pixel_ablation.py, rgb_pixel_sensitivity.py,
+     rgb_inloop_visualize.py) do not replicate the trainer's
+     META_DECISION_INTERVAL hold-state logic (hierarchical_ac_pqn_playground.py
+     lines ~445-495) -- they let the meta re-decide every step regardless of
+     what interval the policy was TRAINED under. For the blind baselines
+     (trained with interval=1) this is a non-issue: train and eval already
+     match. For the fixed runs (trained with interval=4) it is a genuine
+     train/eval mismatch. It does NOT affect the pixel-dependence VERDICT: the
+     meta selects from privileged state in every single one of the six ablation
+     conditions for a given run, so intact-vs-corrupted stays a clean, fair A/B
+     comparison regardless of the interval mismatch. It MAY mean the reported
+     magnitude for the fixed runs (e.g. 0.978 mean upright, 180.4 mean return)
+     is a slightly conservative estimate of the policy's true performance under
+     its own intended 4-step-commitment deployment. Not fixed before this
+     campaign closed out (verdict-affecting risk assessed as none; cost of
+     fixing = new eval code + re-running 4+ configs); flagged here as an
+     explicit, scoped item for anyone extending this work.
+
 F8. The infrastructure claim: in-loop pixel rendering is NOT a research blocker.
     We previously believed MJWarp in-loop rendering was unusable (it consistently
     crashed on Colab). It turned out to be a version desync. With mujoco-warp

@@ -1,0 +1,39 @@
+{
+  "env": "CheetahRun",
+  "meta": "nesy",
+  "policy": "runs/abl_cheetah_nesy_s2.pkl",
+  "train_return": 112.7697525024414,
+  "render": {
+    "temporal_std": 0.11080031841993332,
+    "frame_diff": 0.008693408221006393,
+    "alive": true
+  },
+  "actor_sensitivity": {
+    "accelerate_forward": {
+      "action_std_over_frames": 0.8547472953796387,
+      "relative_to_action_range": 0.42737364768981934,
+      "shift_vs_blank_image": 0.8760094046592712
+    },
+    "stabilize_posture": {
+      "action_std_over_frames": 0.72877436876297,
+      "relative_to_action_range": 0.364387184381485,
+      "shift_vs_blank_image": 0.8574683666229248
+    },
+    "energy_efficient_run": {
+      "action_std_over_frames": 0.8295261263847351,
+      "relative_to_action_range": 0.41476306319236755,
+      "shift_vs_blank_image": 0.8200657367706299
+    }
+  },
+  "actor_responsive": true,
+  "action_state_correlation": {
+    "accelerate_forward": 0.020154862574271463,
+    "stabilize_posture": 0.23129038391886395,
+    "energy_efficient_run": -0.045651826339837796
+  },
+  "skill_histogram": [
+    208,
+    2,
+    40
+  ]
+}

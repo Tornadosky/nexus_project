@@ -1,0 +1,92 @@
+{
+  "env": "WalkerWalk",
+  "meta": "nesy",
+  "seed": 1,
+  "updates": 250,
+  "num_envs": 128,
+  "episodes": 5,
+  "eval_steps": 250,
+  "rgb_proprio": "none",
+  "final_train_return": 159.41683959960938,
+  "performance_drop_fraction": {
+    "frozen_first": 0.9224468283267881,
+    "random_replay": 0.9057276164018871,
+    "shuffle_frames": 0.4013104372628412,
+    "zeros": 0.9405575405048427,
+    "const_action": 0.9295485550319004
+  },
+  "actor_uses_pixels": true,
+  "actor_uses_pixels_strict": true,
+  "pixel_drop_median": 0.9224468283267881,
+  "pixel_drop_min": 0.9057276164018871,
+  "actor_variation_needed": true,
+  "motion_sensitive": true,
+  "results": {
+    "intact": {
+      "reward_per_step_mean": 0.4713107585728169,
+      "reward_per_step_std": 0.21955954784322834,
+      "per_episode": [
+        0.5779205757714808,
+        0.4785312430597842,
+        0.6256922067701817,
+        0.628591039609164,
+        0.04581872765347362
+      ]
+    },
+    "frozen_first": {
+      "reward_per_step_mean": 0.03655164417102933,
+      "reward_per_step_std": 0.010503888208912727,
+      "per_episode": [
+        0.03687499476224184,
+        0.03138989628851414,
+        0.02912704073637724,
+        0.05672940402105451,
+        0.028636885046958924
+      ]
+    },
+    "random_replay": {
+      "reward_per_step_mean": 0.044431588626094164,
+      "reward_per_step_std": 0.009234643319312341,
+      "per_episode": [
+        0.04289542239066214,
+        0.050187401339411734,
+        0.03654548861831427,
+        0.05895323502086103,
+        0.03357639576122165
+      ]
+    },
+    "shuffle_frames": {
+      "reward_per_step_mean": 0.28216883196327835,
+      "reward_per_step_std": 0.16935344755217682,
+      "per_episode": [
+        0.3181648345896974,
+        0.2658017587829381,
+        0.205261837258935,
+        0.5699258719608188,
+        0.05168985722400248
+      ]
+    },
+    "zeros": {
+      "reward_per_step_mean": 0.028015870676096528,
+      "reward_per_step_std": 0.005260545996789062,
+      "per_episode": [
+        0.024841710494365545,
+        0.03574912070669234,
+        0.022361736115068198,
+        0.03280128595978021,
+        0.02432550010457635
+      ]
+    },
+    "const_action": {
+      "reward_per_step_mean": 0.0332045239704661,
+      "reward_per_step_std": 0.02162526979922385,
+      "per_episode": [
+        0.027744466621428727,
+        0.009715876494999975,
+        0.02667616868764162,
+        0.07423256199806928,
+        0.027653546050190925
+      ]
+    }
+  }
+}

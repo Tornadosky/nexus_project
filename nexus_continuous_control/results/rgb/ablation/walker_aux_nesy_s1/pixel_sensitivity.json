@@ -1,0 +1,46 @@
+{
+  "env": "WalkerWalk",
+  "meta": "nesy",
+  "policy": "runs/abl_walker_aux_nesy_s1.pkl",
+  "train_return": 159.41683959960938,
+  "render": {
+    "temporal_std": 0.08647418022155762,
+    "frame_diff": 0.019421404227614403,
+    "alive": true
+  },
+  "actor_sensitivity": {
+    "stand_recover": {
+      "action_std_over_frames": 0.5995064377784729,
+      "relative_to_action_range": 0.29975321888923645,
+      "shift_vs_blank_image": 0.6583423614501953
+    },
+    "walk_forward": {
+      "action_std_over_frames": 0.7633865475654602,
+      "relative_to_action_range": 0.3816932737827301,
+      "shift_vs_blank_image": 0.8168975710868835
+    },
+    "stabilize_gait": {
+      "action_std_over_frames": 0.5897648930549622,
+      "relative_to_action_range": 0.2948824465274811,
+      "shift_vs_blank_image": 1.0683212280273438
+    },
+    "energy_efficient": {
+      "action_std_over_frames": 0.7478814125061035,
+      "relative_to_action_range": 0.37394070625305176,
+      "shift_vs_blank_image": 0.890836775302887
+    }
+  },
+  "actor_responsive": true,
+  "action_state_correlation": {
+    "stand_recover": 0.05319695931591222,
+    "walk_forward": -0.05552621800833737,
+    "stabilize_gait": -0.05319492953663835,
+    "energy_efficient": -0.0887717875978838
+  },
+  "skill_histogram": [
+    108,
+    18,
+    6,
+    118
+  ]
+}
