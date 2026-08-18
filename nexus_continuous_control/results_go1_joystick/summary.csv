@@ -1,9 +1,0 @@
-env,backend,kind,metric,mean,std
-Go1JoystickFlatTerrain,-,hand_written,env_reward,0.0063666343223303555,0.002133196323931045
-Go1JoystickFlatTerrain,-,hand_written,success_rate,0.28377608954906464,0.08395387337084663
-Go1JoystickFlatTerrain,-,hand_written,goal_metric,-0.923990786075592,0.051855459407033795
-Go1JoystickFlatTerrain,hf,llm,env_reward,8.512663370652263e-07,4.5844145241134646e-07
-Go1JoystickFlatTerrain,hf,llm,success_rate,0.03738172203302383,0.011368281812102872
-Go1JoystickFlatTerrain,hf,llm,goal_metric,-1.9731464624404906,0.15795370473335413
-Go1JoystickFlatTerrain,hf,refined_first_iter,env_reward,0.0062332614324986935,
-Go1JoystickFlatTerrain,hf,refined_last_iter,env_reward,5.871008397662081e-06,

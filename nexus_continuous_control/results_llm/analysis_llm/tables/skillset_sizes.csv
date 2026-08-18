@@ -1,0 +1,6 @@
+env,hand_written_skills,hand_written_names,llm_initial_skills,llm_initial_names,llm_refined_skills,llm_refined_names
+CartpoleBalance,3,0_recover_balance; 1_center_cart; 2_damp_motion,3,Initial Balance Check; Leverage Gravity to Maintain Balance; Optimize Locomotion for Stability,5,Initial Balance Check; Pole Locomotion; Stability Enhancement; Dynamic Pole Control; Improved Stability
+CheetahRun,3,0_accelerate_forward; 1_stabilize_posture; 2_energy_efficient_run,3,Initial Stability; Lateral Locomotion; Optimal Performance,5,Initial Balance; Sideways Movement; High-Speed Forward Motion; Steering Maneuver; Dynamic Locomotion
+Go1JoystickFlatTerrain,4,0_stand; 1_track_velocity; 2_turn; 3_recover,3,BaseHeightSafety; LateralMovementControl; OptimalGait,5,SafeDistanceFromObstacles; AvoidCollisions; OptimalLandingParameters; SmoothSwinging; StabilizeBaseHeight
+HopperHop,4,0_stand_recover; 1_hop_forward; 2_stabilize_landing; 3_energy_efficient,3,Initial Stability; Forward Movement; Optimal Locomotion,5,Initial Balance; Forward Momentum; Efficient Locomotion; Stability Enhancement; Dynamic Stabilization
+WalkerWalk,4,0_stand_recover; 1_walk_forward; 2_stabilize_gait; 3_energy_efficient,3,Initial Balance Check; Forward Movement; Optimal Locomotion,5,Initial Balance Check; Steady Walking; Smooth Locomotion; Dynamic Stance; Stealthy Movement
