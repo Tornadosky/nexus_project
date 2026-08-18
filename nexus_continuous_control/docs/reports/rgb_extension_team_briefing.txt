@@ -3,7 +3,7 @@ NEXUS CONTINUOUS CONTROL — RGB SKILL-AGENT EXTENSION
 Team briefing: setup, implementation, experiments, findings
 ================================================================================
 Author:  Rosela Berberi
-Repo:    nexus_project/nexus_continuous_control  (branch: rosela)
+Repo:    nexus_project/nexus_continuous_control  (branch: rgb-pixel-ablation)
 Status:  COMPLETE + VERIFIED — two methods, 4 envs, pixel-dependence ablated,
          one failure mode found AND fixed
 Results: results/rgb/   (figures, videos, JSON, README)
@@ -41,7 +41,14 @@ Headline numbers:
   | WalkerWalk      | (not distilled)          | —                    | ~0.40 reward/step  |
   | HopperHop       | (not distilled)          | —                    | ~0.00 (FAILS)      |
 
-*** THE IN-LOOP COLUMN IS ENV-DEPENDENT -- READ F7a AND F7b. *** Ablations on
+*** HEADLINE RESULTS ARE NOW THE nesy RUNS (F7f). *** The first ablation
+campaign accidentally ran the in-loop arm with --meta neural, overriding the
+META_POLICY_TYPE: nesy declared in every RGB config -- so it never tested the
+extension on NEXUS's own flagship neuro-symbolic meta. Re-run under nesy
+(2026-08-18 16:46-18:30): every conclusion holds. The neural runs are kept as a
+meta-variant comparison.
+
+*** THE IN-LOOP COLUMN IS ENV-DEPENDENT -- READ F7a, F7b AND F7f. *** Ablations on
 2026-08-17/18 measured whether the in-loop actor actually uses its camera:
   * CheetahRun  -> YES, decisively. Blanking the image drops performance 99.8%
                    (0.498 -> 0.001 reward/step) and a constant action per skill
@@ -678,6 +685,49 @@ F7e. FULL RE-RUN WITH COMPLETE ARTIFACTS (2026-08-18 07:09-08:00). All three
      Re-scored with a 2-of-3 median rule (tools/rescore_rgb_ablation.py), which
      separates the three runs unambiguously: medians 98.5% / -0.2% / 37.0%. Both
      the median and the strict value are stored in every pixel_ablation.json.
+
+F7f. *** THE CAMPAIGN RE-RUN ON THE PROJECT'S OWN META (nesy) ***
+     (2026-08-18). Every RGB config declares META_POLICY_TYPE: nesy -- the
+     flagship neuro-symbolic meta (learned meta-Q masked by hand-written skill
+     preconditions). The first campaign passed --meta neural on the command line,
+     which silently overrode it, so the in-loop arm had never actually been
+     demonstrated on the configuration this project is about. Re-run under nesy,
+     128 envs / 250 updates, 5 episodes per condition:
+
+       run (all nesy)      intact           median drop   responsiveness  verdict
+       CheetahRun          0.307 rew/step      97.3%          43.1%       SEES
+       WalkerWalk          0.326 rew/step      63.9%          33.9%       SEES
+       CartpoleBalance     0.670 upright        0.1%           0.20%      BLIND
+       CartpoleBalance+FIX 1.000 upright       43.4%          12.6%       SEES
+       HopperHop           (running; expected INCONCLUSIVE -- that policy scores
+                            ~0 reward, so there is no performance for a blindfold
+                            to destroy. Report it as not-measurable, not as a
+                            negative result.)
+
+     EVERY CONCLUSION HOLDS UNDER THE FLAGSHIP META:
+       * locomotion genuinely learns to see (cheetah 97.3%, walker 63.9% of
+         performance lost when the camera is corrupted; blanking the image costs
+         98.8% and 73.8% respectively);
+       * cartpole is still blind -- 0.1% change, responsiveness 0.202%, i.e. the
+         symbolic precondition masking does NOT rescue it. A masked meta-Q solves
+         cartpole by itself just as easily as an unmasked one;
+       * the fix still works, and here it clears even the strict all-conditions
+         rule: 43.4% / 38.5% / 60.2% drops, perfect 1.000 upright.
+
+     WALKER IS THE NEW DATA POINT: a second locomotion environment, never
+     ablated before, lands on the SEES side. So the pattern is now 3 environments
+     seeing (cheetah, walker, fixed cartpole) versus 1 blind (cartpole), across
+     two different meta-policies -- much stronger than a single observation.
+     Walker's effect is weaker than cheetah's (74% vs 99% when blanked) with high
+     variance (+/-0.12), so it sits between cheetah and cartpole rather than being
+     a clean copy of cheetah.
+
+     nesy vs neural, honestly: greedy performance is LOWER under nesy on cheetah
+     (0.307 vs 0.502 rew/step) and noisier, even though its training return was
+     higher (110.5 vs 107.1). That matches the existing state-task finding that
+     nesy trails neural (0.56 vs 0.62 in the distillation study); the symbolic
+     mask costs something at greedy evaluation. It does not affect the
+     pixel-dependence conclusion, which is what these runs were for.
 
 F8. The infrastructure claim: in-loop pixel rendering is NOT a research blocker.
     We previously believed MJWarp in-loop rendering was unusable (it consistently

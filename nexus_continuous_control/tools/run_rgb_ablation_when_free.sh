@@ -94,7 +94,15 @@ run_one() {
   return 1
 }
 
-run_one cheetah      configs/cheetah_run_neural.yaml            neural
-run_one cartpole     configs/cartpole_balance_nesy_rgb.yaml     neural
-run_one cartpole_aux configs/cartpole_balance_nesy_rgb_aux.yaml neural
+# THE PROJECT'S FLAGSHIP META. NEXUS's selling point is the neuro-symbolic meta
+# (learned meta-Q masked by hand-written skill preconditions), and every RGB
+# config already declares META_POLICY_TYPE: nesy. The first campaign overrode
+# that with --meta neural, so the in-loop arm never actually demonstrated the
+# extension on the project's own configuration. These runs fix that; the earlier
+# neural results are kept as a meta-variant comparison.
+run_one cheetah_nesy      configs/cheetah_run_nesy.yaml              nesy
+run_one cartpole_nesy     configs/cartpole_balance_nesy_rgb.yaml     nesy
+run_one cartpole_aux_nesy configs/cartpole_balance_nesy_rgb_aux.yaml nesy
+run_one walker_nesy       configs/walker_walk_nesy.yaml              nesy
+run_one hopper_nesy       configs/hopper_hop_nesy.yaml               nesy
 log "campaign done"
