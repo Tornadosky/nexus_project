@@ -2,38 +2,38 @@
   "env": "CartpoleBalance",
   "meta": "neural",
   "policy": "runs/abl_cartpole.pkl",
-  "train_return": 8.146367073059082,
+  "train_return": 0.03341686725616455,
   "render": {
-    "temporal_std": 0.009470516815781593,
-    "frame_diff": 0.0008703306084498763,
+    "temporal_std": 0.008228356949985027,
+    "frame_diff": 0.0006285495474003255,
     "alive": true
   },
   "actor_sensitivity": {
     "recover_balance": {
-      "action_std_over_frames": 9.458761633140966e-05,
-      "relative_to_action_range": 4.729380816570483e-05,
-      "shift_vs_blank_image": 0.006646603345870972
+      "action_std_over_frames": 0.0001709076896077022,
+      "relative_to_action_range": 8.54538448038511e-05,
+      "shift_vs_blank_image": 0.000602424144744873
     },
     "center_cart": {
-      "action_std_over_frames": 0.0023012554738670588,
-      "relative_to_action_range": 0.0011506277369335294,
-      "shift_vs_blank_image": 0.02669377624988556
+      "action_std_over_frames": 0.007342444267123938,
+      "relative_to_action_range": 0.003671222133561969,
+      "shift_vs_blank_image": 0.07213449478149414
     },
     "damp_motion": {
-      "action_std_over_frames": 0.0030298333149403334,
-      "relative_to_action_range": 0.0015149166574701667,
-      "shift_vs_blank_image": 0.0014535784721374512
+      "action_std_over_frames": 0.00040719175012782216,
+      "relative_to_action_range": 0.00020359587506391108,
+      "shift_vs_blank_image": 0.005729373544454575
     }
   },
   "actor_responsive": false,
   "action_state_correlation": {
-    "recover_balance": 0.8958835812312664,
-    "center_cart": 0.5849738953000059,
-    "damp_motion": 0.024329208093704324
+    "recover_balance": 0.5944662242927019,
+    "center_cart": -0.575240268617683,
+    "damp_motion": 0.15613704589290311
   },
   "skill_histogram": [
-    199,
     0,
-    51
+    41,
+    209
   ]
 }

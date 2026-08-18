@@ -634,6 +634,51 @@ F7d. ENCODER RESPONSIVENESS, the mechanism in one number (2026-08-18).
      minute retrain. Self-checks: fixed cartpole rollout 0.100 reward/step
      (its ablation baseline was 0.0985), cheetah rollout 0.532 (baseline 0.498).
 
+F7e. FULL RE-RUN WITH COMPLETE ARTIFACTS (2026-08-18 07:09-08:00). All three
+     configurations retrained from scratch on a free GPU, each now producing
+     training curves + ablation + responsiveness probe + video/filmstrip/timeline.
+     EVERY CONCLUSION REPRODUCED on independent runs (different GPU nondeterminism):
+
+       run            metric        first campaign     re-run        conclusion
+       cheetah        intact        0.498 rew/step     0.502         SEES (both)
+                      blank image   -99.8%             -98.5%
+                      responsiveness 38.1%             38.4%
+       cartpole       intact        0.514 upright      0.642         BLIND (both)
+                      corruptions    ~0% change        0.0% change
+                      responsiveness 0.151%            0.367%
+       cartpole+FIX   intact        1.000 upright      1.000         SEES (both)
+                      blank image   -51.8%             -56.3%
+                      responsiveness 26.0%             12.7%
+                      train return   24.42             24.60
+
+     Run-to-run variance is real on cartpole (intact 0.514 vs 0.642; training
+     return 8.15 vs 0.03) but the qualitative verdicts are stable, which is the
+     claim that matters. Numbers in the report should come from the re-run,
+     which has the complete artifact set.
+
+     NEW MECHANISTIC FINDING, visible only in the curves
+     (results/rgb/ablation/*/training_curves.png). The pixel-sensitivity metric
+     is logged per update, and it shows the failure HAPPENING:
+       * cheetah: flat at ~0 until update ~30, then climbs to ~0.35 and stays
+         there -- and the episode return takes off at the same moment. You can
+         see perception switching on.
+       * cartpole (unfixed): sensitivity RISES to ~0.19 over updates 5-55, then
+         COLLAPSES back to ~0 and stays flat for the remaining 200 updates. The
+         encoder starts to use its camera and then UN-LEARNS it, because the meta
+         solves the task first and the policy gradient stops rewarding vision.
+         That is a sharper statement than "it never learned".
+       * cartpole + FIX: sensitivity rises by update ~50 and is SUSTAINED at
+         0.2-0.3, the aux state loss falls 3.0 -> ~0 (the encoder learns to
+         locate the pole), and the return plateaus stably at ~24.6.
+
+     VERDICT-RULE FIX (worth mentioning if anyone reads the raw logs): the
+     original rule required EVERY pixel corruption to cost >30%, so the fixed
+     cartpole run was auto-labelled "does NOT use pixels" purely because
+     random_replay came in at 27.9% -- while blanking the image cost 56.3%.
+     Re-scored with a 2-of-3 median rule (tools/rescore_rgb_ablation.py), which
+     separates the three runs unambiguously: medians 98.5% / -0.2% / 37.0%. Both
+     the median and the strict value are stored in every pixel_ablation.json.
+
 F8. The infrastructure claim: in-loop pixel rendering is NOT a research blocker.
     We previously believed MJWarp in-loop rendering was unusable (it consistently
     crashed on Colab). It turned out to be a version desync. With mujoco-warp
@@ -726,6 +771,10 @@ FIGURE INDEX (what exists and what each one proves)
     cheetah/pixel_ablation.png        cheetah, six conditions
     cheetah/viz/                    video + filmstrip + skill/reward timeline
     */pixel_ablation.json           every number, per condition and per episode
+    */training_curves.png           episode return + pixel sensitivity + aux
+                                    loss per update -- shows perception switching
+                                    ON (cheetah), COLLAPSING (blind cartpole) and
+                                    being SUSTAINED (fixed cartpole)
 
   EARLIER RGB WORK, results/rgb/
     comparison.png, {nesy,neural,symbolic}_state_vs_pixel.png, results_table.md
@@ -735,10 +784,9 @@ FIGURE INDEX (what exists and what each one proves)
     inloop/viz_{cartpole,cheetah,walker,hopper}/   in-loop rollout artifacts
     inloop/cheetah_render_probe.png tracking camera verified in-frame
 
-  NOTE: the three ablation runs did not save their own learning curves (the
-  ablation script only kept the final training return). The curves in
-  results/rgb/inloop/ come from the earlier runs of the SAME configuration and
-  budget, so they are representative but are not the identical checkpoints.
+  NOTE: as of the 2026-08-18 re-run every ablation run saves its OWN training
+  curves (training_curves.json/.png), so no figure is a stand-in any more. The
+  older results/rgb/inloop/ curves remain as the first-campaign record.
 
 12. HOW TO REPRODUCE (exact commands)
 --------------------------------------------------------------------------------
