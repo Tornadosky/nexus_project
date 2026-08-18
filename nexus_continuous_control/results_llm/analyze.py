@@ -191,9 +191,35 @@ def build_skill_usage_table(all_data: dict[str, dict[str, Any]]) -> list[dict[st
     for env, data in all_data.items():
         usage = mean_skill_usage(data["hand_written"]["runs"])
         for skill, frac in sorted(usage.items(), key=lambda kv: -kv[1]):
-            rows.append({"env": env, "skill": skill, "mean_usage_fraction": round(frac, 4)})
+            rows.append({"env": env, "condition": "hand_written", "skill": skill, "mean_usage_fraction": round(frac, 4)})
     return rows
- 
+
+def build_llm_skill_usage_table(all_data: dict[str, dict[str, Any]]) -> list[dict[str, Any]]:
+    rows = []
+    for env, data in all_data.items():
+        _, backend = first_backend(data)
+        usage = mean_skill_usage(backend["llm"]["runs"])
+        for skill, frac in sorted(usage.items(), key=lambda kv: -kv[1]):
+            rows.append({"env": env, "condition": "llm_initial", "skill": skill, "mean_usage_fraction": round(frac, 4)})
+    return rows 
+
+def build_refined_skill_usage_table(all_data: dict[str, dict[str, Any]]) -> list[dict[str, Any]]:
+
+    rows = []
+    for env, data in all_data.items():
+        _, backend = first_backend(data)
+        curve = backend["refinement"]["curve"]
+        if not curve:
+            continue
+        final_metrics = curve[-1]["metrics"]
+        usage = {
+            k.split("/", 1)[1]: float(v)
+            for k, v in final_metrics.items()
+            if k.startswith("skill_usage/")
+        }
+        for skill, frac in sorted(usage.items(), key=lambda kv: -kv[1]):
+            rows.append({"env": env, "condition": "llm_refined", "skill": skill, "mean_usage_fraction": round(frac, 4)})
+    return rows
  
 def build_skillset_size_table(all_data: dict[str, dict[str, Any]]) -> list[dict[str, Any]]:
     rows = []
@@ -457,14 +483,14 @@ def main() -> None:
  
     env_table = build_env_comparison_table(all_data)
     per_seed_table = build_per_seed_table(all_data)
-    skill_usage_table = build_skill_usage_table(all_data)
+    skill_usage_table = (build_skill_usage_table(all_data) + build_llm_skill_usage_table(all_data) + build_refined_skill_usage_table(all_data))
     skillset_size_table = build_skillset_size_table(all_data)
     curve_table = build_refinement_curve_table(all_data)
     wall_table = build_wall_clock_table(all_data)
  
     write_csv(env_table, tables_dir / "env_comparison_summary.csv")
     write_csv(per_seed_table, tables_dir / "per_seed_results.csv")
-    write_csv(skill_usage_table, tables_dir / "skill_usage_handwritten.csv")
+    write_csv(skill_usage_table, tables_dir / "skill_usage_all_conditions.csv")
     write_csv(skillset_size_table, tables_dir / "skillset_sizes.csv")
     write_csv(curve_table, tables_dir / "refinement_curve.csv")
     write_csv(wall_table, tables_dir / "wall_clock.csv")
@@ -473,7 +499,12 @@ def main() -> None:
     md = []
     md.append(rows_to_markdown(env_table, "Environment comparison summary (hand-written vs LLM vs refined)"))
     md.append(rows_to_markdown(skillset_size_table, "Skillset sizes and names"))
-    md.append(rows_to_markdown(skill_usage_table, "Hand-written skill usage (mean fraction of steps, per seed-averaged)"))
+    md.append(rows_to_markdown(
+        skill_usage_table,
+        "Skill usage by condition (hand-written / LLM-initial / LLM-refined; "
+        "hand-written and LLM-initial are averaged over 5 seeds, "
+        "LLM-refined is the single final-iteration training run)",
+    ))
     md.append(rows_to_markdown(curve_table, "LLM refinement loop, iteration by iteration"))
     md.append(rows_to_markdown(wall_table, "Mean training wall-clock time (seconds)"))
     md.append(rows_to_markdown(per_seed_table, "Per-seed raw results"))

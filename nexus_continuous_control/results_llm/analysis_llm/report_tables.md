@@ -20,28 +20,68 @@
 | WalkerWalk | 4 | 0_stand_recover; 1_walk_forward; 2_stabilize_gait; 3_energy_efficient | 3 | Initial Balance Check; Forward Movement; Optimal Locomotion | 5 | Initial Balance Check; Steady Walking; Smooth Locomotion; Dynamic Stance; Stealthy Movement |
 
 
-### Hand-written skill usage (mean fraction of steps, per seed-averaged)
+### Skill usage by condition (hand-written / LLM-initial / LLM-refined; hand-written and LLM-initial are averaged over 5 seeds, LLM-refined is the single final-iteration training run)
 
-| env | skill | mean_usage_fraction |
-|---|---|---|
-| CartpoleBalance | 2_damp_motion | 0.7381 |
-| CartpoleBalance | 1_center_cart | 0.1484 |
-| CartpoleBalance | 0_recover_balance | 0.1134 |
-| CheetahRun | 2_energy_efficient_run | 0.6018 |
-| CheetahRun | 0_accelerate_forward | 0.3544 |
-| CheetahRun | 1_stabilize_posture | 0.0439 |
-| Go1JoystickFlatTerrain | 0_stand | 0.3588 |
-| Go1JoystickFlatTerrain | 3_recover | 0.2798 |
-| Go1JoystickFlatTerrain | 1_track_velocity | 0.2016 |
-| Go1JoystickFlatTerrain | 2_turn | 0.1597 |
-| HopperHop | 3_energy_efficient | 0.3727 |
-| HopperHop | 1_hop_forward | 0.2911 |
-| HopperHop | 0_stand_recover | 0.1927 |
-| HopperHop | 2_stabilize_landing | 0.1436 |
-| WalkerWalk | 3_energy_efficient | 0.8244 |
-| WalkerWalk | 0_stand_recover | 0.1201 |
-| WalkerWalk | 2_stabilize_gait | 0.0555 |
-| WalkerWalk | 1_walk_forward | 0 |
+| env | condition | skill | mean_usage_fraction |
+|---|---|---|---|
+| CartpoleBalance | hand_written | 2_damp_motion | 0.7381 |
+| CartpoleBalance | hand_written | 1_center_cart | 0.1484 |
+| CartpoleBalance | hand_written | 0_recover_balance | 0.1134 |
+| CheetahRun | hand_written | 2_energy_efficient_run | 0.6018 |
+| CheetahRun | hand_written | 0_accelerate_forward | 0.3544 |
+| CheetahRun | hand_written | 1_stabilize_posture | 0.0439 |
+| Go1JoystickFlatTerrain | hand_written | 0_stand | 0.3588 |
+| Go1JoystickFlatTerrain | hand_written | 3_recover | 0.2798 |
+| Go1JoystickFlatTerrain | hand_written | 1_track_velocity | 0.2016 |
+| Go1JoystickFlatTerrain | hand_written | 2_turn | 0.1597 |
+| HopperHop | hand_written | 3_energy_efficient | 0.3727 |
+| HopperHop | hand_written | 1_hop_forward | 0.2911 |
+| HopperHop | hand_written | 0_stand_recover | 0.1927 |
+| HopperHop | hand_written | 2_stabilize_landing | 0.1436 |
+| WalkerWalk | hand_written | 3_energy_efficient | 0.8244 |
+| WalkerWalk | hand_written | 0_stand_recover | 0.1201 |
+| WalkerWalk | hand_written | 2_stabilize_gait | 0.0555 |
+| WalkerWalk | hand_written | 1_walk_forward | 0 |
+| CartpoleBalance | llm_initial | 0_Initial Balance Check | 1 |
+| CartpoleBalance | llm_initial | 1_Leverage Gravity to Maintain Balance | 0 |
+| CartpoleBalance | llm_initial | 2_Optimize Locomotion for Stability | 0 |
+| CheetahRun | llm_initial | 1_Lateral Locomotion | 0.4731 |
+| CheetahRun | llm_initial | 2_Optimal Performance | 0.4032 |
+| CheetahRun | llm_initial | 0_Initial Stability | 0.1236 |
+| Go1JoystickFlatTerrain | llm_initial | 0_BaseHeightSafety | 0.8573 |
+| Go1JoystickFlatTerrain | llm_initial | 2_OptimalGait | 0.1202 |
+| Go1JoystickFlatTerrain | llm_initial | 1_LateralMovementControl | 0.0226 |
+| HopperHop | llm_initial | 2_Optimal Locomotion | 0.583 |
+| HopperHop | llm_initial | 0_Initial Stability | 0.4083 |
+| HopperHop | llm_initial | 1_Forward Movement | 0.0086 |
+| WalkerWalk | llm_initial | 1_Forward Movement | 0.8577 |
+| WalkerWalk | llm_initial | 0_Initial Balance Check | 0.1419 |
+| WalkerWalk | llm_initial | 2_Optimal Locomotion | 0.0004 |
+| CartpoleBalance | llm_refined | 0_Initial Balance Check | 0.6573 |
+| CartpoleBalance | llm_refined | 3_Dynamic Pole Control | 0.1452 |
+| CartpoleBalance | llm_refined | 2_Stability Enhancement | 0.1276 |
+| CartpoleBalance | llm_refined | 1_Pole Locomotion | 0.0474 |
+| CartpoleBalance | llm_refined | 4_Improved Stability | 0.0225 |
+| CheetahRun | llm_refined | 2_High-Speed Forward Motion | 0.6085 |
+| CheetahRun | llm_refined | 1_Sideways Movement | 0.2434 |
+| CheetahRun | llm_refined | 0_Initial Balance | 0.07 |
+| CheetahRun | llm_refined | 4_Dynamic Locomotion | 0.0399 |
+| CheetahRun | llm_refined | 3_Steering Maneuver | 0.0382 |
+| Go1JoystickFlatTerrain | llm_refined | 0_SafeDistanceFromObstacles | 0.6713 |
+| Go1JoystickFlatTerrain | llm_refined | 3_SmoothSwinging | 0.1563 |
+| Go1JoystickFlatTerrain | llm_refined | 4_StabilizeBaseHeight | 0.1327 |
+| Go1JoystickFlatTerrain | llm_refined | 1_AvoidCollisions | 0.0395 |
+| Go1JoystickFlatTerrain | llm_refined | 2_OptimalLandingParameters | 0.0002 |
+| HopperHop | llm_refined | 1_Forward Momentum | 0.5851 |
+| HopperHop | llm_refined | 3_Stability Enhancement | 0.2063 |
+| HopperHop | llm_refined | 0_Initial Balance | 0.1914 |
+| HopperHop | llm_refined | 4_Dynamic Stabilization | 0.0173 |
+| HopperHop | llm_refined | 2_Efficient Locomotion | 0 |
+| WalkerWalk | llm_refined | 0_Initial Balance Check | 0.639 |
+| WalkerWalk | llm_refined | 2_Smooth Locomotion | 0.2448 |
+| WalkerWalk | llm_refined | 1_Steady Walking | 0.071 |
+| WalkerWalk | llm_refined | 3_Dynamic Stance | 0.0402 |
+| WalkerWalk | llm_refined | 4_Stealthy Movement | 0.005 |
 
 
 ### LLM refinement loop, iteration by iteration
