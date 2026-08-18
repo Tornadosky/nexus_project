@@ -1,0 +1,100 @@
+{
+  "environment": "PandaPickCube",
+  "observation_schema": "tcp_pos, gripper_pos, eef_pos, cube_pos, object_pos, obj_pos, target_pos, goal_pos",
+  "skills": [
+    {
+      "name": "ReachAndGrasp",
+      "description": "Navigate to the cube, grasp it, and bring it close.",
+      "activation_rule": "tcp_pos[0] < 0.2 && tcp_pos[1] < 0.2 && tcp_pos[2] > 0.8",
+      "reward_terms": [
+        {
+          "type": "positive_distance",
+          "weight": 1.0,
+          "lhs": "tcp_pos[0]",
+          "rhs": 0.1,
+          "threshold": 0.0,
+          "description": ""
+        },
+        {
+          "type": "positive_distance",
+          "weight": 1.0,
+          "lhs": "tcp_pos[1]",
+          "rhs": 0.1,
+          "threshold": 0.0,
+          "description": ""
+        },
+        {
+          "type": "positive_distance",
+          "weight": 1.0,
+          "lhs": "tcp_pos[2]",
+          "rhs": 0.1,
+          "threshold": 0.0,
+          "description": ""
+        }
+      ]
+    },
+    {
+      "name": "LiftAndMoveToTarget",
+      "description": "After grasping the cube, lift it and move it towards the target.",
+      "activation_rule": "tcp_pos[0] >= 0.9 && tcp_pos[1] >= 0.9 && tcp_pos[2] <= 0.4",
+      "reward_terms": [
+        {
+          "type": "positive_distance",
+          "weight": 1.0,
+          "lhs": "eef_pos[0]",
+          "rhs": 0.1,
+          "threshold": 0.0,
+          "description": ""
+        },
+        {
+          "type": "positive_distance",
+          "weight": 1.0,
+          "lhs": "eef_pos[1]",
+          "rhs": 0.1,
+          "threshold": 0.0,
+          "description": ""
+        },
+        {
+          "type": "positive_distance",
+          "weight": 1.0,
+          "lhs": "eef_pos[2]",
+          "rhs": 0.1,
+          "threshold": 0.0,
+          "description": ""
+        }
+      ]
+    },
+    {
+      "name": "OptimalPerformance",
+      "description": "Final optimization step to ensure smooth movement and precise placement of the cube.",
+      "activation_rule": "tcp_pos[0] >= 0.95 && tcp_pos[1] >= 0.95 && tcp_pos[2] <= 0.35",
+      "reward_terms": [
+        {
+          "type": "positive_distance",
+          "weight": 1.0,
+          "lhs": "eef_pos[0]",
+          "rhs": 0.05,
+          "threshold": 0.0,
+          "description": ""
+        },
+        {
+          "type": "positive_distance",
+          "weight": 1.0,
+          "lhs": "eef_pos[1]",
+          "rhs": 0.05,
+          "threshold": 0.0,
+          "description": ""
+        },
+        {
+          "type": "positive_distance",
+          "weight": 1.0,
+          "lhs": "eef_pos[2]",
+          "rhs": 0.05,
+          "threshold": 0.0,
+          "description": ""
+        }
+      ]
+    }
+  ],
+  "meta_policy_notes": ""
+}
