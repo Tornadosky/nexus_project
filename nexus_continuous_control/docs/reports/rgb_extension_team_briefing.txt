@@ -226,16 +226,18 @@ TESTS (CPU, no GPU needed — this is the correctness gate)
 
 RESULTS TREE (results/rgb/)
   README.md                         consolidated two-method write-up
-  comparison.png                    grouped state-vs-pixel bars, 3 meta variants
-  {nesy,neural,symbolic}_state_vs_pixel.png    per-variant figures
-  results_table.md / combined.json  cartpole distillation, upright metric, per-seed
-  multienv/*.json                   reward-metric distillation (cartpole + cheetah)
-  viz/ , viz_cheetah/               distillation videos/filmstrips/timelines/scatter
+  distill/comparison.png            grouped state-vs-pixel bars, 3 meta variants
+  distill/{nesy,neural,symbolic}_state_vs_pixel.png    per-variant figures
+  distill/results_table.md / combined.json  cartpole distillation, upright metric, per-seed
+  distill/multienv/*.json           reward-metric distillation (cartpole + cheetah)
+  distill/viz_cartpole/ , viz_cheetah/   distillation videos/filmstrips/timelines/scatter
   inloop/cartpole_inloop.json+png   in-loop curve + eval metrics
   inloop/cheetah_inloop.json+png    in-loop curve
   inloop/cheetah_render_probe.png   proof the tracking camera frames the robot
   inloop/viz_{cartpole,cheetah,walker,hopper}/   in-loop video + filmstrip +
                                     skill/reward timeline (+ curve for walker/hopper)
+  ablation/<env>/<meta>_<status>[_seedN]/   pixel-dependence ablation campaign
+                                    (see ablation/README.md for the naming legend; §7-8)
 
 
 --------------------------------------------------------------------------------
@@ -397,7 +399,7 @@ Plus qualitative artifacts (video + filmstrip + skill timeline) for:
   in-loop:      cartpole, cheetah, walker, hopper
 
 RESULTS — (A) DISTILLATION, CartpoleBalance, upright-fraction metric, 3 seeds
-  (source: results/rgb/results_table.md, combined.json, comparison.png)
+  (source: results/rgb/distill/results_table.md, combined.json, comparison.png)
 
   meta      | state success  | pixel success  | retention | pixel-fallback
   ----------|----------------|----------------|-----------|---------------
@@ -409,7 +411,7 @@ RESULTS — (A) DISTILLATION, CartpoleBalance, upright-fraction metric, 3 seeds
   Pixel-fallback below 2.5% everywhere -> the pixel policy really is acting.
 
 RESULTS — (A) DISTILLATION, reward-per-step metric (cross-env comparison, 3 seeds)
-  (source: results/rgb/multienv/*.json)
+  (source: results/rgb/distill/multienv/*.json)
 
   env / meta               | state rew/step | pixel rew/step | retention
   -------------------------|----------------|----------------|----------
@@ -536,7 +538,8 @@ F7. The pixel policy is genuinely pixel-driven — PROVEN for distillation,
     non-pixel input literally width-0, so no state can reach the actor. An earlier
     version leaked qpos+qvel into the actor; found and fixed before any result was
     produced. Distillation adds a second guard: pixel-fallback < 2.5%, and the
-    held-out teacher-vs-student action correlation r ~ 0.99 (viz/action_tracking.png)
+    held-out teacher-vs-student action correlation r ~ 0.99
+    (results/rgb/distill/viz_cartpole/action_tracking.png)
     — a network ignoring its input would score r ~ 0, so the CNN demonstrably
     decodes state from the image.
     OPEN POINT for the in-loop arm: the hierarchy still receives privileged state
@@ -632,7 +635,7 @@ F7b. CHEETAH ABLATION (2026-08-18): THE IN-LOOP CHEETAH ACTOR *DOES* USE ITS
      and beats distillation 0.50 vs 0.16), then give cartpole as the instructive
      failure and the shortcut-learning explanation. Both are measured, not argued.
 
-F7c. THE FIX WORKS (2026-08-18, cartpole_aux). Same env, same budget, same
+F7c. THE FIX WORKS (2026-08-18, ablation/cartpole/neural_fixed/). Same env, same budget, same
      ablation protocol -- but trained with the auxiliary pixel->state loss
      (RGB_AUX_STATE_COEF 1.0), META_DECISION_INTERVAL 4, and LR 3e-4:
 
@@ -676,7 +679,7 @@ F7d. ENCODER RESPONSIVENESS, the mechanism in one number (2026-08-18).
      there on the policy gradient alone because its task left no shortcut. Render
      health was confirmed in every case (per-pixel temporal std 0.005-0.090), so
      none of these numbers is a renderer artifact. Figure:
-     results/rgb/ablation/pixel_responsiveness.png
+     results/rgb/ablation/summary/pixel_responsiveness_neural.png
 
      Qualitative artifacts now exist for the ablated policies too (video,
      64x64 filmstrip, skill+reward timeline), generated from the SAVED weights
@@ -707,7 +710,7 @@ F7e. FULL RE-RUN WITH COMPLETE ARTIFACTS (2026-08-18 07:09-08:00). All three
      which has the complete artifact set.
 
      NEW MECHANISTIC FINDING, visible only in the curves
-     (results/rgb/ablation/*/training_curves.png). The pixel-sensitivity metric
+     (results/rgb/ablation/*/*/training_curves.png). The pixel-sensitivity metric
      is logged per update, and it shows the failure HAPPENING:
        * cheetah: flat at ~0 until update ~30, then climbs to ~0.35 and stays
          there -- and the episode return takes off at the same moment. You can
@@ -803,7 +806,7 @@ F7f. *** THE CAMPAIGN RE-RUN ON THE PROJECT'S OWN META (nesy) ***
      walker's other three skills the same way it fixed cartpole -- not yet run.
 
 F7g. *** THE FIX ALSO RESCUES WALKER'S SATURATED SKILLS *** (2026-08-18,
-     walker_aux_nesy). F7f found walker's SEES verdict was carried by only ONE
+     ablation/walker/nesy_fixed_seed0/). F7f found walker's SEES verdict was carried by only ONE
      of its four skills (energy_efficient); the other three (stand_recover,
      walk_forward, stabilize_gait) had tanh-saturated, image-independent output.
      Applied the SAME fix that rescued cartpole (RGB_AUX_STATE_COEF 1.0,
@@ -831,7 +834,7 @@ F7g. *** THE FIX ALSO RESCUES WALKER'S SATURATED SKILLS *** (2026-08-18,
        const_action drop          62.5%         96.3%
 
      This run clears even the STRICT all-conditions rule (min drop 93.5% > 30%),
-     unlike the original walker_nesy which only cleared the median rule. So the
+     unlike the original ablation/walker/nesy_blind/ which only cleared the median rule. So the
      fix did not just add a fourth seeing skill on top of three saturated ones --
      it turned a policy that was mostly coasting on one skill into one where
      every skill is genuinely, similarly pixel-driven, and that shows up directly
@@ -868,8 +871,8 @@ F7h. *** MULTI-SEED CONFIRMATION (2026-08-19), 3 seeds (0,1,2) on the three key
      and a genuine reason to treat any SINGLE walker number with caution, but it
      does not change the verdict in a single one of the 3 runs.
      Full per-seed numbers: results/rgb/ablation/seed_variance.json.
-     (cartpole_nesy, the already-3x-confirmed BLIND baseline, was deprioritized
-     for extra seeds -- lowest marginal value of anything left to check.)
+     (ablation/cartpole/nesy_blind/, the already-3x-confirmed BLIND baseline, was
+     deprioritized for extra seeds -- lowest marginal value of anything left to check.)
 
      HONEST CAVEAT ON THE *_aux (FIXED) NUMBERS SPECIFICALLY: the evaluation
      scripts (rgb_pixel_ablation.py, rgb_pixel_sensitivity.py,
@@ -946,59 +949,66 @@ F8. The infrastructure claim: in-loop pixel rendering is NOT a research blocker.
 --------------------------------------------------------------------------------
 11. WHAT TO SHOW IN THE MEETING (suggested order, 10 minutes)
 --------------------------------------------------------------------------------
-  1. results/rgb/ablation/method_comparison_nesy.png
+  1. results/rgb/ablation/summary/method_comparison_nesy.png
      -> THE performance slide, on the project's OWN meta (nesy). Cheetah: in-loop
         0.307 vs distilled 0.097 vs privileged 0.555. Cartpole: the fix restores
         a perfect 1.000 upright.
-  2. results/rgb/ablation/cheetah_nesy/viz/rollout_inloop.mp4
+  2. results/rgb/ablation/cheetah/nesy_seed0/viz/rollout_inloop.mp4
      -> a cheetah running, driven from 64x64 pixels under the neuro-symbolic
         meta, skill-annotated. The single most convincing artifact.
-  3. results/rgb/ablation/comparison_nesy.png
+  3. results/rgb/ablation/summary/comparison_nesy.png
      -> the credibility slide: corrupt ONLY the actor's image, all 4 nesy runs
         together. Cheetah/walker collapse; cartpole is untouched at 100%; the
         fixed cartpole drops properly (35-60%).
-  4. results/rgb/ablation/pixel_responsiveness_nesy.png
+  4. results/rgb/ablation/summary/pixel_responsiveness_nesy.png
      -> the mechanism, per skill actor. 0.01-0.20% (blind) vs 5.4-12.6% (fixed)
         vs 34.5-43.1% (cheetah) vs a MIX for walker (three skills saturated at
         +-1, one at 33.9% -- see F7f's walker nuance).
-  5. results/rgb/ablation/cartpole_aux_nesy/viz/skill_timeline.png
+  5. results/rgb/ablation/cartpole/nesy_fixed_seed0/viz/skill_timeline.png
      -> the fixed cartpole hierarchy under nesy: skill activation vs reward.
-  5b. results/rgb/ablation/pixel_responsiveness_nesy.png (walker before/after)
+  5b. results/rgb/ablation/summary/pixel_responsiveness_nesy.png (walker before/after)
      -> the fix generalizes: applied to walker's 3 saturated skills, ALL FOUR
         jump to 33-38% responsiveness and training return improves 99->192.
-  6. results/rgb/comparison.png + results/rgb/viz/action_tracking.png
+  6. results/rgb/distill/comparison.png + results/rgb/distill/viz_cartpole/action_tracking.png
      -> the distillation arm: ~50% retention across all three meta variants
         (meta-agnostic) and r ~ 0.99 held-out teacher-vs-student fidelity.
-  7. results/rgb/ablation/hopper_nesy/viz/rollout_inloop.gif
+  7. results/rgb/ablation/hopper/nesy_seed0/viz/rollout_inloop.gif
      -> the honest failure (hopper never learns), for the difficulty ordering --
         now confirmed inconclusive rather than negative (F7f).
 
   BACKUP / meta-variant comparison (if asked "does this depend on which meta?"):
-  the whole set above also exists for meta=neural at the un-suffixed tags
-  (method_comparison.png, comparison.png, pixel_responsiveness.png, cheetah/,
-  cartpole/, cartpole_aux/) -- same conclusions, run first, kept for comparison.
+  the whole set above also exists for meta=neural under the neural_* variant
+  names (summary/method_comparison_neural.png, summary/comparison_neural.png,
+  summary/pixel_responsiveness_neural.png, cheetah/neural_seed0/,
+  cartpole/neural_blind/, cartpole/neural_fixed/) -- same conclusions, run
+  first, kept for comparison.
 
 FIGURE INDEX (what exists and what each one proves)
 --------------------------------------------------------------------------------
+  Directory layout is results/rgb/ablation/<env>/<meta>_<status>[_seedN]/ --
+  see results/rgb/ablation/README.md for the full naming legend and an
+  old-tag-name -> new-path lookup table.
+
   HEADLINE: nesy CAMPAIGN (2026-08-18), results/rgb/ablation/
-    method_comparison_nesy.png    performance of every method vs privileged bound
-    comparison_nesy.png           pixel-dependence, 5 conclusive nesy runs, normalized
-    pixel_responsiveness_nesy.png per-skill encoder responsiveness (log scale) --
+    summary/method_comparison_nesy.png    performance of every method vs privileged bound
+    summary/comparison_nesy.png           pixel-dependence, 5 conclusive nesy runs, normalized
+    summary/pixel_responsiveness_nesy.png per-skill encoder responsiveness (log scale) --
                                   includes walker before/after the fix (F7g)
-    cheetah_nesy/, walker_nesy/, walker_aux_nesy/, cartpole_nesy/, cartpole_aux_nesy/,
-    hopper_nesy/
+    cheetah/nesy_seed0/, walker/nesy_blind/, walker/nesy_fixed_seed0/,
+    cartpole/nesy_blind/, cartpole/nesy_fixed_seed0/, hopper/nesy_seed0/
        each has: pixel_ablation.json/.png (six-condition ablation + verdict),
        pixel_sensitivity.json (open-loop responsiveness + render-health check),
        training_curves.json/.png (return + pixel sensitivity + aux loss per
        update -- shows perception switching ON/COLLAPSING/SUSTAINED),
        viz/ (rollout video + 64x64 filmstrip + skill/reward timeline)
-    hopper_nesy is INCONCLUSIVE (near-zero intact score) -- included for
+    hopper/nesy_seed0/ is INCONCLUSIVE (near-zero intact score) -- included for
     completeness, excluded from the bar-chart comparisons automatically by
     tools/rescore_rgb_ablation.py's baseline-magnitude guard.
 
   META-VARIANT COMPARISON: neural CAMPAIGN (2026-08-17/18), results/rgb/ablation/
-    method_comparison.png, comparison.png, pixel_responsiveness.png
-    cheetah/, cartpole/, cartpole_aux/          same structure as above
+    summary/method_comparison_neural.png, summary/comparison_neural.png,
+    summary/pixel_responsiveness_neural.png
+    cheetah/neural_seed0/, cartpole/neural_blind/, cartpole/neural_fixed/   same structure as above
 
   REGENERATING ANY FIGURE (no GPU needed, reads the committed JSONs):
     tools/rescore_rgb_ablation.py --tags <comma list>       (re-verdict + re-plot
@@ -1006,14 +1016,18 @@ FIGURE INDEX (what exists and what each one proves)
     tools/plot_rgb_ablation_comparison.py --tags <list> --out <path> --title <t>
     tools/plot_rgb_sensitivity_figure.py  --tags <list> --out <path>
     tools/plot_rgb_summary_figures.py     --meta {neural,nesy} [--out <path>]
+    (<list> entries are now nested tags, e.g. cartpole/neural_blind,
+    cartpole/neural_fixed,cheetah/neural_seed0 -- see each script's docstring.)
 
-  EARLIER RGB WORK (distillation + first in-loop pass), results/rgb/
-    comparison.png, {nesy,neural,symbolic}_state_vs_pixel.png, results_table.md
-    viz/, viz_cheetah/              distillation videos, filmstrips, timelines,
+  EARLIER RGB WORK (distillation + first in-loop pass)
+    results/rgb/distill/
+      comparison.png, {nesy,neural,symbolic}_state_vs_pixel.png, results_table.md
+      viz_cartpole/, viz_cheetah/    distillation videos, filmstrips, timelines,
                                     teacher-vs-student action scatter
-    inloop/*_curve.png              in-loop learning curves (cartpole, cheetah)
-    inloop/viz_{cartpole,cheetah,walker,hopper}/   in-loop rollout artifacts
-    inloop/cheetah_render_probe.png tracking camera verified in-frame
+    results/rgb/inloop/
+      *_curve.png                    in-loop learning curves (cartpole, cheetah)
+      viz_{cartpole,cheetah,walker,hopper}/   in-loop rollout artifacts
+      cheetah_render_probe.png       tracking camera verified in-frame
 
   NOTE: every ablation run (both campaigns) saves its OWN training curves, so
   no figure is a stand-in. The results/rgb/inloop/ curves are the original,
@@ -1070,12 +1084,12 @@ FIGURE INDEX (what exists and what each one proves)
         python -m nexus_continuous.scripts.rgb_pixel_ablation \
           --config configs/cartpole_balance_nesy_rgb.yaml --meta neural --seed 0 \
           --updates 250 --num-envs 128 --episodes 5 \
-          --save-policy runs/abl_cartpole.pkl --out results/rgb/ablation/cartpole
+          --save-policy runs/abl_cartpole.pkl --out results/rgb/ablation/cartpole/neural_blind
         python -m nexus_continuous.scripts.rgb_pixel_ablation \
           --config configs/cheetah_run_neural.yaml --meta neural --seed 0 \
           --updates 250 --num-envs 128 --episodes 5 \
-          --save-policy runs/abl_cheetah.pkl --out results/rgb/ablation/cheetah
-      -> results/rgb/ablation/*/pixel_ablation.{json,png} (bar chart + verdict).
+          --save-policy runs/abl_cheetah.pkl --out results/rgb/ablation/cheetah/neural_seed0
+      -> results/rgb/ablation/*/*/pixel_ablation.{json,png} (bar chart + verdict).
 
   P1. Seeds: rerun in-loop cartpole + cheetah with 3 seeds so both methods are
       reported with error bars. Cheapest credibility win.

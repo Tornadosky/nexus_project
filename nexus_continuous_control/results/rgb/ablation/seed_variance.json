@@ -1,5 +1,5 @@
 {
-  "cheetah_nesy": {
+  "cheetah/nesy_seed0-2": {
     "metric": "reward_per_step_mean",
     "intact_mean": 0.4001,
     "intact_std": 0.073,
@@ -14,7 +14,7 @@
     "return_mean": 107.2,
     "return_std": 6.3
   },
-  "cartpole_aux_nesy": {
+  "cartpole/nesy_fixed_seed0-2": {
     "metric": "upright_fraction_mean",
     "intact_mean": 0.9784,
     "intact_std": 0.0305,
@@ -29,7 +29,7 @@
     "return_mean": 24.1,
     "return_std": 0.3
   },
-  "walker_aux_nesy": {
+  "walker/nesy_fixed_seed0-2": {
     "metric": "reward_per_step_mean",
     "intact_mean": 0.648,
     "intact_std": 0.1251,

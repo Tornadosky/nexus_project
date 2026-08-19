@@ -40,7 +40,7 @@ Reading the result:
     python -m nexus_continuous.scripts.rgb_pixel_ablation \\
         --config configs/cartpole_balance_nesy_rgb.yaml --meta neural --seed 0 \\
         --updates 250 --num-envs 128 --episodes 5 \\
-        --save-policy runs/abl_cartpole.pkl --out results/rgb/ablation/cartpole
+        --save-policy runs/abl_cartpole.pkl --out results/rgb/ablation/cartpole/neural_blind
 """
 
 from __future__ import annotations

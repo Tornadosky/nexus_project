@@ -9,16 +9,18 @@ Panel 2 CheetahRun -- mean per-step task reward (locomotion has no upright rate)
     privileged state teacher / distilled pixels / in-loop pixels
 
 --meta selects which in-loop/distillation meta-variant to plot (the ablation
-tags for env X under meta Y are assumed to be named "<env>" for neural and
-"<env>_nesy" for nesy, matching this campaign's naming).
+dir for env X under meta Y is assumed to be named "<env>/neural_blind" (or
+"<env>/neural_seed0" if there's no blind/fixed split) for neural, and
+"<env>/nesy_blind" (or "<env>/nesy_seed0") for nesy -- see
+results/rgb/ablation/README.md for the full naming legend).
 
-Sources: results/rgb/combined.json (distillation, upright, 3 seeds),
-results/rgb/multienv/*.json (distillation, reward/step, 3 seeds),
-results/rgb/ablation/*/pixel_ablation.json (in-loop, this campaign).
+Sources: results/rgb/distill/combined.json (distillation, upright, 3 seeds),
+results/rgb/distill/multienv/*.json (distillation, reward/step, 3 seeds),
+results/rgb/ablation/<env>/<variant>/pixel_ablation.json (in-loop, this campaign).
 
     python tools/plot_rgb_summary_figures.py --meta neural
     python tools/plot_rgb_summary_figures.py --meta nesy \
-        --out results/rgb/ablation/method_comparison_nesy.png
+        --out results/rgb/ablation/summary/method_comparison_nesy.png
 """
 
 from __future__ import annotations
@@ -35,8 +37,8 @@ def main(argv: list[str] | None = None) -> None:
     ap.add_argument("--meta", default="neural", choices=["neural", "nesy"])
     ap.add_argument("--out", default=None)
     args = ap.parse_args(argv)
-    out_default = ("results/rgb/ablation/method_comparison.png" if args.meta == "neural"
-                   else "results/rgb/ablation/method_comparison_nesy.png")
+    out_default = ("results/rgb/ablation/summary/method_comparison_neural.png" if args.meta == "neural"
+                   else "results/rgb/ablation/summary/method_comparison_nesy.png")
     out = Path(args.out or out_default)
 
     import matplotlib
@@ -46,24 +48,28 @@ def main(argv: list[str] | None = None) -> None:
 
     root = Path(args.root)
     jl = lambda p: json.loads(Path(p).read_text())
-    suffix = "" if args.meta == "neural" else "_nesy"
+    # Ablation dirs are named <env>/<meta>_<status>[_seedN] -- the "primary"
+    # (first-seed) blind/fixed run for each env+meta used in this summary figure.
+    cp_blind_dir = "cartpole/neural_blind" if args.meta == "neural" else "cartpole/nesy_blind"
+    cp_fixed_dir = "cartpole/neural_fixed" if args.meta == "neural" else "cartpole/nesy_fixed_seed0"
+    ch_dir = "cheetah/neural_seed0" if args.meta == "neural" else "cheetah/nesy_seed0"
 
     # --- cartpole: everything on the upright fraction ---
-    distill = {d["meta_policy"]: d for d in jl(root / "combined.json")}
+    distill = {d["meta_policy"]: d for d in jl(root / "distill" / "combined.json")}
     cp_state = distill[args.meta]["state_hierarchy_success_mean"]
     cp_distill = distill[args.meta]["pixel_hierarchy_success_mean"]
-    cp_path = root / f"ablation/cartpole{suffix}/pixel_ablation.json"
+    cp_path = root / "ablation" / cp_blind_dir / "pixel_ablation.json"
     cp_inloop = jl(cp_path)["results"]["intact"]["upright_fraction_mean"] if cp_path.exists() else None
-    aux_path = root / f"ablation/cartpole_aux{suffix}/pixel_ablation.json"
+    aux_path = root / "ablation" / cp_fixed_dir / "pixel_ablation.json"
     cp_fixed = jl(aux_path)["results"]["intact"]["upright_fraction_mean"] if aux_path.exists() else None
 
     # --- cheetah: everything on mean per-step task reward ---
     ch_key = "neural" if args.meta == "neural" else "nesy"
-    ch_distill_path = root / f"multienv/rgb_cheetah_{ch_key}.json"
+    ch_distill_path = root / "distill" / f"multienv/rgb_cheetah_{ch_key}.json"
     ch = jl(ch_distill_path) if ch_distill_path.exists() else None
     ch_state = ch["state_hierarchy_success_mean"] if ch else None
     ch_distill = ch["pixel_hierarchy_success_mean"] if ch else None
-    ch_path = root / f"ablation/cheetah{suffix}/pixel_ablation.json"
+    ch_path = root / "ablation" / ch_dir / "pixel_ablation.json"
     ch_inloop = jl(ch_path)["results"]["intact"]["reward_per_step_mean"] if ch_path.exists() else None
 
     STATE, PIX, GOOD, BAD = "#8C8C8C", "#DD8452", "#55A868", "#C44E52"

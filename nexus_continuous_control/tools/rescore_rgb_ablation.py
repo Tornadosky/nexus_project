@@ -34,7 +34,7 @@ def main(argv: list[str] | None = None) -> None:
     ap = argparse.ArgumentParser(description=__doc__,
                                  formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("--root", default="results/rgb/ablation")
-    ap.add_argument("--tags", default="cheetah,cartpole,cartpole_aux")
+    ap.add_argument("--tags", default="cheetah/neural_seed0,cartpole/neural_blind,cartpole/neural_fixed")
     args = ap.parse_args(argv)
 
     import numpy as np
@@ -54,9 +54,9 @@ def main(argv: list[str] | None = None) -> None:
         median_drop = float(sorted(px)[len(px) // 2])
 
         # Baseline-magnitude guard: a "% drop" from a near-zero intact score is
-        # noise, not a finding (e.g. hopper_nesy: intact 0.012 +/- 0.023 reward/
-        # step -- the confidence interval includes zero). Below this the run is
-        # INCONCLUSIVE, not a verdict either way.
+        # noise, not a finding (e.g. hopper/nesy_seed0: intact 0.012 +/- 0.023
+        # reward/step -- the confidence interval includes zero). Below this the
+        # run is INCONCLUSIVE, not a verdict either way.
         intact_key = ("upright_fraction_mean" if "upright_fraction_mean" in d["results"]["intact"]
                       else "reward_per_step_mean")
         intact_val = d["results"]["intact"][intact_key]

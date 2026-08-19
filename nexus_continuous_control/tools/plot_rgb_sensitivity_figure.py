@@ -9,11 +9,11 @@ constant -> ~0%.
 Log scale, because the interesting range spans four orders of magnitude.
 
     python tools/plot_rgb_sensitivity_figure.py \
-        --tags cartpole,cartpole_aux,cheetah \
-        --out results/rgb/ablation/pixel_responsiveness.png
+        --tags cartpole/neural_blind,cartpole/neural_fixed,cheetah/neural_seed0 \
+        --out results/rgb/ablation/summary/pixel_responsiveness_neural.png
     python tools/plot_rgb_sensitivity_figure.py \
-        --tags cartpole_nesy,cartpole_aux_nesy,cheetah_nesy,walker_nesy \
-        --out results/rgb/ablation/pixel_responsiveness_nesy.png
+        --tags cartpole/nesy_blind,cartpole/nesy_fixed_seed0,cheetah/nesy_seed0,walker/nesy_blind \
+        --out results/rgb/ablation/summary/pixel_responsiveness_nesy.png
 """
 
 from __future__ import annotations
@@ -29,8 +29,8 @@ def main(argv: list[str] | None = None) -> None:
     ap = argparse.ArgumentParser(description=__doc__,
                                  formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("--root", default="results/rgb/ablation")
-    ap.add_argument("--tags", default="cartpole,cartpole_aux,cheetah")
-    ap.add_argument("--out", default="results/rgb/ablation/pixel_responsiveness.png")
+    ap.add_argument("--tags", default="cartpole/neural_blind,cartpole/neural_fixed,cheetah/neural_seed0")
+    ap.add_argument("--out", default="results/rgb/ablation/summary/pixel_responsiveness_neural.png")
     args = ap.parse_args(argv)
 
     import matplotlib
@@ -53,7 +53,7 @@ def main(argv: list[str] | None = None) -> None:
         if ap_.exists():
             verdict = json.loads(ap_.read_text()).get("actor_uses_pixels")
         tag_note = " (inconclusive)" if verdict is None else ""
-        variant = " + FIX" if "aux" in tag else ""
+        variant = " + FIX" if "fixed" in tag else ""
         runs.append((tag, f"{env}{variant} ({meta}){tag_note}" if meta else f"{tag}{tag_note}",
                     PALETTE[i % len(PALETTE)]))
 

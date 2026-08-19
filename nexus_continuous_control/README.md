@@ -332,8 +332,8 @@ the unchanged meta selects skills from privileged state and the pixel students a
 `nexus_continuous/scripts/rgb_report.py` aggregates the per-variant runs into one
 figure + table.
 
-Results (CartpoleBalance, 3 seeds each; artifacts in [`results/rgb/`](results/rgb/),
-figure `results/rgb/comparison.png`):
+Results (CartpoleBalance, 3 seeds each; artifacts in [`results/rgb/distill/`](results/rgb/distill/),
+figure `results/rgb/distill/comparison.png`):
 
 | meta | state success | pixel success | retention | pixel-fallback |
 |------|---------------|---------------|-----------|----------------|
@@ -351,7 +351,7 @@ variants — the RGB skill extension is meta-agnostic.**
 
 `nexus_continuous/scripts/rgb_visualize.py` produces the qualitative artifacts for a
 single run — an annotated rollout video, the 64×64 observation filmstrip, the
-skill-activation timeline, and a held-out fidelity scatter (see `results/rgb/viz/`).
+skill-activation timeline, and a held-out fidelity scatter (see `results/rgb/distill/viz_cartpole/`).
 
 ## Reproducing results for the report (graphs + videos)
 
@@ -409,7 +409,7 @@ export __EGL_VENDOR_LIBRARY_DIRS=$M/share/glvnd/egl_vendor.d EGL_PLATFORM=surfac
 
 Open them in Colab (GPU runtime); each clones this repo and runs end-to-end.
 
-- **Graphs:** `rgb_distill_nexus.py` → `results/rgb/comparison.png` + per-variant
+- **Graphs:** `rgb_distill_nexus.py` → `results/rgb/distill/comparison.png` + per-variant
   `state_vs_pixel.png`; `rgb_visualize.py` → skill-activation timeline, observation
   filmstrip, held-out fidelity scatter. State training curves: plot the `.pkl` `metrics`.
 - **Videos:** `rgb_visualize.py` → `rollout_pixel.mp4` / `.gif` (the pixel hierarchy
@@ -418,7 +418,7 @@ Open them in Colab (GPU runtime); each clones this repo and runs end-to-end.
   legs. (1) A *quantitative distillation study* — the real NEXUS hierarchy's
   disentangled skills are behavior-cloned to 64×64 pixels and retain ~50 % of
   privileged closed-loop success across all three meta variants on CartpoleBalance
-  (see `results/rgb/`), verified genuinely pixel-driven (r≈0.99 held-out fidelity).
+  (see `results/rgb/distill/`), verified genuinely pixel-driven (r≈0.99 held-out fidelity).
   (2) *In-loop pixel RL* (skills trained directly from MJWarp pixels) works on
   CheetahRun and WalkerWalk (verified pixel-driven, 3 seeds each) but the
   CartpoleBalance in-loop result was found BLIND by ablation and required a

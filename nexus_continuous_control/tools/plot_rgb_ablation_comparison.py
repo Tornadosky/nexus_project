@@ -8,11 +8,12 @@ Labels and colors are derived automatically from each run's rescored verdict
 (tools/rescore_rgb_ablation.py must have been run first): green = SEES,
 red = BLIND, grey = INCONCLUSIVE (near-zero baseline, e.g. hopper).
 
-    python tools/plot_rgb_ablation_comparison.py --tags cheetah,cartpole,cartpole_aux \
-        --out results/rgb/ablation/comparison.png
     python tools/plot_rgb_ablation_comparison.py \
-        --tags cheetah_nesy,walker_nesy,cartpole_nesy,cartpole_aux_nesy \
-        --out results/rgb/ablation/comparison_nesy.png
+        --tags cheetah/neural_seed0,cartpole/neural_blind,cartpole/neural_fixed \
+        --out results/rgb/ablation/summary/comparison_neural.png
+    python tools/plot_rgb_ablation_comparison.py \
+        --tags cheetah/nesy_seed0,walker/nesy_blind,cartpole/nesy_blind,cartpole/nesy_fixed_seed0 \
+        --out results/rgb/ablation/summary/comparison_nesy.png
 """
 
 from __future__ import annotations
@@ -37,8 +38,8 @@ def main(argv: list[str] | None = None) -> None:
     ap = argparse.ArgumentParser(description=__doc__,
                                  formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("--runs", default="results/rgb/ablation")
-    ap.add_argument("--tags", default="cheetah,cartpole,cartpole_aux")
-    ap.add_argument("--out", default="results/rgb/ablation/comparison.png")
+    ap.add_argument("--tags", default="cheetah/neural_seed0,cartpole/neural_blind,cartpole/neural_fixed")
+    ap.add_argument("--out", default="results/rgb/ablation/summary/comparison_neural.png")
     ap.add_argument("--title", default="Does the in-loop pixel actor actually use its camera?")
     args = ap.parse_args(argv)
 
@@ -66,7 +67,7 @@ def main(argv: list[str] | None = None) -> None:
         verdict = "SEES" if d.get("actor_uses_pixels") else "BLIND"
         # Same env+meta can appear twice (original vs the aux/fix run) -- the tag
         # is the only thing that disambiguates them, so fold it into the label.
-        variant = " + FIX" if "aux" in tag else ""
+        variant = " + FIX" if "fixed" in tag else ""
         label = f"{d['env']}{variant} ({d['meta']}) -- actor {verdict}"
         color = VERDICT_COLOR[d.get("actor_uses_pixels")]
         vals = [100.0 * d["results"][c][key] / base if c in d["results"] else np.nan

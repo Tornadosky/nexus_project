@@ -15,7 +15,7 @@ teacher is the *actual* trained NEXUS hierarchy -- not a hand-coded controller:
      per-skill VisionSkillActor, rendering 64x64 frames on the fly from the
      teacher rollout. Rarely-used skills keep the privileged teacher and are
      reported as a pixel-fallback fraction. (An optional --dagger-iters DAgger
-     stage exists but did NOT robustly help on CartpoleBalance -- see results/rgb;
+     stage exists but did NOT robustly help on CartpoleBalance -- see results/rgb/distill;
      default 0 = plain BC.)
   3. Closed-loop eval: the UNCHANGED meta (on privileged state) selects the skill
      and the PIXEL student acts. Primary metric = mean per-step task reward
@@ -67,7 +67,7 @@ def main(argv: list[str] | None = None) -> None:
     ap.add_argument("--teacher-steps", type=int, default=4000, help="round-0 teacher rollout steps (BC dataset)")
     ap.add_argument("--dagger-iters", type=int, default=0,
                     help="DAgger aggregation rounds after BC (0 = plain behavior cloning; "
-                         "note: DAgger did not robustly beat BC on CartpoleBalance -- see results/rgb)")
+                         "note: DAgger did not robustly beat BC on CartpoleBalance -- see results/rgb/distill)")
     ap.add_argument("--dagger-steps", type=int, default=1500,
                     help="student-rollout steps added per DAgger round (teacher-relabelled)")
     ap.add_argument("--dagger-beta", type=float, default=0.5,

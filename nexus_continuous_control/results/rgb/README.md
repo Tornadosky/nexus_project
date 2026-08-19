@@ -12,9 +12,9 @@
 > (its score is statistical noise around zero, so there is no signal to test).
 > A fix (auxiliary pixel→state loss + a longer meta-decision interval) was
 > found and verified to repair the cartpole blindness completely — see
-> `ablation/cartpole_aux_nesy/` (perfect upright fraction, 3/3 seeds) and the
+> `ablation/cartpole/nesy_fixed_seed0/` (perfect upright fraction, 3/3 seeds) and the
 > same fix independently rescued 3 previously-saturated WalkerWalk skills too
-> (`ablation/walker_aux_nesy/`). **Full findings, all figures, every number:
+> (`ablation/walker/nesy_fixed_seed0/`). **Full findings, all figures, every number:
 > [`ablation/`](ablation/) and
 > [`../../docs/reports/rgb_extension_team_briefing.txt`](../../docs/reports/rgb_extension_team_briefing.txt).**
 > The numbers below are kept as the original historical record (nothing was
@@ -46,7 +46,7 @@ control beats behavior cloning, as originally hypothesized). CartpoleBalance's
 in-loop win is real *in score* but NOT vision-driven — the ablation campaign
 found the privileged meta-policy solves that task alone, so the actor never had
 to learn to see; a fix now makes it genuinely vision-driven too (perfect upright
-fraction, `ablation/cartpole_aux_nesy/`). Details for each method below.
+fraction, `ablation/cartpole/nesy_fixed_seed0/`). Details for each method below.
 
 ## In-loop pixel RL (skills trained directly from MJWarp pixels)
 
@@ -59,9 +59,9 @@ visualized walker/hopper rollouts):
 
 | env | in-loop result | notes |
 |-----|----------------|-------|
-| CartpoleBalance | **0.64 eval success** | ⚠️ later found BLIND (privileged meta did the work, not vision) — fixed in `ablation/cartpole_aux_nesy/` (perfect upright, verified pixel-driven, 3/3 seeds) |
+| CartpoleBalance | **0.64 eval success** | ⚠️ later found BLIND (privileged meta did the work, not vision) — fixed in `ablation/cartpole/nesy_fixed_seed0/` (perfect upright, verified pixel-driven, 3/3 seeds) |
 | CheetahRun | **~0.42 reward/step** (return 0→~110) | ✅ learns to run from pixels, verified (93-99% collapse when camera corrupted, 3/3 seeds) |
-| WalkerWalk | **~0.40 reward/step** (return 0→~90) | ✅ overall verified pixel-driven, BUT only 1 of 4 skills was actually responsive pre-fix (3 were saturated/blind); fixed in `ablation/walker_aux_nesy/` (all 4 skills responsive, 3/3 seeds) |
+| WalkerWalk | **~0.40 reward/step** (return 0→~90) | ✅ overall verified pixel-driven, BUT only 1 of 4 skills was actually responsive pre-fix (3 were saturated/blind); fixed in `ablation/walker/nesy_fixed_seed0/` (all 4 skills responsive, 3/3 seeds) |
 | HopperHop | **~0.00 reward/step** (return ~0) | **failed to learn** — and the ablation later confirmed this score is statistical noise (inconclusive), not a testable pixel-dependence result |
 
 - Cartpole / cheetah / walker all **beat the distilled pixel policy** on the same env by
@@ -78,6 +78,9 @@ visualized walker/hopper rollouts):
   observation filmstrip, a skill + reward timeline, and the learning curve. Each rollout
   is self-checked (rollout reward matches the trained policy — 0.074 cartpole, 0.259
   cheetah, 0.404 walker, 0.000 hopper), so the videos show the real trained policy.
+  (These `inloop/` artifacts are the original, never-ablated first pass; the
+  ablation campaign's own per-run qualitative artifacts live under each
+  `ablation/<env>/<variant>/viz/`, see `ablation/README.md`.)
 - **Enabled by:** `mujoco-warp==3.11.0` (version-aligned with mujoco 3.11 — the desync
   that blocked this on Colab is gone) + two runtime shims (`ensure_mjwarp_graphmode`,
   `ensure_mjx_render_compat`) + `dm_control_vision.py` (Cheetah/Walker/Hopper vision
@@ -95,7 +98,7 @@ pixels. For each meta variant we (1) train state NEXUS, (2) roll it out recordin
 `VisionSkillActor` (Learning-by-Cheating, Chen et al. 2020), (4) run closed-loop
 where the unchanged meta selects skills from state and the **pixel** students act.
 
-![pixel vs state](comparison.png)
+![pixel vs state](distill/comparison.png)
 
 | meta | state success | pixel success | retention | pixel-fallback |
 |------|---------------|---------------|-----------|----------------|
@@ -144,9 +147,9 @@ The same BC-distillation pipeline runs on a second, harder env by rendering the
 locomotion side (tracking) camera offline — showing the RGB extension is not tied
 to the single framework-vision env. Here the metric is **mean per-step task reward**
 (env-agnostic; cartpole's upright rate has no locomotion analogue), retention =
-pixel / state, 3 seeds. `multienv/*.json` holds the per-seed records; qualitative
+pixel / state, 3 seeds. `distill/multienv/*.json` holds the per-seed records; qualitative
 artifacts (running-cheetah video, skill timeline, filmstrip, fidelity scatter) are
-in `viz_cheetah/`.
+in `distill/viz_cheetah/`.
 
 | env / meta | state reward/step | pixel reward/step | retention |
 |------------|-------------------|-------------------|-----------|
@@ -170,18 +173,25 @@ run-to-run (GPU nondeterminism in teacher training); the retention *ordering*
 
 ## Files
 
-- `comparison.png` — grouped state-vs-pixel bar chart (cartpole, 3 variants).
-- `results_table.md` — the cartpole table (upright metric), machine-generated.
-- `combined.json` — cartpole per-seed records (upright metric).
-- `{nesy,neural,symbolic}_state_vs_pixel.png` — per-variant single-panel figures.
-- `viz/` — cartpole distillation qualitative artifacts (video, filmstrip, skill timeline, scatter).
-- `viz_cheetah/` — CheetahRun distillation qualitative artifacts (same set).
-- `multienv/*.json` — return-based distillation summaries used in the cross-env table above.
-- `inloop/` — **in-loop pixel RL** results: `cartpole_inloop_curve.png` + `.json`,
+- `distill/` — **distillation** (Method A) results:
+  - `comparison.png` — grouped state-vs-pixel bar chart (cartpole, 3 variants).
+  - `results_table.md` — the cartpole table (upright metric), machine-generated.
+  - `combined.json` — cartpole per-seed records (upright metric).
+  - `{nesy,neural,symbolic}_state_vs_pixel.png` — per-variant single-panel figures.
+  - `viz_cartpole/` — cartpole distillation qualitative artifacts (video, filmstrip, skill timeline, scatter).
+  - `viz_cheetah/` — CheetahRun distillation qualitative artifacts (same set).
+  - `multienv/*.json` — return-based distillation summaries used in the cross-env table above.
+- `inloop/` — **in-loop pixel RL** (Method B) original, never-ablated results:
+  `cartpole_inloop_curve.png` + `.json`,
   `cheetah_inloop_curve.png` + `.json` (learning curves + eval/return),
   `cheetah_render_probe.png` (verifies the cheetah tracking camera renders in-frame),
   and `viz_{cartpole,cheetah,walker,hopper}/` (in-loop rollout **video** + filmstrip +
   skill/reward timeline + learning curve for each env).
+- `ablation/` — the **pixel-dependence ablation campaign** (see the correction
+  banner at the top of this file): per-run six-condition camera ablations,
+  responsiveness probes, and cross-run summary figures, organized as
+  `<env>/<meta>_<status>[_seedN]/`. See `ablation/README.md` for the naming
+  legend.
 
 Run environment: TU student pool `mlsp2` (RTX 2080 Ti), jax 0.11 CUDA, mujoco 3.11 +
 mujoco-warp 3.11; distillation renders offline via software-EGL (llvmpipe), in-loop

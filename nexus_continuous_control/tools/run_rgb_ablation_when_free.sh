@@ -43,8 +43,10 @@ wait_for_gpu() {
 }
 
 run_one() {
-  local tag=$1 config=$2 meta=$3 seed=${4:-0}
-  local dir="results/rgb/ablation/${tag}"
+  # tag: flat identifier used for the pkl/log filenames (must stay slash-free).
+  # outdir: where results land, results/rgb/ablation/<env>/<meta>_<status>[_seedN].
+  local tag=$1 outdir=$2 config=$3 meta=$4 seed=${5:-0}
+  local dir="results/rgb/ablation/${outdir}"
   if [ "$FORCE" != "1" ] && [ -f "${dir}/pixel_ablation.json" ]; then
     log "=== $tag: already done -- skipping (FORCE=1 to redo) ==="
     return 0
@@ -100,26 +102,26 @@ run_one() {
 # that with --meta neural, so the in-loop arm never actually demonstrated the
 # extension on the project's own configuration. These runs fix that; the earlier
 # neural results are kept as a meta-variant comparison.
-run_one cheetah_nesy      configs/cheetah_run_nesy.yaml              nesy
-run_one cartpole_nesy     configs/cartpole_balance_nesy_rgb.yaml     nesy
-run_one cartpole_aux_nesy configs/cartpole_balance_nesy_rgb_aux.yaml nesy
-run_one walker_nesy       configs/walker_walk_nesy.yaml              nesy
-run_one hopper_nesy       configs/hopper_hop_nesy.yaml               nesy
+run_one cheetah_nesy      cheetah/nesy_seed0        configs/cheetah_run_nesy.yaml              nesy
+run_one cartpole_nesy     cartpole/nesy_blind       configs/cartpole_balance_nesy_rgb.yaml     nesy
+run_one cartpole_aux_nesy cartpole/nesy_fixed_seed0 configs/cartpole_balance_nesy_rgb_aux.yaml nesy
+run_one walker_nesy       walker/nesy_blind         configs/walker_walk_nesy.yaml              nesy
+run_one hopper_nesy       hopper/nesy_seed0         configs/hopper_hop_nesy.yaml               nesy
 # Fix rescued cartpole; testing it on walker where 3/4 skills were saturated.
-run_one walker_aux_nesy   configs/walker_walk_nesy_rgb_aux.yaml      nesy
+run_one walker_aux_nesy   walker/nesy_fixed_seed0   configs/walker_walk_nesy_rgb_aux.yaml      nesy
 
 # Multi-seed replicates on the 4 key nesy runs (seed 0 already above), for
 # real mean +/- std instead of a single-seed point estimate -- matching the
 # rigor the distillation arm already has (3 seeds there).
-run_one cheetah_nesy_s1      configs/cheetah_run_nesy.yaml              nesy 1
-run_one cheetah_nesy_s2      configs/cheetah_run_nesy.yaml              nesy 2
-run_one cartpole_aux_nesy_s1 configs/cartpole_balance_nesy_rgb_aux.yaml nesy 1
-run_one cartpole_aux_nesy_s2 configs/cartpole_balance_nesy_rgb_aux.yaml nesy 2
-run_one walker_aux_nesy_s1   configs/walker_walk_nesy_rgb_aux.yaml      nesy 1
-run_one walker_aux_nesy_s2   configs/walker_walk_nesy_rgb_aux.yaml      nesy 2
+run_one cheetah_nesy_s1      cheetah/nesy_seed1        configs/cheetah_run_nesy.yaml              nesy 1
+run_one cheetah_nesy_s2      cheetah/nesy_seed2        configs/cheetah_run_nesy.yaml              nesy 2
+run_one cartpole_aux_nesy_s1 cartpole/nesy_fixed_seed1 configs/cartpole_balance_nesy_rgb_aux.yaml nesy 1
+run_one cartpole_aux_nesy_s2 cartpole/nesy_fixed_seed2 configs/cartpole_balance_nesy_rgb_aux.yaml nesy 2
+run_one walker_aux_nesy_s1   walker/nesy_fixed_seed1   configs/walker_walk_nesy_rgb_aux.yaml      nesy 1
+run_one walker_aux_nesy_s2   walker/nesy_fixed_seed2   configs/walker_walk_nesy_rgb_aux.yaml      nesy 2
 # Deprioritized: cartpole_nesy is already confirmed blind 3 independent ways
 # (2 neural campaigns + this nesy seed 0). Extra seeds here add little; the fix
 # results benefit far more from replicates. Still queued, just last.
-run_one cartpole_nesy_s1     configs/cartpole_balance_nesy_rgb.yaml     nesy 1
-run_one cartpole_nesy_s2     configs/cartpole_balance_nesy_rgb.yaml     nesy 2
+run_one cartpole_nesy_s1     cartpole/nesy_blind_seed1 configs/cartpole_balance_nesy_rgb.yaml     nesy 1
+run_one cartpole_nesy_s2     cartpole/nesy_blind_seed2 configs/cartpole_balance_nesy_rgb.yaml     nesy 2
 log "campaign done"
