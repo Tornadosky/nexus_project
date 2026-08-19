@@ -7,7 +7,7 @@ Repo:    nexus_project/nexus_continuous_control  (branch: rgb-pixel-ablation)
 Status:  COMPLETE + VERIFIED — two methods, 4 envs, pixel-dependence ablated,
          one failure mode found AND fixed
 Results: results/rgb/   (figures, videos, JSON, README)
-Date of this summary: 2026-08-18 (neural + nesy ablation campaigns, walker/hopper included)
+Date of this summary: 2026-08-19 (multi-seed confirmation + doc consistency audit, see F7h and section 10)
 
 
 --------------------------------------------------------------------------------
@@ -234,8 +234,8 @@ RESULTS TREE (results/rgb/)
   distill/results_table.md / combined.json  cartpole distillation, upright metric, per-seed
   distill/multienv/*.json           reward-metric distillation (cartpole + cheetah)
   distill/viz_cartpole/ , viz_cheetah/   distillation videos/filmstrips/timelines/scatter
-  inloop/cartpole_inloop.json+png   in-loop curve + eval metrics
-  inloop/cheetah_inloop.json+png    in-loop curve
+  inloop/cartpole_inloop.json + cartpole_inloop_curve.png   in-loop curve + eval metrics
+  inloop/cheetah_inloop.json + cheetah_inloop_curve.png     in-loop curve
   inloop/cheetah_render_probe.png   proof the tracking camera frames the robot
   inloop/viz_{cartpole,cheetah,walker,hopper}/   in-loop video + filmstrip +
                                     skill/reward timeline (+ curve for walker/hopper)
@@ -814,7 +814,8 @@ F7f. *** THE CAMPAIGN RE-RUN ON THE PROJECT'S OWN META (nesy) ***
      produce a mix of a genuinely visual skill and several saturated ones within
      the same run, which is exactly the kind of failure the auxiliary loss (F7c)
      is designed to prevent. Worth testing whether RGB_AUX_STATE_COEF fixes
-     walker's other three skills the same way it fixed cartpole -- not yet run.
+     walker's other three skills the same way it fixed cartpole -- RESULT: see
+     F7g immediately below -- it does, completely.
 
 F7g. *** THE FIX ALSO RESCUES WALKER'S SATURATED SKILLS *** (2026-08-18,
      ablation/walker/nesy_fixed_seed0/). F7f found walker's SEES verdict was carried by only ONE
@@ -938,7 +939,13 @@ F8. The infrastructure claim: in-loop pixel rendering is NOT a research blocker.
 --------------------------------------------------------------------------------
 10. CAVEATS / HONEST SCOPE (state these before someone asks)
 --------------------------------------------------------------------------------
-  * In-loop results are SINGLE SEED per env. Distillation results are 3 seeds.
+  * In-loop results: UPDATED per F7h (2026-08-19) -- cheetah, cartpole+FIX and
+    walker+FIX now have 3 independent seeds each (results/rgb/ablation/
+    seed_variance.json), matching distillation's rigor. Only the two BLIND/
+    unfixed baselines (cartpole, walker pre-fix) and hopper remain single-seed
+    -- deprioritized since cartpole's blindness is already confirmed 3
+    independent ways (2 neural campaigns + this nesy seed 0) and hopper is
+    inconclusive regardless of seed count.
   * For cheetah/walker/hopper the in-loop configs have no greedy-eval stage, so
     the reported number is TRAINING return (per-update episode return), not a
     deterministic eval. Cartpole in-loop does have a proper greedy eval (0.639).
@@ -952,9 +959,10 @@ F8. The infrastructure claim: in-loop pixel rendering is NOT a research blocker.
     would need its own encoder and the symbolic masks would need visual grounding).
   * The in-loop path depends on a Beta component (mujoco-warp). It works at the
     pinned versions; treat upgrades with suspicion.
-  * Minor doc debt: README.md still says in one bullet "only CartpoleBalance has a
-    vision pipeline in Playground" — true of the FRAMEWORK, but out of date now
-    that dm_control_vision.py ports cheetah/walker/hopper. Worth a one-line fix.
+  * (Resolved 2026-08-19: README.md's "only CartpoleBalance has a vision
+    pipeline" bullet has been corrected to note dm_control_vision.py's port to
+    cheetah/walker/hopper. This item previously flagged it as still pending --
+    it was fixed elsewhere and this note just wasn't updated to match.)
 
 
 --------------------------------------------------------------------------------
@@ -1081,17 +1089,25 @@ FIGURE INDEX (what exists and what each one proves)
     --out runs/rgb_viz_cheetah
 
   # 3. METHOD B: in-loop pixel RL (needs mujoco-warp==3.11.0 on a CUDA GPU)
+  # UPDATED 2026-08-19: the original example here used --meta neural, the
+  # accidental first-pass config whose in-loop artifacts have since been
+  # deleted (see F7f). Use --meta nesy -- the project's own flagship config
+  # and the only in-loop meta with surviving data.
   pip install mujoco-warp==3.11.0        # version-aligned with mujoco/mjx 3.11
   python -m nexus_continuous.scripts.rgb_inloop_visualize \
-    --config configs/cartpole_balance_nesy_rgb.yaml --meta neural --seed 0 \
+    --config configs/cartpole_balance_nesy_rgb.yaml --meta nesy --seed 0 \
     --updates 250 --num-envs 128 --out runs/rgb_inloop_cartpole
   # locomotion: pass the normal state config; the script forces USE_RGB and the
   # adapter routes the env to our ported vision class
   python -m nexus_continuous.scripts.rgb_inloop_visualize \
-    --config configs/cheetah_run_neural.yaml --meta neural --seed 0 \
+    --config configs/cheetah_run_nesy.yaml --meta nesy --seed 0 \
     --updates 250 --num-envs 128 --out runs/rgb_inloop_cheetah
   # (walker/hopper: same, with walker_walk_nesy.yaml / hopper_hop_nesy.yaml,
   #  --num-envs 96 --updates 200)
+  #
+  # For the pixel-dependence ABLATION itself (verdict + figures, not just a
+  # rollout video), use rgb_pixel_ablation.py -- see section 13 P0 for the
+  # exact, current (nesy) commands and output paths.
 
 
 --------------------------------------------------------------------------------

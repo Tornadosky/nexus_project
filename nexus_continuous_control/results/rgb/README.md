@@ -182,8 +182,8 @@ run-to-run (GPU nondeterminism in teacher training); the retention *ordering*
   - `viz_cheetah/` — CheetahRun distillation qualitative artifacts (same set).
   - `multienv/*.json` — return-based distillation summaries used in the cross-env table above.
 - `inloop/` — **in-loop pixel RL** (Method B) original, never-ablated results:
-  `cartpole_inloop_curve.png` + `.json`,
-  `cheetah_inloop_curve.png` + `.json` (learning curves + eval/return),
+  `cartpole_inloop.json` + `cartpole_inloop_curve.png`,
+  `cheetah_inloop.json` + `cheetah_inloop_curve.png` (learning curves + eval/return),
   `cheetah_render_probe.png` (verifies the cheetah tracking camera renders in-frame),
   and `viz_{cartpole,cheetah,walker,hopper}/` (in-loop rollout **video** + filmstrip +
   skill/reward timeline + learning curve for each env).
