@@ -297,6 +297,39 @@ def make_train(config: dict[str, Any]) -> Callable[[jax.Array], NexusTrainOutput
             return obs_actor[..., idx]
         return obs_actor[..., :0]  # pixels-only
 
+    # State-path counterpart of RGB_PROPRIO="indices": restrict which components
+    # of the state vector the SKILL ACTORS read, while the meta-Q, the critics,
+    # the symbolic rules and the skill rewards keep the FULL privileged state.
+    # This is the "blind baseline" arm of the actor-information ablation
+    # (A: full state / B: restricted state / C: pixels via USE_RGB), where the
+    # actor's observation is the only variable. Absent/null -> no restriction,
+    # i.e. the code path is identical to before this option existed.
+    actor_obs_indices = config.get("ACTOR_OBS_INDICES")
+    if actor_obs_indices is not None:
+        if use_rgb:
+            raise ValueError(
+                "ACTOR_OBS_INDICES restricts the STATE actor's input and is not "
+                "used in USE_RGB mode; use RGB_PROPRIO: indices + "
+                "RGB_PROPRIO_INDICES to restrict the pixel actor's side input."
+            )
+        actor_obs_indices = tuple(int(i) for i in actor_obs_indices)
+        if not actor_obs_indices:
+            raise ValueError("ACTOR_OBS_INDICES must be a non-empty list of integer indices")
+        if min(actor_obs_indices) < 0:
+            raise ValueError("ACTOR_OBS_INDICES must be non-negative indices")
+
+    def _actor_state_obs(obs_actor):
+        """Restrict the state actor's input; identity unless ACTOR_OBS_INDICES is set.
+
+        Applied ONLY inside `_actor_apply` (and to the actor's init dummy), so
+        every other consumer of `get_actor_obs` -- crucially `_meta_values`,
+        which is fed the very same array -- keeps the full state vector.
+        """
+        if actor_obs_indices is None:
+            return obs_actor
+        idx = jnp.asarray(actor_obs_indices, dtype=jnp.int32)
+        return obs_actor[..., idx]
+
     def _augment_pixels(pixels, rng):
         """DrQ random shift: replicate-pad by rgb_aug_pad then random-crop back."""
         b, h, w, c = pixels.shape
@@ -369,7 +402,8 @@ def make_train(config: dict[str, Any]) -> Callable[[jax.Array], NexusTrainOutput
                 )
             proprio = _actor_proprio(obs_actor)
             return jax.vmap(lambda p: actor.apply({"params": p}, obs_pixels, proprio))(actor_params)
-        return jax.vmap(lambda p: actor.apply({"params": p}, obs_actor))(actor_params)
+        obs_actor_restricted = _actor_state_obs(obs_actor)
+        return jax.vmap(lambda p: actor.apply({"params": p}, obs_actor_restricted))(actor_params)
 
     def _critic_values_all_skills(critic_params, obs_critic, action):
         """Return mean critic values [batch, num_skills] for an executed action."""
@@ -781,8 +815,18 @@ def make_train(config: dict[str, Any]) -> Callable[[jax.Array], NexusTrainOutput
         obs_actor = get_actor_obs(obs)
         obs_critic = get_critic_obs(obs)
         dummy_action = jnp.zeros((action_dim,), dtype=obs_actor.dtype)
+        # Full-width state dummy. Used to init the meta-Q (which always sees the
+        # full privileged state) and, unless ACTOR_OBS_INDICES restricts it, the
+        # state actor as well.
         dummy_actor_obs = jnp.zeros(obs_actor.shape[1:], dtype=obs_actor.dtype)
         dummy_critic_obs = jnp.zeros(obs_critic.shape[1:], dtype=obs_critic.dtype)
+        if actor_obs_indices is not None:
+            state_dim = int(obs_actor.shape[-1])
+            if max(actor_obs_indices) >= state_dim:
+                raise ValueError(
+                    f"ACTOR_OBS_INDICES contains index {max(actor_obs_indices)} but the "
+                    f"state observation only has {state_dim} components"
+                )
 
         # Initialize one actor per skill and one critic ensemble per skill.
         rng, rng_actor, rng_critic, rng_meta = jax.random.split(rng, 4)
@@ -798,7 +842,13 @@ def make_train(config: dict[str, Any]) -> Callable[[jax.Array], NexusTrainOutput
                 lambda k: actor.init(k, dummy_pixels, dummy_proprio)["params"]
             )(actor_rngs)
         else:
-            actor_params = jax.vmap(lambda k: actor.init(k, dummy_actor_obs)["params"])(actor_rngs)
+            # The state actor's input width is the RESTRICTED one when
+            # ACTOR_OBS_INDICES is set; the meta-Q below still inits (and runs)
+            # on the full-width `dummy_actor_obs`.
+            dummy_state_actor_obs = _actor_state_obs(dummy_actor_obs)
+            actor_params = jax.vmap(lambda k: actor.init(k, dummy_state_actor_obs)["params"])(
+                actor_rngs
+            )
 
         num_critics = int(config.get("NUM_CRITICS", 2))
         critic_rngs = jax.random.split(rng_critic, num_skills * num_critics).reshape(
