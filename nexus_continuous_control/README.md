@@ -291,19 +291,35 @@ meta-policy(state/symbols) -> skill            # unchanged symbolic/nesy layer
   `--override USE_RGB=true`. When off, the state path is byte-identical.
 - **Encoder:** dtype-driven normalization, orthogonal conv init, LayerNorm→tanh
   trunk (DrQ-v2 / SAC+AE conventions).
-- **Env coverage:** only `CartpoleBalance` has a vision pipeline in Playground.
+- **Env coverage:** the framework's own vision pipeline covers only
+  `CartpoleBalance`; `nexus_continuous/envs/dm_control_vision.py` ports the same
+  MJWarp render path to `CheetahRun`/`WalkerWalk`/`HopperHop`, so in-loop RGB
+  training runs on all 4 environments (see `results/rgb/ablation/`).
 - **Status:** the code is verified (`pytest tests/test_vision_rgb_smoke.py` drives
   the full `USE_RGB` training path on a fake pixel env). The **in-loop pixel RL**
   path (skills trained directly from MJWarp-rendered pixels) also **runs** on the
   student pool: install the version-aligned renderer `pip install mujoco-warp==3.11.0`
   (matches mujoco/mujoco-mjx 3.11), and `build_playground_env` applies two runtime
   shims automatically — `ensure_mjwarp_graphmode()` and `ensure_mjx_render_compat()`
-  (the latter fixes a mujoco-mjx 3.11 `mjx.render` tuple-arity drift). Verified:
-  `run_training` with `USE_RGB` renders 64×64 batches and completes with finite eval
-  metrics. The earlier Colab block was a mujoco/warp **version desync**, not a
-  fundamental limitation. The headline **distillation** result below is still the
-  primary deliverable (it also covers a second env); in-loop pixel RL is now
-  available for longer training runs.
+  (the latter fixes a mujoco-mjx 3.11 `mjx.render` tuple-arity drift). The earlier
+  Colab block was a mujoco/warp **version desync**, not a fundamental limitation.
+- **IMPORTANT — "runs and completes" is not the same as "uses the camera."**
+  A pixel-dependence ablation campaign (`nexus_continuous/scripts/rgb_pixel_ablation.py`:
+  corrupt only the actor's image input and check whether performance survives)
+  found the in-loop `CartpoleBalance` policy was **BLIND** — a state-based
+  privileged meta-policy was solving the task alone, so the pixel actor never
+  learned to see, despite training completing and scoring well. `CheetahRun`
+  and `WalkerWalk` were independently verified **genuinely pixel-driven**
+  (93-99% performance collapse when the camera is corrupted, confirmed on 3
+  seeds each); `HopperHop` is inconclusive (score is noise around zero). A fix
+  (auxiliary pixel→state loss + a longer meta-decision interval) was found and
+  verified to repair the cartpole blindness, and separately rescued 3
+  previously-saturated WalkerWalk skills. Full findings, every figure, every
+  number: [`results/rgb/ablation/`](results/rgb/ablation/) and
+  [`docs/reports/rgb_extension_team_briefing.txt`](docs/reports/rgb_extension_team_briefing.txt).
+  The headline **distillation** result below predates and is unaffected by this
+  finding (it was independently verified pixel-driven from the start, r≈0.99
+  held-out fidelity) and remains a primary deliverable in its own right.
 
 ### Distillation result (report-grade, reproduced on GPU)
 
@@ -398,13 +414,18 @@ Open them in Colab (GPU runtime); each clones this repo and runs end-to-end.
   filmstrip, held-out fidelity scatter. State training curves: plot the `.pkl` `metrics`.
 - **Videos:** `rgb_visualize.py` → `rollout_pixel.mp4` / `.gif` (the pixel hierarchy
   acting, each frame annotated with the active skill).
-- **Honest scope for the writeup:** the RGB result is a *quantitative distillation
-  study of pixel-based skill actors (asymmetric AC)* — the real NEXUS hierarchy's
+- **Honest scope for the writeup:** the RGB result has two independently-verified
+  legs. (1) A *quantitative distillation study* — the real NEXUS hierarchy's
   disentangled skills are behavior-cloned to 64×64 pixels and retain ~50 % of
   privileged closed-loop success across all three meta variants on CartpoleBalance
-  (see `results/rgb/`). The interpretable meta-policy remains state-based by design
-  (privileged-critic asymmetry). In-loop pixel RL (skills trained from MJWarp
-  pixels) now runs on the pool with `mujoco-warp==3.11.0` + the render shims above.
+  (see `results/rgb/`), verified genuinely pixel-driven (r≈0.99 held-out fidelity).
+  (2) *In-loop pixel RL* (skills trained directly from MJWarp pixels) works on
+  CheetahRun and WalkerWalk (verified pixel-driven, 3 seeds each) but the
+  CartpoleBalance in-loop result was found BLIND by ablation and required a
+  targeted fix to become genuinely pixel-driven — see
+  `results/rgb/ablation/` and `docs/reports/rgb_extension_team_briefing.txt`
+  for the full campaign. In both cases the interpretable meta-policy remains
+  state-based by design (privileged-critic asymmetry).
 
 ## Notes on observation features
 

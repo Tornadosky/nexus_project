@@ -1,5 +1,25 @@
 # RGB skill-agent extension — results
 
+> **UPDATE (2026-08-19) — READ BEFORE TRUSTING THE IN-LOOP NUMBERS BELOW.**
+> A pixel-dependence ablation campaign (corrupt *only* the actor's camera input
+> and see if performance survives) found that the **CartpoleBalance in-loop
+> result below (0.64 eval success) is BLIND** — the actor's action barely
+> moves when the image is frozen, scrambled, or blanked, and a policy with the
+> actor removed entirely scores *better*. The privileged meta-policy was doing
+> the work, not vision. **CheetahRun and WalkerWalk in-loop are independently
+> verified genuinely pixel-driven** (corrupting the camera collapses
+> performance 93-99%, confirmed on 3 seeds each). **HopperHop is inconclusive**
+> (its score is statistical noise around zero, so there is no signal to test).
+> A fix (auxiliary pixel→state loss + a longer meta-decision interval) was
+> found and verified to repair the cartpole blindness completely — see
+> `ablation/cartpole_aux_nesy/` (perfect upright fraction, 3/3 seeds) and the
+> same fix independently rescued 3 previously-saturated WalkerWalk skills too
+> (`ablation/walker_aux_nesy/`). **Full findings, all figures, every number:
+> [`ablation/`](ablation/) and
+> [`../../docs/reports/rgb_extension_team_briefing.txt`](../../docs/reports/rgb_extension_team_briefing.txt).**
+> The numbers below are kept as the original historical record (nothing was
+> deleted) but should be read through the correction above, not at face value.
+
 Two ways to give NEXUS's disentangled skills **raw-pixel** input while keeping the
 interpretable meta-policy on privileged state (asymmetric / privileged-critic
 design, Pinto et al. 2017):
@@ -12,15 +32,21 @@ design, Pinto et al. 2017):
    shims (see top-level README); works for CartpoleBalance (framework) and CheetahRun
    (our `CheetahRunVision` port).
 
-**Headline comparison** — in-loop pixel RL beats distillation on **both** environments:
+**Headline comparison (ORIGINAL, see the correction banner above)** — in-loop
+pixel RL scores higher than distillation on both environments by raw number,
+but this table does NOT mean both wins are vision-driven:
 
 | env | privileged state teacher | distillation → pixels | in-loop pixel RL |
 |-----|--------------------------|-----------------------|------------------|
-| CartpoleBalance | 1.00 upright | 0.52 upright | **0.64 eval success** |
-| CheetahRun | 0.62 reward/step | 0.16 reward/step | **~0.42 reward/step** |
+| CartpoleBalance | 1.00 upright | 0.52 upright | **0.64 eval success** ⚠️ later found BLIND, see ablation/ |
+| CheetahRun | 0.62 reward/step | 0.16 reward/step | **~0.42 reward/step** ✅ verified pixel-driven |
 
-In-loop wins because it learns perception + control **jointly**, while distillation is
-capped by behavior cloning + covariate shift. Details for each method below.
+CheetahRun's in-loop win is real and vision-driven (jointly learned perception +
+control beats behavior cloning, as originally hypothesized). CartpoleBalance's
+in-loop win is real *in score* but NOT vision-driven — the ablation campaign
+found the privileged meta-policy solves that task alone, so the actor never had
+to learn to see; a fix now makes it genuinely vision-driven too (perfect upright
+fraction, `ablation/cartpole_aux_nesy/`). Details for each method below.
 
 ## In-loop pixel RL (skills trained directly from MJWarp pixels)
 
@@ -33,13 +59,15 @@ visualized walker/hopper rollouts):
 
 | env | in-loop result | notes |
 |-----|----------------|-------|
-| CartpoleBalance | **0.64 eval success** | learns to balance from pixels |
-| CheetahRun | **~0.42 reward/step** (return 0→~110) | learns to run |
-| WalkerWalk | **~0.40 reward/step** (return 0→~90) | learns to walk |
-| HopperHop | **~0.00 reward/step** (return ~0) | **failed to learn** — see below |
+| CartpoleBalance | **0.64 eval success** | ⚠️ later found BLIND (privileged meta did the work, not vision) — fixed in `ablation/cartpole_aux_nesy/` (perfect upright, verified pixel-driven, 3/3 seeds) |
+| CheetahRun | **~0.42 reward/step** (return 0→~110) | ✅ learns to run from pixels, verified (93-99% collapse when camera corrupted, 3/3 seeds) |
+| WalkerWalk | **~0.40 reward/step** (return 0→~90) | ✅ overall verified pixel-driven, BUT only 1 of 4 skills was actually responsive pre-fix (3 were saturated/blind); fixed in `ablation/walker_aux_nesy/` (all 4 skills responsive, 3/3 seeds) |
+| HopperHop | **~0.00 reward/step** (return ~0) | **failed to learn** — and the ablation later confirmed this score is statistical noise (inconclusive), not a testable pixel-dependence result |
 
-- Cartpole / cheetah / walker all **beat the distilled pixel policy** on the same env
-  (joint perception+control learning > behavior cloning).
+- Cartpole / cheetah / walker all **beat the distilled pixel policy** on the same env by
+  raw score, but only cheetah and (mostly) walker's win is attributable to "joint
+  perception+control learning" — see the correction banner at the top of this file
+  and `ablation/` for the full, ablation-verified picture.
 - **HopperHop is the honest exception:** the single-leg hopper is inherently unstable
   — if the policy can't keep it upright the `standing×hopping` reward is exactly 0, and
   learning to hop from pixels at this budget is too hard. The render is correct (the

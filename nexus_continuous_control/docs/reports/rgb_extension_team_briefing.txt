@@ -36,10 +36,18 @@ Headline numbers:
 
   | env             | privileged state teacher | (A) distilled pixels | (B) in-loop pixels |
   |-----------------|--------------------------|----------------------|--------------------|
-  | CartpoleBalance | 1.00 upright fraction    | 0.52 upright         | 0.64 eval success  |
-  | CheetahRun      | 0.62 reward/step         | 0.16 reward/step     | ~0.42 reward/step  |
-  | WalkerWalk      | (not distilled)          | —                    | ~0.40 reward/step  |
-  | HopperHop       | (not distilled)          | —                    | ~0.00 (FAILS)      |
+  | CartpoleBalance | 1.00 upright fraction    | 0.52 upright         | 0.64 eval success ⚠️BLIND, see below |
+  | CheetahRun      | 0.62 reward/step         | 0.16 reward/step     | ~0.42 reward/step ✅verified pixel-driven |
+  | WalkerWalk      | (not distilled)          | —                    | ~0.40 reward/step ✅verified (mostly*) |
+  | HopperHop       | (not distilled)          | —                    | ~0.00 (FAILS, and separately INCONCLUSIVE for pixel-dependence) |
+
+  ⚠️ CartpoleBalance's 0.64 was later found to be produced by the privileged
+  meta-policy alone, NOT vision (ablation: corrupting the camera changes
+  nothing). A fix restores it to a genuinely pixel-driven PERFECT 1.000 --
+  see F7c/F7h. *WalkerWalk's 0.40 is real and mostly vision-driven, but only 1
+  of its 4 skills was actually responsive pre-fix (3 were saturated/blind);
+  fixed to all 4 responsive in F7g/F7h. Read F7a-h before quoting any of these
+  four numbers on their own.
 
 *** HEADLINE RESULTS ARE NOW THE nesy RUNS (F7f). *** The first ablation
 campaign accidentally ran the in-loop arm with --meta neural, overriding the
@@ -63,12 +71,18 @@ Three findings worth remembering:
   1. Distillation retains ~50% of privileged performance and does so EQUALLY for
      all three meta-policy variants (nesy / neural / symbolic) -> the RGB
      extension is META-AGNOSTIC. It rides on the shared skill actors.
-  2. In-loop pixel RL BEATS distillation on every env where both were run,
-     because it learns perception and control jointly instead of inheriting
-     behaviour-cloning's covariate shift.
-  3. Difficulty ordering from pixels: balance < walk/run << hop. HopperHop is an
-     honest negative result — the render is correct, the policy just never
-     learns at this budget.
+  2. In-loop pixel RL BEATS distillation by raw score on every env where both
+     were run -- but "because it learns perception and control jointly" is only
+     the correct explanation for CheetahRun (and the FIXED CartpoleBalance /
+     WalkerWalk). The original CartpoleBalance in-loop win was NOT from joint
+     perception learning -- ablation found the actor blind; the privileged meta
+     solved the task alone. Verify with ablation before attributing any in-loop
+     win to vision -- a good score is not proof, as this env demonstrated.
+  3. Difficulty ordering from pixels: balance(fixed) < walk/run << hop.
+     HopperHop is an honest negative result for TRAINING (the render is
+     correct, the policy just never learns at this budget) and separately
+     INCONCLUSIVE for the pixel-dependence question (its near-zero score has
+     no signal for the ablation to read either way).
 
 
 --------------------------------------------------------------------------------
@@ -410,6 +424,14 @@ RESULTS — (A) DISTILLATION, reward-per-step metric (cross-env comparison, 3 se
 
 RESULTS — (B) IN-LOOP PIXEL RL (single seed each)
   (source: results/rgb/inloop/*.json and viz_*/inloop_curve.json)
+  *** THIS IS THE FIRST-LOOK TABLE, BEFORE THE ABLATION CAMPAIGN EXISTED. ***
+  CartpoleBalance's row was LATER FOUND BLIND (not vision-driven; fixed to a
+  genuinely pixel-driven perfect 1.000, see F7c/F7h). WalkerWalk's row is
+  mostly vision-driven but only 1 of 4 skills was responsive pre-fix (fixed in
+  F7g/F7h). CheetahRun's row is genuinely vision-driven, confirmed unchanged.
+  HopperHop's "FAILED TO LEARN" is a training fact, separately reconfirmed
+  INCONCLUSIVE for pixel-dependence specifically (near-zero score, no signal).
+  Do not quote any row here without also citing F7a-h.
 
   env              | budget            | outcome
   -----------------|-------------------|--------------------------------------------
@@ -452,27 +474,41 @@ F2. Cloning is near-exact; the loss is in CLOSED LOOP.
     grayscale stack carries coarser velocity information than exact state. This
     is a property of open-loop imitation, not a bug in the vision model.
 
-F3. *** VERIFIED FOR CHEETAH, RETRACTED FOR CARTPOLE (see F7a / F7b). *** On
-    CheetahRun the in-loop win is real AND is produced by vision: the ablation
-    shows performance collapsing 99.8% without pixels, so "in-loop beats
-    distillation" (0.50 vs 0.16 reward/step) stands and is now evidence-backed.
-    On CartpoleBalance the raw score is real but is NOT produced by vision, so
-    the in-loop-beats-distillation claim must NOT be made for that env.
-
-F3. IN-LOOP PIXEL RL BEATS DISTILLATION — on both envs where we ran both.
-    cartpole 0.64 vs 0.52 upright; cheetah ~0.42 vs 0.16 reward/step. Reason:
-    in-loop learns perception and control JOINTLY and never leaves its own state
-    distribution, whereas BC is capped by the teacher's distribution. Practical
-    consequence: for future work, prefer in-loop; keep distillation as the
-    portable/robust fallback and as the meta-agnosticism experiment.
+F3. *** VERIFIED FOR CHEETAH, RETRACTED-THEN-REPAIRED FOR CARTPOLE
+    (see F7a / F7b / F7c / F7h). *** Raw scores: cartpole 0.64 vs 0.52 upright
+    (in-loop vs distillation); cheetah ~0.42-0.50 vs 0.16 reward/step. Do NOT
+    read this as "in-loop wins because it learns perception and control jointly"
+    on both envs -- that explanation is only true for cheetah.
+      - CheetahRun: the in-loop win IS produced by vision. The ablation shows
+        performance collapsing 93-99% without pixels (3/3 seeds), so "in-loop
+        beats distillation" stands and is evidence-backed.
+      - CartpoleBalance (original in-loop, this row's number): the win is real
+        IN SCORE but NOT produced by vision -- the ablation found the actor
+        blind (privileged meta solved the task alone). The original
+        "learns jointly, beats BC" explanation for this number is WRONG.
+      - CartpoleBalance + FIX (a later, separate run, see F7c/F7h): once
+        repaired, in-loop reaches a PERFECT 1.000 upright (mean 0.978 +/- 0.030
+        across 3 seeds) and this time is genuinely vision-driven -- so the
+        "in-loop beats distillation via joint learning" claim DOES hold for
+        cartpole too, just not for the number quoted at the top of this section.
+    Practical consequence: prefer in-loop for future work, but always pair it
+    with the ablation check -- a good score alone does not prove vision was
+    used, as this env demonstrated. Keep distillation as the portable/robust
+    fallback and as the meta-agnosticism experiment.
 
 F4. Task difficulty from pixels orders as: BALANCE < WALK/RUN << HOP.
-    Distillation retention: cartpole 0.84 vs cheetah 0.25 on the same metric.
-    In-loop: cartpole 0.64, cheetah 0.42, walker 0.40, hopper 0.00.
-    Locomotion needs precise gait timing that a coarse grayscale stack recovers
-    poorly; hopping additionally has an unstable single-leg balance whose reward
-    (standing x hopping) is exactly 0 whenever the robot falls, giving almost no
-    gradient signal at this budget.
+    Distillation retention: cartpole 0.84 vs cheetah 0.25 on the same metric
+    (distillation's cartpole number IS pixel-driven throughout, r~0.99).
+    In-loop RAW SCORES: cartpole 0.64, cheetah 0.42, walker 0.40, hopper 0.00 --
+    but per F3/F7a, the in-loop cartpole 0.64 was NOT achieved via pixels (the
+    actor was blind), so it does not belong in a "difficulty FROM PIXELS"
+    ordering as originally framed; the fixed cartpole (perfect 1.000, genuinely
+    pixel-driven, F7c/F7h) is the number that actually belongs here, and the
+    corrected ordering is BALANCE(fixed) < WALK/RUN << HOP with cheetah/walker
+    slotting as before. Locomotion needs precise gait timing that a coarse
+    grayscale stack recovers poorly; hopping additionally has an unstable
+    single-leg balance whose reward (standing x hopping) is exactly 0 whenever
+    the robot falls, giving almost no gradient signal at this budget.
 
 F5. HopperHop is an honest NEGATIVE result, and we can defend it.
     The render is verified correct (the fallen hopper is clearly visible in
@@ -480,6 +516,13 @@ F5. HopperHop is an honest NEGATIVE result, and we can defend it.
     does not learn. We report it rather than hiding it. It bounds the claim: "in-
     loop pixel skills work for balancing and for statically-forgiving locomotion;
     highly unstable dynamics need more budget / better exploration."
+    (This is a claim about TRAINING -- it never learns to hop. It is a SEPARATE,
+    compatible fact from the later pixel-dependence ablation's own verdict on
+    hopper, which is INCONCLUSIVE rather than negative -- see F7f/F7h: a
+    near-zero score has no performance for a blindfold to destroy, so the
+    ablation test itself has no signal to read on this env. Both are true at
+    once: it failed to learn AND we cannot separately test whether pixels
+    would have mattered if it had.)
 
 F6. Teacher strength orders as expected and explains the variance.
     neural (1.00 state success) >= nesy (0.74) >> symbolic (0.31). The rule-based
