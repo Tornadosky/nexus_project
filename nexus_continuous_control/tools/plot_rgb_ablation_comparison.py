@@ -9,9 +9,6 @@ Labels and colors are derived automatically from each run's rescored verdict
 red = BLIND, grey = INCONCLUSIVE (near-zero baseline, e.g. hopper).
 
     python tools/plot_rgb_ablation_comparison.py \
-        --tags cheetah/neural_seed0,cartpole/neural_blind,cartpole/neural_fixed \
-        --out results/rgb/ablation/summary/comparison_neural.png
-    python tools/plot_rgb_ablation_comparison.py \
         --tags cheetah/nesy_seed0,walker/nesy_blind,cartpole/nesy_blind,cartpole/nesy_fixed_seed0 \
         --out results/rgb/ablation/summary/comparison_nesy.png
 """
@@ -38,8 +35,8 @@ def main(argv: list[str] | None = None) -> None:
     ap = argparse.ArgumentParser(description=__doc__,
                                  formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("--runs", default="results/rgb/ablation")
-    ap.add_argument("--tags", default="cheetah/neural_seed0,cartpole/neural_blind,cartpole/neural_fixed")
-    ap.add_argument("--out", default="results/rgb/ablation/summary/comparison_neural.png")
+    ap.add_argument("--tags", default="cheetah/nesy_seed0,walker/nesy_blind,cartpole/nesy_blind,cartpole/nesy_fixed_seed0")
+    ap.add_argument("--out", default="results/rgb/ablation/summary/comparison_nesy.png")
     ap.add_argument("--title", default="Does the in-loop pixel actor actually use its camera?")
     args = ap.parse_args(argv)
 

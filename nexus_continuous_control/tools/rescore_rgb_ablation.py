@@ -34,7 +34,7 @@ def main(argv: list[str] | None = None) -> None:
     ap = argparse.ArgumentParser(description=__doc__,
                                  formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("--root", default="results/rgb/ablation")
-    ap.add_argument("--tags", default="cheetah/neural_seed0,cartpole/neural_blind,cartpole/neural_fixed")
+    ap.add_argument("--tags", default="cheetah/nesy_seed0,cartpole/nesy_blind,cartpole/nesy_fixed_seed0")
     args = ap.parse_args(argv)
 
     import numpy as np

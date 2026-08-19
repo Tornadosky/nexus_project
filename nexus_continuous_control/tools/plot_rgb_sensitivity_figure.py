@@ -9,9 +9,6 @@ constant -> ~0%.
 Log scale, because the interesting range spans four orders of magnitude.
 
     python tools/plot_rgb_sensitivity_figure.py \
-        --tags cartpole/neural_blind,cartpole/neural_fixed,cheetah/neural_seed0 \
-        --out results/rgb/ablation/summary/pixel_responsiveness_neural.png
-    python tools/plot_rgb_sensitivity_figure.py \
         --tags cartpole/nesy_blind,cartpole/nesy_fixed_seed0,cheetah/nesy_seed0,walker/nesy_blind \
         --out results/rgb/ablation/summary/pixel_responsiveness_nesy.png
 """
@@ -29,8 +26,8 @@ def main(argv: list[str] | None = None) -> None:
     ap = argparse.ArgumentParser(description=__doc__,
                                  formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("--root", default="results/rgb/ablation")
-    ap.add_argument("--tags", default="cartpole/neural_blind,cartpole/neural_fixed,cheetah/neural_seed0")
-    ap.add_argument("--out", default="results/rgb/ablation/summary/pixel_responsiveness_neural.png")
+    ap.add_argument("--tags", default="cartpole/nesy_blind,cartpole/nesy_fixed_seed0,cheetah/nesy_seed0,walker/nesy_blind")
+    ap.add_argument("--out", default="results/rgb/ablation/summary/pixel_responsiveness_nesy.png")
     args = ap.parse_args(argv)
 
     import matplotlib

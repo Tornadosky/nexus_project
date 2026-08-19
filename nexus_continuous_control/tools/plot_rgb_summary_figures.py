@@ -34,7 +34,7 @@ def main(argv: list[str] | None = None) -> None:
     ap = argparse.ArgumentParser(description=__doc__,
                                  formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("--root", default="results/rgb")
-    ap.add_argument("--meta", default="neural", choices=["neural", "nesy"])
+    ap.add_argument("--meta", default="nesy", choices=["neural", "nesy"])
     ap.add_argument("--out", default=None)
     args = ap.parse_args(argv)
     out_default = ("results/rgb/ablation/summary/method_comparison_neural.png" if args.meta == "neural"

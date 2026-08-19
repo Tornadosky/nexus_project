@@ -53,8 +53,11 @@ Headline numbers:
 campaign accidentally ran the in-loop arm with --meta neural, overriding the
 META_POLICY_TYPE: nesy declared in every RGB config -- so it never tested the
 extension on NEXUS's own flagship neuro-symbolic meta. Re-run under nesy
-(2026-08-18 16:46-18:30): every conclusion holds. The neural runs are kept as a
-meta-variant comparison.
+(2026-08-18 16:46-18:30): every conclusion holds. The neural runs were that
+first (accidental) pass; once nesy independently reproduced every conclusion,
+the neural in-loop artifacts were deleted as redundant (see F7f, and the
+"nesy vs neural, honestly" note in §8). They are discussed below purely as
+history -- there are no files left to open for them.
 
 *** THE IN-LOOP COLUMN IS ENV-DEPENDENT -- READ F7a, F7b AND F7f. *** Ablations on
 2026-08-17/18 measured whether the in-loop actor actually uses its camera:
@@ -635,7 +638,8 @@ F7b. CHEETAH ABLATION (2026-08-18): THE IN-LOOP CHEETAH ACTOR *DOES* USE ITS
      and beats distillation 0.50 vs 0.16), then give cartpole as the instructive
      failure and the shortcut-learning explanation. Both are measured, not argued.
 
-F7c. THE FIX WORKS (2026-08-18, ablation/cartpole/neural_fixed/). Same env, same budget, same
+F7c. THE FIX WORKS (2026-08-18, first run under the superseded neural pass;
+     artifacts deleted once reproduced under nesy in F7f/F7h). Same env, same budget, same
      ablation protocol -- but trained with the auxiliary pixel->state loss
      (RGB_AUX_STATE_COEF 1.0), META_DECISION_INTERVAL 4, and LR 3e-4:
 
@@ -678,8 +682,10 @@ F7d. ENCODER RESPONSIVENESS, the mechanism in one number (2026-08-18).
      The fix moved cartpole ~170x, into the same regime as cheetah -- which got
      there on the policy gradient alone because its task left no shortcut. Render
      health was confirmed in every case (per-pixel temporal std 0.005-0.090), so
-     none of these numbers is a renderer artifact. Figure:
-     results/rgb/ablation/summary/pixel_responsiveness_neural.png
+     none of these numbers is a renderer artifact. (Figure for this neural-pass
+     table was deleted as redundant once nesy reproduced the same
+     responsiveness pattern -- see F7f and summary/pixel_responsiveness_nesy.png
+     for the surviving equivalent.)
 
      Qualitative artifacts now exist for the ablated policies too (video,
      64x64 filmstrip, skill+reward timeline), generated from the SAVED weights
@@ -771,6 +777,11 @@ F7f. *** THE CAMPAIGN RE-RUN ON THE PROJECT'S OWN META (nesy) ***
      nesy trails neural (0.56 vs 0.62 in the distillation study); the symbolic
      mask costs something at greedy evaluation. It does not affect the
      pixel-dependence conclusion, which is what these runs were for.
+     (The neural in-loop artifacts behind the 0.502/107.1 numbers above were
+     deleted in this cleanup as redundant once nesy reproduced every
+     conclusion; they are kept here only as a historical/prose note -- nothing
+     is left on disk to open. The distillation-study neural numbers just cited
+     are unaffected; that data still lives under results/rgb/distill/.)
 
      HOPPERHOP RESULT (2026-08-18): INCONCLUSIVE, not negative, and the rescore
      script now enforces this automatically. Its intact score is 0.012 +/- 0.023
@@ -976,12 +987,13 @@ F8. The infrastructure claim: in-loop pixel rendering is NOT a research blocker.
      -> the honest failure (hopper never learns), for the difficulty ordering --
         now confirmed inconclusive rather than negative (F7f).
 
-  BACKUP / meta-variant comparison (if asked "does this depend on which meta?"):
-  the whole set above also exists for meta=neural under the neural_* variant
-  names (summary/method_comparison_neural.png, summary/comparison_neural.png,
-  summary/pixel_responsiveness_neural.png, cheetah/neural_seed0/,
-  cartpole/neural_blind/, cartpole/neural_fixed/) -- same conclusions, run
-  first, kept for comparison.
+  IF ASKED "does this depend on which meta?": the whole campaign was first run
+  (accidentally) under meta=neural and reproduced every conclusion above. That
+  pass predates the nesy run; once nesy independently confirmed the same
+  findings (F7f), the neural in-loop artifacts were deleted as redundant --
+  there is nothing left to pull up on screen. Answer verbally from F7f's "nesy
+  vs neural, honestly" note (§8) and point back at this section's own nesy
+  figures; do not promise a neural-labelled figure, it no longer exists.
 
 FIGURE INDEX (what exists and what each one proves)
 --------------------------------------------------------------------------------
@@ -1005,10 +1017,15 @@ FIGURE INDEX (what exists and what each one proves)
     completeness, excluded from the bar-chart comparisons automatically by
     tools/rescore_rgb_ablation.py's baseline-magnitude guard.
 
-  META-VARIANT COMPARISON: neural CAMPAIGN (2026-08-17/18), results/rgb/ablation/
-    summary/method_comparison_neural.png, summary/comparison_neural.png,
-    summary/pixel_responsiveness_neural.png
-    cheetah/neural_seed0/, cartpole/neural_blind/, cartpole/neural_fixed/   same structure as above
+  META-VARIANT COMPARISON: neural CAMPAIGN (2026-08-17/18) -- SUPERSEDED,
+  ARTIFACTS DELETED. This was the first (accidental) --meta neural pass, run
+  before the project's own nesy meta was tested (see §0 and F7f for why it was
+  re-run). Every conclusion reproduced under nesy (F7a-c vs F7f, F7h), so once
+  that reproduction was confirmed its figures and per-run directories
+  (summary/*_neural.png, cheetah/neural_seed0/, cartpole/neural_blind/,
+  cartpole/neural_fixed/) were deleted as redundant. See F7c, F7d, F7e and the
+  "nesy vs neural, honestly" note (§8) for what it found, as history only --
+  nothing under results/rgb/ablation/ still carries a _neural suffix.
 
   REGENERATING ANY FIGURE (no GPU needed, reads the committed JSONs):
     tools/rescore_rgb_ablation.py --tags <comma list>       (re-verdict + re-plot
@@ -1016,8 +1033,10 @@ FIGURE INDEX (what exists and what each one proves)
     tools/plot_rgb_ablation_comparison.py --tags <list> --out <path> --title <t>
     tools/plot_rgb_sensitivity_figure.py  --tags <list> --out <path>
     tools/plot_rgb_summary_figures.py     --meta {neural,nesy} [--out <path>]
-    (<list> entries are now nested tags, e.g. cartpole/neural_blind,
-    cartpole/neural_fixed,cheetah/neural_seed0 -- see each script's docstring.)
+    (<list> entries are nested tags, e.g. cartpole/nesy_blind,
+    cartpole/nesy_fixed_seed0,cheetah/nesy_seed0 -- see each script's
+    docstring. --meta neural is still a valid flag value, but there is no
+    neural-tagged data on disk any more to feed it -- see the note above.)
 
   EARLIER RGB WORK (distillation + first in-loop pass)
     results/rgb/distill/
@@ -1029,9 +1048,10 @@ FIGURE INDEX (what exists and what each one proves)
       viz_{cartpole,cheetah,walker,hopper}/   in-loop rollout artifacts
       cheetah_render_probe.png       tracking camera verified in-frame
 
-  NOTE: every ablation run (both campaigns) saves its OWN training curves, so
-  no figure is a stand-in. The results/rgb/inloop/ curves are the original,
-  never-ablated first pass and remain as that record.
+  NOTE: every surviving ablation run saves its OWN training curves, so no
+  figure is a stand-in (the deleted neural campaign's runs did too, before
+  their artifacts were removed as redundant -- see F7e). The results/rgb/inloop/
+  curves are the original, never-ablated first pass and remain as that record.
 
 12. HOW TO REPRODUCE (exact commands)
 --------------------------------------------------------------------------------
@@ -1077,18 +1097,22 @@ FIGURE INDEX (what exists and what each one proves)
 --------------------------------------------------------------------------------
 13. PROPOSED NEXT STEPS (for discussion)
 --------------------------------------------------------------------------------
-  P0. RUN FIRST — the pixel-dependence ablation (see F7). Minutes of GPU time,
-      no retraining if a policy is saved with --save-policy. It converts the
-      in-loop pixel claim from "argued" to "measured", and it is the single most
-      likely question from the room:
+  P0. DONE -- the pixel-dependence ablation (see F7). This was the top proposed
+      next step when this list was first drafted; it has since been run under
+      nesy for every env (F7a-h) and is no longer a TODO. Command below updated
+      to the current (nesy) config/output paths for anyone reproducing it or
+      extending it to a new env/seed -- the original example used --meta neural
+      and wrote into results/rgb/ablation/cartpole/neural_blind and
+      results/rgb/ablation/cheetah/neural_seed0, both since deleted as
+      redundant once nesy reproduced the same conclusions:
         python -m nexus_continuous.scripts.rgb_pixel_ablation \
-          --config configs/cartpole_balance_nesy_rgb.yaml --meta neural --seed 0 \
+          --config configs/cartpole_balance_nesy_rgb.yaml --meta nesy --seed 0 \
           --updates 250 --num-envs 128 --episodes 5 \
-          --save-policy runs/abl_cartpole.pkl --out results/rgb/ablation/cartpole/neural_blind
+          --save-policy runs/abl_cartpole.pkl --out results/rgb/ablation/cartpole/nesy_blind
         python -m nexus_continuous.scripts.rgb_pixel_ablation \
-          --config configs/cheetah_run_neural.yaml --meta neural --seed 0 \
+          --config configs/cheetah_run_nesy.yaml --meta nesy --seed 0 \
           --updates 250 --num-envs 128 --episodes 5 \
-          --save-policy runs/abl_cheetah.pkl --out results/rgb/ablation/cheetah/neural_seed0
+          --save-policy runs/abl_cheetah.pkl --out results/rgb/ablation/cheetah/nesy_seed0
       -> results/rgb/ablation/*/*/pixel_ablation.{json,png} (bar chart + verdict).
 
   P1. Seeds: rerun in-loop cartpole + cheetah with 3 seeds so both methods are
