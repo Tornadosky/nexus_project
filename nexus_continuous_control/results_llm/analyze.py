@@ -423,6 +423,43 @@ def plot_skill_usage(env: str, usage: dict[str, float], out_path: Path) -> None:
     fig.tight_layout()
     fig.savefig(out_path, dpi=150)
     plt.close(fig)
+    
+def plot_skill_usage_three_way(env: str, data: dict[str, Any], out_path: Path) -> None:
+    """One figure, three horizontal-bar panels: hand-written / LLM-initial / LLM-refined."""
+    _, backend = first_backend(data)
+    hand_usage = mean_skill_usage(data["hand_written"]["runs"])
+    llm_usage = mean_skill_usage(backend["llm"]["runs"])
+    curve = backend["refinement"]["curve"]
+    refined_usage = {}
+    if curve:
+        refined_usage = {
+            k.split("/", 1)[1]: float(v)
+            for k, v in curve[-1]["metrics"].items()
+            if k.startswith("skill_usage/")
+        }
+ 
+    panels = [
+        ("Hand-written", hand_usage, CONDITION_COLORS["hand_written"]),
+        ("LLM (initial)", llm_usage, CONDITION_COLORS["llm_initial"]),
+        ("LLM (refined)", refined_usage, CONDITION_COLORS["llm_refined"]),
+    ]
+    max_names = max(len(u) for _, u, _ in panels) or 1
+    fig, axes = plt.subplots(1, 3, figsize=(15, 0.5 * max_names + 1.8))
+    for ax, (title, usage, color) in zip(axes, panels):
+        names = list(usage.keys())
+        values = [usage[n] for n in names]
+        bars = ax.barh(names, values, color=color)
+        ax.set_xlim(0, 1)
+        ax.set_title(title, fontsize=11)
+        ax.set_xlabel("usage fraction")
+        for b, v in zip(bars, values):
+            ax.text(v + 0.01, b.get_y() + b.get_height() / 2, f"{v:.2f}", va="center", fontsize=8)
+        ax.spines["top"].set_visible(False)
+        ax.spines["right"].set_visible(False)
+    fig.suptitle(f"{env}: skill usage across conditions")
+    fig.tight_layout()
+    fig.savefig(out_path, dpi=150)
+    plt.close(fig)
  
  
 def plot_seed_variance(per_seed_table: list[dict[str, Any]], envs: list[str], out_path: Path) -> None:
@@ -516,9 +553,8 @@ def main() -> None:
     plot_refinement_curves(curve_table, envs, plots_dir / "refinement_curves.png")
     plot_seed_variance(per_seed_table, envs, plots_dir / "seed_variance_env_reward.png")
     for env, data in all_data.items():
-        usage = mean_skill_usage(data["hand_written"]["runs"])
         safe_env = env.replace("/", "_")
-        plot_skill_usage(env, usage, plots_dir / f"skill_usage_{safe_env}.png")
+        plot_skill_usage_three_way(env, data, plots_dir / f"skill_usage_{safe_env}.png")
     print(f"Wrote plots to {plots_dir}/")
  
     print("\nDone. Summary:")
