@@ -1115,8 +1115,12 @@ FIGURE INDEX (what exists and what each one proves)
           --save-policy runs/abl_cheetah.pkl --out results/rgb/ablation/cheetah/nesy_seed0
       -> results/rgb/ablation/*/*/pixel_ablation.{json,png} (bar chart + verdict).
 
-  P1. Seeds: rerun in-loop cartpole + cheetah with 3 seeds so both methods are
-      reported with error bars. Cheapest credibility win.
+  P1. DONE -- see F7h (2026-08-19). 3 seeds (0,1,2) run for cheetah, cartpole+fix
+      and walker+fix; all report real mean +/- std now (results/rgb/ablation/
+      seed_variance.json). Not yet extended to the blind-cartpole baseline
+      (deprioritized -- already confirmed blind 3 independent ways some other
+      way: 2 neural campaigns + this nesy seed 0) or to hopper (inconclusive
+      regardless of seed count, since its score is noise around zero).
   P2. Add a greedy deterministic eval stage to the locomotion in-loop configs so
       all in-loop numbers are eval numbers, not training returns.
   P3. Shared CNN encoder across skills (DrQ/SAC+AE style). Expected to be the
@@ -1125,9 +1129,14 @@ FIGURE INDEX (what exists and what each one proves)
       of updates, to quantify "the cost of vision" in sample efficiency terms.
   P5. HopperHop retry with a larger budget and/or a state-based warm start, to
       test whether F5 is a budget limit or a structural limit.
-  P6. Optional, only if pixels stall: an auxiliary pixel->state regression head
-      (predict qpos/qvel from the CNN latent). Chosen over reconstruction because
-      it is cheaper and better matched to control. Explicitly NOT needed so far.
+  P6. DONE, AND IT WAS NEEDED -- contrary to this item's original prediction
+      ("NOT needed so far"). Implemented as RGB_AUX_STATE_COEF (predict qpos/qvel
+      from the CNN latent, chosen over reconstruction as cheaper and better
+      matched to control) + META_DECISION_INTERVAL. This is exactly the fix in
+      F7c/F7g/F7h that rescued blind CartpoleBalance (0.670 -> 1.000 upright,
+      3/3 seeds) and WalkerWalk's 3 saturated skills (0.000% -> 32-38%
+      responsive, 3/3 seeds). The pixels did stall on those two envs; this
+      repaired it completely both times.
 
 ================================================================================
 END
