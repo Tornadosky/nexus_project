@@ -40,8 +40,8 @@ and a single 4-iteration refinement run per environment.
 | HopperHop | 0.206 ± 0.093 | 0.000 ± 0.000 | 0.000 | **−100.0%** | 0.241 ± 0.053 | 0.001 ± 0.000 | 0.000 |
 | Go1JoystickFlatTerrain | 0.0064 ± 0.0021 | ~0.0000 | ~0.0000 | **−99.99%** | 0.284 ± 0.084 | 0.037 ± 0.011 | 0.017 |
 
-![Env reward comparison](analysis_output/plots/env_reward_comparison.png)
-![Success rate comparison](analysis_output/plots/success_rate_comparison.png)
+![Env reward comparison](analysis_llm/plots/env_reward_comparison.png)
+![Success rate comparison](analysis_llm/plots/success_rate_comparison.png)
 
 **Reading this table:**
 - **CheetahRun is the one environment where the LLM is competitive out of the
@@ -112,10 +112,10 @@ and a single 4-iteration refinement run per environment.
 | HopperHop | energy_efficient (0.37) | Optimal Locomotion (0.58) | (see plot) |
 | Go1JoystickFlatTerrain | stand (0.36) | BaseHeightSafety (0.86) | (see plot) |
 
-![WalkerWalk skill usage across conditions](analysis_output/plots/skill_usage_WalkerWalk.png)
+![WalkerWalk skill usage across conditions](analysis_llm/plots/skill_usage_WalkerWalk.png)
 
 Per-environment three-panel usage charts for all five environments are in
-`analysis_output/plots/skill_usage_<Env>.png`.
+`analysis_llm/plots/skill_usage_<Env>.png`.
 
 **Observations:**
 - **CartpoleBalance's LLM-initial skillset collapses to a single skill**:
@@ -140,7 +140,7 @@ Per-environment three-panel usage charts for all five environments are in
 
 ## 4. Refinement loop
 
-![Refinement curves](analysis_output/plots/refinement_curves.png)
+![Refinement curves](analysis_llm/plots/refinement_curves.png)
 
 | Env | iter 0 reward → iter 3 reward | iter 0 → iter 3 skills | Monotonic improvement? |
 |---|---|---|---|
