@@ -59,7 +59,7 @@ def main(argv: list[str] | None = None) -> None:
     from nexus_continuous.utils import load_config
     from nexus_continuous.algorithms.hierarchical_ac_pqn_playground import run_training
     from nexus_continuous.networks import MetaQ
-    from nexus_continuous.vision import VisionSkillActor
+    from nexus_continuous.vision import build_rgb_actor_fns
     from nexus_continuous.policies.registry import load_policy_module
     from nexus_continuous.envs.playground_adapter import (
         build_playground_env,
@@ -81,11 +81,30 @@ def main(argv: list[str] | None = None) -> None:
     cfg["NUM_ENVS"] = args.num_envs
     cfg["TOTAL_TIMESTEPS"] = args.num_envs * cfg.get("NUM_STEPS", 64) * args.updates
     env_name = cfg["ENV_NAME"]
+    # A shared CNN trunk stores the actor as {"encoder", "heads"} instead of one
+    # stacked VisionSkillActor tree, so the rollout below must be rebuilt to match.
+    shared_encoder = bool(cfg.get("RGB_SHARED_ENCODER", False))
+    # Lever B: with RGB_META_SEES_PIXELS the meta-Q was trained on
+    # [state, latent], so the rollout has to feed it the same concatenation.
+    meta_sees_pixels = bool(cfg.get("RGB_META_SEES_PIXELS", False))
+    if meta_sees_pixels and not shared_encoder:
+        raise ValueError(
+            "RGB_META_SEES_PIXELS requires RGB_SHARED_ENCODER (no single latent "
+            "exists with one private encoder per skill)."
+        )
     print(f"jax {jax.__version__} {jax.devices()} | env {env_name} | meta {args.meta} | in-loop {args.updates}u")
     if args.load_policy:
         import pickle as _pickle
         print(f"[1] loading saved in-loop policy from {args.load_policy} (no retraining)")
         _blob = _pickle.loads(Path(args.load_policy).read_bytes())
+        _blob_shared = bool(_blob.get("rgb_shared_encoder", False))
+        if _blob_shared != shared_encoder:
+            raise ValueError(
+                f"{args.load_policy} was saved with rgb_shared_encoder="
+                f"{_blob_shared} but {args.config} has RGB_SHARED_ENCODER="
+                f"{shared_encoder}. The two actor parameter layouts are "
+                "incompatible; pass the config the policy was trained with."
+            )
         output = None
         actor_params = jax.tree_util.tree_map(jnp.asarray, _blob["actor_params"])
         meta_params = (None if _blob["meta_params"] is None
@@ -133,10 +152,14 @@ def main(argv: list[str] | None = None) -> None:
     step_fn = jax.jit(env.step)
     normalize_obs = bool(cfg.get("NORMALIZE_OBS", True))
 
-    vactor = VisionSkillActor(
+    # aux_state_dim=0 on purpose: the auxiliary pixel->state head is a TRAINING
+    # loss only and is never evaluated here. Flax ignores the extra `aux_state`
+    # entries a trained policy may carry, so this stays correct either way.
+    rgb_fns = build_rgb_actor_fns(
         action_dim=action_dim, action_scale=action_scale, action_bias=action_bias,
         hidden_sizes=tuple(cfg.get("ACTOR_HIDDEN_SIZES", (256, 256))),
         embedding_dim=int(cfg.get("RGB_EMBED_DIM", 128)),
+        shared_encoder=shared_encoder,
     )
     meta_q = MetaQ(
         num_skills=num_skills, hidden_sizes=tuple(cfg.get("META_HIDDEN_SIZES", (256, 256))),
@@ -158,11 +181,16 @@ def main(argv: list[str] | None = None) -> None:
         px = get_actor_pixels(obs)               # [1, 64, 64, 3]
         pol = get_policy_obs(obs)
         proprio = oa[..., :0]                    # pixels-only (RGB_PROPRIO=none)
-        all_a = jax.vmap(lambda p: vactor.apply({"params": p}, px, proprio))(actor_params)  # [N,1,A]
+        all_a = rgb_fns.apply(actor_params, px, proprio)                                    # [N,1,A]
         if args.meta == "symbolic":
             skill = jnp.atleast_1d(jnp.asarray(policy_module.symbolic_meta_policy(pol), jnp.int32))
         else:
-            qm = jnp.atleast_2d(meta_q.apply({"params": meta_params}, oa))
+            meta_in = (
+                jnp.concatenate([oa, rgb_fns.encode(actor_params, px)], axis=-1)
+                if meta_sees_pixels  # lever B: same [state, latent] order as the trainer
+                else oa
+            )
+            qm = jnp.atleast_2d(meta_q.apply({"params": meta_params}, meta_in))
             if args.meta == "nesy":
                 mask = jnp.atleast_2d(jnp.asarray(policy_module.skill_mask(pol), bool))
                 any_valid = jnp.any(mask, axis=-1, keepdims=True)

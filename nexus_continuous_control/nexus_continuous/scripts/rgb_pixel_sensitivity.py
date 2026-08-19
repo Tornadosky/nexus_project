@@ -54,7 +54,7 @@ def main(argv: list[str] | None = None) -> None:
 
     from nexus_continuous.utils import load_config
     from nexus_continuous.networks import MetaQ
-    from nexus_continuous.vision import VisionSkillActor
+    from nexus_continuous.vision import build_rgb_actor_fns
     from nexus_continuous.policies.registry import load_policy_module
     from nexus_continuous.envs.playground_adapter import (
         build_playground_env, get_actor_obs, get_actor_pixels, get_policy_obs,
@@ -72,6 +72,35 @@ def main(argv: list[str] | None = None) -> None:
     cfg["USE_RGB"] = True
     cfg["META_POLICY_TYPE"] = args.meta
     env_name = cfg["ENV_NAME"]
+    # A shared CNN trunk stores the actor as {"encoder", "heads"} instead of one
+    # stacked VisionSkillActor tree. Cross-check the blob's stamp against the
+    # config so a wrong --config fails here rather than silently reporting
+    # "effectively blind" from an unreadable parameter tree.
+    shared_encoder = bool(cfg.get("RGB_SHARED_ENCODER", False))
+    blob_shared = bool(blob.get("rgb_shared_encoder", False))
+    if blob_shared != shared_encoder:
+        raise ValueError(
+            f"{args.load_policy} was saved with rgb_shared_encoder={blob_shared} "
+            f"but {args.config} has RGB_SHARED_ENCODER={shared_encoder}. The two "
+            "actor parameter layouts are incompatible; pass the config the "
+            "policy was trained with."
+        )
+    # Lever B: a meta-Q trained with RGB_META_SEES_PIXELS has a first Dense kernel
+    # of width state_dim + RGB_EMBED_DIM, so the flag must match the blob or the
+    # meta cannot be reconstructed.
+    meta_sees_pixels = bool(cfg.get("RGB_META_SEES_PIXELS", False))
+    blob_meta_px = bool(blob.get("rgb_meta_sees_pixels", False))
+    if blob_meta_px != meta_sees_pixels:
+        raise ValueError(
+            f"{args.load_policy} was saved with rgb_meta_sees_pixels={blob_meta_px} "
+            f"but {args.config} has RGB_META_SEES_PIXELS={meta_sees_pixels}; the "
+            "meta-Q input widths differ (state vs state+RGB_EMBED_DIM)."
+        )
+    if meta_sees_pixels and not shared_encoder:
+        raise ValueError(
+            "RGB_META_SEES_PIXELS requires RGB_SHARED_ENCODER (no single latent "
+            "exists with one private encoder per skill)."
+        )
     eval_cfg = dict(cfg)
     eval_cfg["NORMALIZE_OBS"] = False
     eval_cfg["NUM_ENVS"] = 1
@@ -86,11 +115,15 @@ def main(argv: list[str] | None = None) -> None:
     num_skills = int(policy_module.NUM_SKILLS)
     skill_names = list(getattr(policy_module, "SKILL_NAMES",
                                [f"skill{i}" for i in range(num_skills)]))
-    vactor = VisionSkillActor(
+    # aux_state_dim=0 on purpose: the auxiliary pixel->state head is a TRAINING
+    # loss only and is never evaluated here. Flax ignores the extra `aux_state`
+    # entries a trained blob may carry, so this stays correct either way.
+    rgb_fns = build_rgb_actor_fns(
         action_dim=int(bundle.action_dim), action_scale=(ahi - alo) / 2.0,
         action_bias=(ahi + alo) / 2.0,
         hidden_sizes=tuple(cfg.get("ACTOR_HIDDEN_SIZES", (256, 256))),
         embedding_dim=int(cfg.get("RGB_EMBED_DIM", 128)),
+        shared_encoder=shared_encoder,
     )
     meta_q = MetaQ(num_skills=num_skills,
                    hidden_sizes=tuple(cfg.get("META_HIDDEN_SIZES", (256, 256))),
@@ -108,7 +141,7 @@ def main(argv: list[str] | None = None) -> None:
     def all_skill_actions(px):
         """Every skill's action for one pixel stack -> [num_skills, 1, A]."""
         proprio = jnp.zeros((px.shape[0], 0), jnp.float32)
-        return jax.vmap(lambda p: vactor.apply({"params": p}, px, proprio))(actor_params)
+        return rgb_fns.apply(actor_params, px, proprio)
 
     @jax.jit
     def pick_skill(obs):
@@ -116,6 +149,13 @@ def main(argv: list[str] | None = None) -> None:
         pol = get_policy_obs(obs)
         if args.meta == "symbolic":
             return jnp.atleast_1d(jnp.asarray(policy_module.symbolic_meta_policy(pol), jnp.int32))
+        if meta_sees_pixels:
+            # Lever B: the meta-Q was trained on [state, latent] (same order as
+            # the trainer's `_meta_values`). This probe only ever feeds it the real
+            # frames; the corruption experiments live in rgb_pixel_ablation.py.
+            oa = jnp.concatenate(
+                [oa, rgb_fns.encode(actor_params, get_actor_pixels(obs))], axis=-1
+            )
         qm = jnp.atleast_2d(meta_q.apply({"params": meta_params}, oa))
         if args.meta == "nesy":
             mask = jnp.atleast_2d(jnp.asarray(policy_module.skill_mask(pol), bool))

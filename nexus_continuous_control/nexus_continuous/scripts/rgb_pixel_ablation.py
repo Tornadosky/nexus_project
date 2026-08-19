@@ -37,6 +37,29 @@ Reading the result:
                                       necessary, not just the skill switching.
   * shuffle_frames << intact       -> it uses motion, not just a static pose.
 
+ATTRIBUTION UNDER RGB_META_SEES_PIXELS (lever B)
+------------------------------------------------
+All six conditions above are designed to isolate the ACTOR, and that works only
+because skill selection classically never touches pixels: the meta reads the
+privileged state, so corrupting the image can only degrade the actor and
+`performance_drop_fraction` is a clean measure of actor blindness.
+
+With `RGB_META_SEES_PIXELS: true` the meta-Q also reads the shared CNN latent.
+Feeding it the corrupted stack would degrade the meta as well, and the drop
+fractions would stop measuring actor blindness (`const_action` would likewise
+stop being comparable: it holds the actor fixed but would silently also change
+what the meta saw). So this script HOLDS THE META'S PIXELS INTACT: the meta-Q
+always encodes the real, un-corrupted frames while the skill actor receives the
+corrupted stack. Every condition therefore keeps varying exactly one thing --
+the actor's view -- and the numbers stay comparable to the pre-lever-B runs.
+
+This is recorded in the emitted JSON as `meta_pixels_held_intact`, alongside
+`rgb_meta_sees_pixels`, so no result can be read out of context. Note what this
+does and does not measure: it quantifies the ACTOR's pixel dependence in a
+meta-sees-pixels hierarchy. It does NOT measure the hierarchy's overall pixel
+dependence -- for that, corrupt both (not implemented here, deliberately, since
+the resulting number is not comparable with any earlier run).
+
     python -m nexus_continuous.scripts.rgb_pixel_ablation \\
         --config configs/cartpole_balance_nesy_rgb.yaml --meta nesy --seed 0 \\
         --updates 250 --num-envs 128 --episodes 5 \\
@@ -102,7 +125,7 @@ def main(argv: list[str] | None = None) -> None:
     from nexus_continuous.utils import load_config
     from nexus_continuous.algorithms.hierarchical_ac_pqn_playground import run_training
     from nexus_continuous.networks import MetaQ
-    from nexus_continuous.vision import VisionSkillActor
+    from nexus_continuous.vision import build_rgb_actor_fns
     from nexus_continuous.policies.registry import load_policy_module
     from nexus_continuous.envs.playground_adapter import (
         build_playground_env,
@@ -124,6 +147,27 @@ def main(argv: list[str] | None = None) -> None:
     env_name = cfg["ENV_NAME"]
     is_cartpole = env_name == "CartpoleBalance"
 
+    # One shared CNN trunk across the skills changes the actor's PARAMETER LAYOUT
+    # ({"encoder", "heads"} instead of one stacked VisionSkillActor tree), so a
+    # saved policy is only readable by a matching flag. Stamped into the blob
+    # below and checked on load -- the two layouts must never be mixed silently.
+    shared_encoder = bool(cfg.get("RGB_SHARED_ENCODER", False))
+
+    # LEVER B. See the "ATTRIBUTION" section of the module docstring: when the
+    # meta-Q reads the CNN latent, it is given the INTACT frames so that every
+    # condition still varies only the ACTOR's view.
+    meta_sees_pixels = bool(cfg.get("RGB_META_SEES_PIXELS", False))
+    if meta_sees_pixels and not shared_encoder:
+        raise ValueError(
+            "RGB_META_SEES_PIXELS requires RGB_SHARED_ENCODER (there is no single "
+            "latent with one private encoder per skill); this mirrors the trainer's "
+            "guard in hierarchical_ac_pqn_playground.make_train."
+        )
+    if meta_sees_pixels:
+        print("[note] RGB_META_SEES_PIXELS: the meta-Q reads the CNN latent. It is "
+              "fed the INTACT frames in every condition, so the drop fractions "
+              "keep measuring ACTOR blindness only (see the docstring).")
+
     proprio_mode = str(cfg.get("RGB_PROPRIO", "none")).lower()
     if proprio_mode != "none":
         print(f"[WARN] RGB_PROPRIO={proprio_mode!r}: the actor also reads privileged "
@@ -139,6 +183,29 @@ def main(argv: list[str] | None = None) -> None:
     if args.load_policy:
         print(f"[1] loading policy from {args.load_policy}")
         blob = pickle.loads(Path(args.load_policy).read_bytes())
+        # Fail loudly: old (unshared) and new (shared-trunk) actor trees are
+        # mutually unreadable, and a silent mismatch would produce a plausible
+        # but meaningless ablation.
+        blob_shared = bool(blob.get("rgb_shared_encoder", False))
+        if blob_shared != shared_encoder:
+            raise ValueError(
+                f"{args.load_policy} was saved with rgb_shared_encoder="
+                f"{blob_shared} but this config has RGB_SHARED_ENCODER="
+                f"{shared_encoder}. The two actor parameter layouts are "
+                "incompatible; use the config the policy was trained with."
+            )
+        # Same reasoning for lever B: a meta-Q trained on [state, latent] has a
+        # first Dense kernel of width state_dim + RGB_EMBED_DIM, so mixing the two
+        # would either crash on a shape or (worse) be reconstructed wrongly.
+        blob_meta_px = bool(blob.get("rgb_meta_sees_pixels", False))
+        if blob_meta_px != meta_sees_pixels:
+            raise ValueError(
+                f"{args.load_policy} was saved with rgb_meta_sees_pixels="
+                f"{blob_meta_px} but this config has RGB_META_SEES_PIXELS="
+                f"{meta_sees_pixels}. The meta-Q input widths differ "
+                "(state vs state+RGB_EMBED_DIM); use the config the policy was "
+                "trained with."
+            )
         actor_params = jax.tree_util.tree_map(jnp.asarray, blob["actor_params"])
         meta_params = (None if blob["meta_params"] is None
                        else jax.tree_util.tree_map(jnp.asarray, blob["meta_params"]))
@@ -167,6 +234,10 @@ def main(argv: list[str] | None = None) -> None:
                 "normalization_stats": jax.device_get(stats),
                 "final_train_return": train_return,
                 "env": env_name, "meta": args.meta, "seed": args.seed,
+                # Which actor parameter layout this blob holds (see load above).
+                "rgb_shared_encoder": shared_encoder,
+                # Whether the meta-Q was trained on [state, latent] (lever B).
+                "rgb_meta_sees_pixels": meta_sees_pixels,
             }))
             print(f"    saved policy -> {args.save_policy}")
         # Training curves, so a finished run is reconstructable without a retrain.
@@ -219,10 +290,14 @@ def main(argv: list[str] | None = None) -> None:
     skill_names = list(getattr(policy_module, "SKILL_NAMES",
                                [f"skill{i}" for i in range(num_skills)]))
 
-    vactor = VisionSkillActor(
+    # aux_state_dim=0 on purpose: the auxiliary pixel->state head is a TRAINING
+    # loss only and is never evaluated here. Flax ignores the extra `aux_state`
+    # entries a trained blob may carry, so this stays correct either way.
+    rgb_fns = build_rgb_actor_fns(
         action_dim=action_dim, action_scale=(ahi - alo) / 2.0, action_bias=(ahi + alo) / 2.0,
         hidden_sizes=tuple(cfg.get("ACTOR_HIDDEN_SIZES", (256, 256))),
         embedding_dim=int(cfg.get("RGB_EMBED_DIM", 128)),
+        shared_encoder=shared_encoder,
     )
     meta_q = MetaQ(
         num_skills=num_skills, hidden_sizes=tuple(cfg.get("META_HIDDEN_SIZES", (256, 256))),
@@ -247,12 +322,23 @@ def main(argv: list[str] | None = None) -> None:
 
     @jax.jit
     def select_skill(obs):
-        """The meta-policy: unchanged, always on privileged state."""
+        """The meta-policy. Privileged state, plus the INTACT-pixel latent if the
+        policy was trained with RGB_META_SEES_PIXELS.
+
+        `obs` here is always the real observation -- the corrupted stack lives in
+        the caller's local `px_in` and is handed only to `act_from_pixels`. That is
+        what keeps all six conditions actor-isolating; see the module docstring.
+        """
         oa = _norm_meta(obs)
         pol = get_policy_obs(obs)
         if args.meta == "symbolic":
             return jnp.atleast_1d(
                 jnp.asarray(policy_module.symbolic_meta_policy(pol), jnp.int32))
+        if meta_sees_pixels:
+            # Same [state, latent] order the trainer's `_meta_values` uses.
+            oa = jnp.concatenate(
+                [oa, rgb_fns.encode(actor_params, get_actor_pixels(obs))], axis=-1
+            )
         qm = jnp.atleast_2d(meta_q.apply({"params": meta_params}, oa))
         if args.meta == "nesy":
             mask = jnp.atleast_2d(jnp.asarray(policy_module.skill_mask(pol), bool))
@@ -264,7 +350,7 @@ def main(argv: list[str] | None = None) -> None:
     def act_from_pixels(obs, px, skill):
         """The skill actor. Pixels are an explicit argument so we can corrupt them."""
         proprio = _actor_proprio(_norm_meta(obs))
-        all_a = jax.vmap(lambda p: vactor.apply({"params": p}, px, proprio))(actor_params)
+        all_a = rgb_fns.apply(actor_params, px, proprio)
         return all_a[skill, jnp.arange(all_a.shape[1])]
 
     # ---- Stage 3: one rollout under a given pixel condition ----
@@ -404,6 +490,19 @@ def main(argv: list[str] | None = None) -> None:
         "updates": args.updates, "num_envs": args.num_envs,
         "episodes": args.episodes, "eval_steps": args.eval_steps,
         "rgb_proprio": proprio_mode,
+        "rgb_shared_encoder": shared_encoder,
+        # LEVER B attribution, recorded so a number can never be read out of
+        # context: when the meta-Q reads the CNN latent it was fed the INTACT
+        # frames in every condition, so `performance_drop_fraction` measures the
+        # ACTOR's pixel dependence, not the whole hierarchy's.
+        "rgb_meta_sees_pixels": meta_sees_pixels,
+        "meta_pixels_held_intact": meta_sees_pixels,
+        "attribution_note": (
+            "meta-Q fed INTACT pixels; only the skill actor's stack was corrupted, "
+            "so every condition isolates the actor"
+            if meta_sees_pixels
+            else "meta-Q is state-only (classic setup); no pixel path above the actor"
+        ),
         "final_train_return": train_return,
         "performance_drop_fraction": drops,
         "actor_uses_pixels": uses_pixels,
@@ -427,6 +526,10 @@ def main(argv: list[str] | None = None) -> None:
           f"{100 * drops['const_action']:.1f}%)")
     print(f"  uses MOTION, not just a pose   : {'YES' if verdict['motion_sensitive'] else 'weak/no'}"
           "   (frame-shuffle costs >15%)")
+    if meta_sees_pixels:
+        print("  ATTRIBUTION: the meta-Q saw the INTACT frames throughout, so the "
+              "numbers above\n               are the ACTOR's pixel dependence, not "
+              "the whole hierarchy's.")
 
     # ---- bar chart ----
     fig = plt.figure(figsize=(7.5, 4.2))

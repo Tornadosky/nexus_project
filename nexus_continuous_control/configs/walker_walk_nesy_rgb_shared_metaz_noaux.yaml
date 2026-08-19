@@ -1,0 +1,136 @@
+# WalkerWalk RGB: LEVER A + LEVER B, and NO auxiliary crutch.
+#
+#     One shared CNN trunk (lever A) + the meta-Q reads its latent (lever B),
+#     with RGB_AUX_STATE_COEF turned OFF.
+#
+# THE QUESTION
+# ------------
+# Every RGB arm so far kept the whole hierarchy ABOVE the skill actors blind: the
+# meta-Q picked a skill from the privileged state alone. This arm asks whether
+# letting the "boss" see the picture too fixes the blindness that the 2026-08-17
+# ablation found -- WITHOUT the RGB_AUX_STATE_COEF crutch, which hands the encoder
+# a privileged-state regression target a real pixel agent would not have and so
+# weakens the "skills learned from pixels" claim.
+#
+# Two distinct effects are switched on together here, and only one of them is new:
+#   * the meta's DECISION improves, because [state, latent] is strictly more
+#     information than [state] (the camera sees things the 24-dim walker state
+#     does not summarise for a *discrete* chooser);
+#   * the meta's TD error becomes a SECOND training signal on the shared encoder,
+#     on top of the skill actors' deterministic policy gradient -- and this one is
+#     driven by the ENVIRONMENT reward rather than the hand-written skill rewards.
+# To separate them, re-run this exact file with RGB_META_LATENT_STOP_GRAD: true;
+# that keeps the improved decision and removes the gradient.
+#
+# WHY WALKER IS THE TESTBED
+# -------------------------
+# Its blind baseline has the sharpest WITHIN-RUN contrast of any env we have:
+# three of the four skills produce 0.000% action spread across completely
+# different frames (bit-identical, tanh-saturated output) while the fourth,
+# energy_efficient, produces 33.85%. One run therefore contains both the failure
+# and the success case, so a fix cannot be confused with between-run variance.
+#
+# THE STATE IS KEPT, NOT REPLACED
+# -------------------------------
+# RGB_META_SEES_PIXELS appends the latent: the meta input is
+# concatenate([state, latent], -1). The hand-written symbolic precondition mask
+# still reads the same privileged state, so the NeSy interpretability story is
+# untouched -- this is an ADDITION to the boss's input, not a replacement of it.
+#
+# WHAT TO WATCH
+# -------------
+#   train/rgb/pixel_sensitivity   ~0 = still blind. Must climb well above 0.01.
+#                                 Expect the three saturated skills to move first.
+#   train/meta_encoder_grad_norm  NEW. The norm of the meta's TD gradient w.r.t.
+#                                 the shared encoder, before it is folded into the
+#                                 actor's gradient. A FLAT ZERO here means the
+#                                 second signal is not arriving and the arm is
+#                                 answering a different question than intended.
+#   train/actor_grad_norm         now also CONTAINS the meta's encoder gradient,
+#                                 because the encoder lives in the actor's params
+#                                 and the sum goes through the actor's
+#                                 clip_by_global_norm(1.0). Compare it against
+#                                 train/meta_encoder_grad_norm: if the actor's own
+#                                 norm dwarfs it, the clip is shrinking the meta's
+#                                 contribution too and the second signal is weak
+#                                 in practice -- raise MAX_GRAD_NORM before
+#                                 concluding lever B does nothing.
+#
+# COMPARE AGAINST, SAME SEED:
+#   walker_walk_nesy_rgb_aux.yaml                  unshared + aux (the shipped fix)
+#   this file + RGB_SHARED_ENCODER only            lever A alone
+#   this file + RGB_META_LATENT_STOP_GRAD: true    lever B without the gradient
+#
+# NOTE FOR THE ABLATION: rgb_pixel_ablation.py feeds the meta the INTACT frames
+# while corrupting only the actor's stack, so its six conditions keep measuring
+# ACTOR blindness and stay comparable with the pre-lever-B runs. It records
+# meta_pixels_held_intact in the emitted JSON.
+ALG_NAME: nexus_ac_pqn
+ENV_NAME: WalkerWalk
+POLICY: walker_walk
+META_POLICY_TYPE: nesy
+
+# RGB extension
+USE_RGB: true
+RGB_EMBED_DIM: 128
+RGB_EPISODE_LENGTH: 250
+RGB_PROPRIO: none
+RGB_AUGMENT: true
+RGB_AUG_PAD: 4
+
+# --- the levers ---
+# No aux crutch: this arm has to work on gradient signal alone.
+RGB_AUX_STATE_COEF: 0.0
+RGB_SHARED_ENCODER: true         # lever A: ONE CNN for all 4 skills
+RGB_META_SEES_PIXELS: true       # lever B: meta-Q input = [state, latent]
+# RGB_META_LATENT_STOP_GRAD: true  # flip on for the "reads but does not train" arm
+RGB_MONITOR_SENSITIVITY: true
+META_DECISION_INTERVAL: 4
+
+# NUM_ENVS/TOTAL_TIMESTEPS are overridden by rgb_pixel_ablation.py's
+# --num-envs/--updates flags; kept here only for direct (non-ablation) runs.
+TOTAL_TIMESTEPS: 2048000       # 128 envs x 64 steps x 250 updates
+NUM_ENVS: 128
+NUM_STEPS: 64
+NUM_EPOCHS: 4
+NUM_MINIBATCHES: 64
+NUM_SEEDS: 1
+SEED: 0
+
+GAMMA: 0.99
+LAMBDA: 0.65
+SKILL_LAMBDA: 0.65
+META_LAMBDA: 0.80
+
+LR: 0.0003
+LR_START: 0.0003
+LR_END: 0.00005
+LR_DECAY: 1.0
+ANNEAL_LR: true
+MAX_GRAD_NORM: 1.0
+
+ACTOR_HIDDEN_SIZES: [256, 256]
+CRITIC_HIDDEN_SIZES: [256, 256]
+META_HIDDEN_SIZES: [128, 128]
+NUM_CRITICS: 2
+NORM_TYPE: layer_norm
+ACTIVATION: relu
+
+NOISE_START: 0.35
+NOISE_FINISH: 0.03
+NOISE_DECAY: 0.80
+META_EPS_START: 1.0
+META_EPS_FINISH: 0.02
+META_EPS_DECAY: 0.60
+
+NORMALIZE_OBS: true
+NORMALIZE_REWARD: false
+BEHAVIOR_PENALTY_COEFF: 0.0005
+ACTOR_UPDATE_MODE: all_states
+
+EVAL_AFTER_TRAIN: true
+EVAL_NUM_ENVS: 64
+EVAL_NUM_EPISODES: 128
+
+PRINT_EVERY: 0
+SAVE_PATH: null

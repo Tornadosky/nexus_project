@@ -34,7 +34,7 @@ from nexus_continuous.envs.playground_adapter import (
     get_policy_obs,
 )
 from nexus_continuous.networks import MetaQ, SkillActor, SkillCritic
-from nexus_continuous.vision import VisionSkillActor
+from nexus_continuous.vision import build_rgb_actor_fns
 from nexus_continuous.policies.registry import load_policy_module
 from nexus_continuous.returns import q_lambda_returns, smooth_l1_loss
 from nexus_continuous.train_state import CounterTrainState, NexusTrainState
@@ -346,15 +346,85 @@ def make_train(config: dict[str, Any]) -> Callable[[jax.Array], NexusTrainOutput
     # pixels change? Logged as rgb/pixel_sensitivity so a blind run is visible at
     # update ~20 instead of after a 45-minute job.
     rgb_monitor = use_rgb and bool(config.get("RGB_MONITOR_SENSITIVITY", True))
+    # LEVER A: one CNN encoder shared by all N skill actors instead of N private
+    # ones. Opt-in and OFF by default, so every existing state and RGB run keeps
+    # a byte-identical parameter tree and PRNG-consumption order. Two reasons to
+    # turn it on: (a) the shared trunk receives the summed policy gradient of all
+    # N heads instead of a 1/N share -- the hypothesised cure for the blind
+    # encoder that today needs RGB_AUX_STATE_COEF to see; (b) it is a strict
+    # compute win, because the unshared path pushes the SAME image through N
+    # independent CNNs on every single step.
+    if bool(config.get("RGB_SHARED_ENCODER", False)) and not use_rgb:
+        raise ValueError(
+            "RGB_SHARED_ENCODER shares one CNN encoder across the PIXEL skill "
+            "actors and has no meaning without USE_RGB; set USE_RGB: true or "
+            "remove RGB_SHARED_ENCODER."
+        )
+    rgb_shared_encoder = use_rgb and bool(config.get("RGB_SHARED_ENCODER", False))
+    embed_dim = int(config.get("RGB_EMBED_DIM", 128))
+    # LEVER B: let the meta-Q -- the "boss" that decides WHICH skill acts -- see
+    # the pixels too. Until now the entire hierarchy above the skill actors was
+    # blind by construction: the meta chose a skill from the privileged state
+    # alone. Under this flag its input becomes
+    #
+    #     concatenate([state, latent], axis=-1)
+    #
+    # i.e. the shared CNN latent APPENDED to the state vector it already had.
+    #
+    # The state is KEPT, not replaced. That is deliberate and load-bearing: the
+    # hand-written symbolic precondition mask (`_skill_mask(policy_obs)`) and the
+    # NeSy diagnostics keep operating on exactly the same quantities as before,
+    # so interpretability survives the change. Appending rather than prepending
+    # is equally deliberate -- every existing state component keeps the SAME
+    # column index, so ACTOR_OBS_INDICES-style index bookkeeping, saved analyses
+    # and the first-Dense-kernel shape assertions stay meaningful.
+    #
+    # Requires RGB_SHARED_ENCODER: with N private per-skill encoders there is no
+    # single latent for a skill-agnostic meta-Q to read (which one of the N would
+    # it be? -- the choice is precisely what the meta is trying to make).
+    if bool(config.get("RGB_META_SEES_PIXELS", False)) and not use_rgb:
+        raise ValueError(
+            "RGB_META_SEES_PIXELS feeds the CNN latent to the meta-Q and has no "
+            "meaning without USE_RGB (there are no pixels); set USE_RGB: true or "
+            "remove RGB_META_SEES_PIXELS."
+        )
+    if bool(config.get("RGB_META_SEES_PIXELS", False)) and not rgb_shared_encoder:
+        raise ValueError(
+            "RGB_META_SEES_PIXELS requires RGB_SHARED_ENCODER: with one private "
+            "CNN encoder per skill there is no single latent the skill-agnostic "
+            "meta-Q could read; set RGB_SHARED_ENCODER: true or remove "
+            "RGB_META_SEES_PIXELS."
+        )
+    rgb_meta_sees_pixels = use_rgb and bool(config.get("RGB_META_SEES_PIXELS", False))
+    # Does the meta's TD gradient reach the shared encoder, or does the meta only
+    # READ it? These are two genuinely different experiments and conflating them
+    # would make the result uninterpretable:
+    #   flag off (default) -> the meta's TD error also TRAINS the CNN. A second,
+    #                         env-reward-driven signal on top of the skill actors'
+    #                         policy gradient -- the candidate cure for the blind
+    #                         encoder of 2026-08-17.
+    #   flag on            -> `jax.lax.stop_gradient` on the latent. The meta
+    #                         benefits from perception without shaping it, which
+    #                         isolates "seeing helps the boss decide" from
+    #                         "the boss's gradient helps the eyes develop".
+    rgb_meta_latent_stop_grad = rgb_meta_sees_pixels and bool(
+        config.get("RGB_META_LATENT_STOP_GRAD", False)
+    )
+    rgb_fns = None
     if use_rgb:
-        actor = VisionSkillActor(
+        rgb_fns = build_rgb_actor_fns(
             action_dim=action_dim,
             action_scale=action_scale,
             action_bias=action_bias,
             hidden_sizes=tuple(config.get("ACTOR_HIDDEN_SIZES", (256, 256))),
-            embedding_dim=int(config.get("RGB_EMBED_DIM", 128)),
+            embedding_dim=embed_dim,
+            # With a shared trunk the aux head lands on the TRUNK, not on each
+            # skill: its regression target (the privileged state) is
+            # skill-independent, so N copies would be N redundant solutions.
             aux_state_dim=(_require_aux_dim(env_bundle) if rgb_aux_coef > 0 else 0),
+            shared_encoder=rgb_shared_encoder,
         )
+        actor = rgb_fns.actor if rgb_fns.actor is not None else rgb_fns.head
     else:
         actor = SkillActor(
             action_dim=action_dim,
@@ -394,6 +464,12 @@ def make_train(config: dict[str, Any]) -> Callable[[jax.Array], NexusTrainOutput
         return jnp.min(vals, axis=0) if critic_agg == "min" else jnp.mean(vals, axis=0)
 
     def _actor_apply(actor_params, obs_actor, obs_pixels=None):
+        """All skills' actions, [num_skills, batch, action_dim].
+
+        The signature is deliberately identical in both RGB layouts (private CNN
+        per skill vs one shared trunk) so no call site has to know which is live;
+        `rgb_fns.apply` branches internally and, when shared, runs the CNN ONCE.
+        """
         if use_rgb:
             if obs_pixels is None:
                 raise ValueError(
@@ -401,9 +477,37 @@ def make_train(config: dict[str, Any]) -> Callable[[jax.Array], NexusTrainOutput
                     "Every RGB-mode actor call must pass obs_pixels=get_actor_pixels(obs)."
                 )
             proprio = _actor_proprio(obs_actor)
-            return jax.vmap(lambda p: actor.apply({"params": p}, obs_pixels, proprio))(actor_params)
+            return rgb_fns.apply(actor_params, obs_pixels, proprio)
         obs_actor_restricted = _actor_state_obs(obs_actor)
         return jax.vmap(lambda p: actor.apply({"params": p}, obs_actor_restricted))(actor_params)
+
+    def _encode(actor_params, obs_pixels):
+        """The CNN latent: [batch, E] with a shared trunk, [N, batch, E] without.
+
+        Not needed by the current losses -- exposed because the shared trunk is
+        the natural place to hang further latent-level objectives (lever B).
+        """
+        if not use_rgb:
+            raise ValueError("_encode is only defined in USE_RGB mode")
+        return rgb_fns.encode(actor_params, obs_pixels)
+
+    def _meta_latent(actor_params, obs_pixels):
+        """The latent the meta-Q consumes, or None when RGB_META_SEES_PIXELS is off.
+
+        `actor_params` only has to carry the ``"encoder"`` subtree: the flag
+        requires RGB_SHARED_ENCODER, so `rgb_fns.encode` is the shared closure and
+        reads nothing else. The meta loss exploits that to pass a one-key dict of
+        the params it is differentiating (see `meta_loss_fn`).
+
+        Inside `jax.jit` the rollout paths compute this latent from the same
+        pixels the skill actors already encoded, so XLA's common-subexpression
+        elimination collapses the two CNN passes into one; no explicit plumbing of
+        the latent out of `_actor_apply` is needed to keep the cost at one pass.
+        """
+        if not rgb_meta_sees_pixels:
+            return None
+        latent = _encode(actor_params, obs_pixels)
+        return jax.lax.stop_gradient(latent) if rgb_meta_latent_stop_grad else latent
 
     def _critic_values_all_skills(critic_params, obs_critic, action):
         """Return mean critic values [batch, num_skills] for an executed action."""
@@ -422,7 +526,25 @@ def make_train(config: dict[str, Any]) -> Callable[[jax.Array], NexusTrainOutput
 
         return jax.vmap(one_skill)(critic_params)
 
-    def _meta_values(meta_params, obs_actor):
+    def _meta_values(meta_params, obs_actor, latent=None):
+        """Q(state[, latent]) over the skills, [batch, num_skills].
+
+        LEVER B: under RGB_META_SEES_PIXELS the meta-Q input is
+        ``concatenate([state, latent], axis=-1)``. The ORDER IS PART OF THE
+        CONTRACT -- state first, latent appended -- so that every existing state
+        component keeps the column index it always had and nothing that indexes
+        into the meta's input (or asserts on its first Dense kernel's shape) has
+        to change. The state is NOT replaced: the symbolic mask and the NeSy
+        diagnostics must keep reading the same privileged state as before.
+        """
+        if rgb_meta_sees_pixels:
+            if latent is None:
+                raise ValueError(
+                    "RGB_META_SEES_PIXELS is set but _meta_values was called "
+                    "without a latent. Every meta-Q call site must pass "
+                    "latent=_meta_latent(actor_params, get_actor_pixels(obs))."
+                )
+            obs_actor = jnp.concatenate([obs_actor, latent], axis=-1)
         return meta_q.apply({"params": meta_params}, obs_actor)
 
     def _skill_mask(policy_obs):
@@ -451,8 +573,8 @@ def make_train(config: dict[str, Any]) -> Callable[[jax.Array], NexusTrainOutput
             reduce_fn=_reduce_critics,
         )
 
-    def _meta_bootstrap_value(meta_params, obs_actor, policy_obs):
-        q = _meta_values(meta_params, obs_actor)
+    def _meta_bootstrap_value(meta_params, obs_actor, policy_obs, latent=None):
+        q = _meta_values(meta_params, obs_actor, latent)
         if meta_policy_type == "nesy":
             return masked_meta_bootstrap_value(q, _skill_mask(policy_obs))
         return masked_meta_bootstrap_value(q)
@@ -501,7 +623,11 @@ def make_train(config: dict[str, Any]) -> Callable[[jax.Array], NexusTrainOutput
             mask = _skill_mask(policy_obs)
             meta_values = jnp.zeros((obs_actor.shape[0], num_skills), dtype=obs_actor.dtype)
         else:
-            meta_values = _meta_values(train_state.meta.params, obs_actor)
+            meta_values = _meta_values(
+                train_state.meta.params,
+                obs_actor,
+                _meta_latent(train_state.actor.params, obs_pixels),
+            )
             if meta_policy_type == "nesy":
                 mask = _skill_mask(policy_obs)
                 # Guard against an all-masked row selecting an invalid skill 0
@@ -838,9 +964,15 @@ def make_train(config: dict[str, Any]) -> Callable[[jax.Array], NexusTrainOutput
             proprio_dim = int(_actor_proprio(obs_actor).shape[-1])
             dummy_pixels = jnp.zeros((1,) + obs_pixels.shape[1:], dtype=obs_pixels.dtype)
             dummy_proprio = jnp.zeros((1, proprio_dim), dtype=obs_actor.dtype)
-            actor_params = jax.vmap(
-                lambda k: actor.init(k, dummy_pixels, dummy_proprio)["params"]
-            )(actor_rngs)
+            # `rgb_fns.init` re-derives the per-skill keys from `rng_actor` with
+            # the same `jax.random.split(rng_actor, num_skills)` the unshared path
+            # always used, so turning the shared trunk ON is the ONLY thing that
+            # changes the PRNG stream; with it off, seeds reproduce exactly.
+            # Shared layout: {"encoder": <one tree>, "heads": <stacked [N,...]>},
+            # deliberately kept INSIDE train_state.actor.params rather than as a
+            # 4th NexusTrainState field -- flax restores NamedTuples by field
+            # name, so a new field would make every old checkpoint unrestorable.
+            actor_params = rgb_fns.init(rng_actor, num_skills, dummy_pixels, dummy_proprio)
         else:
             # The state actor's input width is the RESTRICTED one when
             # ACTOR_OBS_INDICES is set; the meta-Q below still inits (and runs)
@@ -862,7 +994,21 @@ def make_train(config: dict[str, Any]) -> Callable[[jax.Array], NexusTrainOutput
 
         meta_state = None
         if meta_policy_type not in ("symbolic", "flat"):
-            meta_params = meta_q.init(rng_meta, dummy_actor_obs)["params"]
+            dummy_meta_obs = dummy_actor_obs
+            if rgb_meta_sees_pixels:
+                # LEVER B: the meta-Q input is [state, latent], so its first Dense
+                # kernel must be (state_dim + embed_dim, hidden). ZEROS on purpose
+                # -- running the encoder here would make the meta's init depend on
+                # the actor's init having already happened (and on the reset obs's
+                # pixels), i.e. an ordering dependency for no benefit: only the
+                # SHAPE matters to `init`. `MetaQ` -> `MLP` is rank-agnostic
+                # (`nn.Dense` acts on the last axis), so the rank-1 dummy the
+                # state path already uses stays correct here.
+                dummy_meta_obs = jnp.zeros(
+                    (int(dummy_actor_obs.shape[-1]) + embed_dim,),
+                    dtype=dummy_actor_obs.dtype,
+                )
+            meta_params = meta_q.init(rng_meta, dummy_meta_obs)["params"]
             meta_state = CounterTrainState.create(apply_fn=meta_q.apply, params=meta_params, tx=tx)
 
         train_state = NexusTrainState(
@@ -882,15 +1028,21 @@ def make_train(config: dict[str, Any]) -> Callable[[jax.Array], NexusTrainOutput
             obs_actor = get_actor_obs(last_obs)
             obs_critic = get_critic_obs(last_obs)
             policy_obs = get_policy_obs(last_obs)
+            obs_pixels = get_actor_pixels(last_obs)
             skill_bootstrap = _skill_actor_bootstrap_values(
                 train_state.critic.params,
                 train_state.actor.params,
                 obs_actor,
                 obs_critic,
-                get_actor_pixels(last_obs),
+                obs_pixels,
             )
             if train_state.meta is not None:
-                meta_bootstrap = _meta_bootstrap_value(train_state.meta.params, obs_actor, policy_obs)
+                meta_bootstrap = _meta_bootstrap_value(
+                    train_state.meta.params,
+                    obs_actor,
+                    policy_obs,
+                    _meta_latent(train_state.actor.params, obs_pixels),
+                )
             else:
                 meta_bootstrap = jnp.zeros((obs_actor.shape[0],), dtype=obs_actor.dtype)
             rng, rng_step = jax.random.split(rng)
@@ -951,18 +1103,20 @@ def make_train(config: dict[str, Any]) -> Callable[[jax.Array], NexusTrainOutput
             last_obs_actor = get_actor_obs(last_obs)
             last_obs_critic = get_critic_obs(last_obs)
             last_policy_obs = get_policy_obs(last_obs)
+            last_obs_pixels = get_actor_pixels(last_obs)
             last_skill_bootstrap_values = _skill_actor_bootstrap_values(
                 train_state.critic.params,
                 train_state.actor.params,
                 last_obs_actor,
                 last_obs_critic,
-                get_actor_pixels(last_obs),
+                last_obs_pixels,
             )
             if train_state.meta is not None:
                 last_meta_bootstrap_value = _meta_bootstrap_value(
                     train_state.meta.params,
                     last_obs_actor,
                     last_policy_obs,
+                    _meta_latent(train_state.actor.params, last_obs_pixels),
                 )
             else:
                 last_meta_bootstrap_value = jnp.zeros(
@@ -1049,14 +1203,19 @@ def make_train(config: dict[str, Any]) -> Callable[[jax.Array], NexusTrainOutput
                             # privileged state from the latent. Target is the
                             # (normalized) actor obs, shared by all skills.
                             proprio = _actor_proprio(obs_actor_mb)
-                            all_actions, state_pred = jax.vmap(
-                                lambda p: actor.apply(
-                                    {"params": p}, obs_pixels_mb, proprio, return_aux=True
-                                )
-                            )(actor_params)  # [N,B,A], [N,B,D]
-                            aux_loss = jnp.mean(
-                                jnp.square(state_pred - obs_actor_mb[None, ...])
+                            all_actions, state_pred = rgb_fns.apply_aux(
+                                actor_params, obs_pixels_mb, proprio
+                            )  # actions [N,B,A]; state_pred [N,B,D] or [B,D]
+                            # With a SHARED trunk there is a single aux head, so
+                            # state_pred is [B, D] and the target must NOT gain a
+                            # skill axis -- broadcasting against [N,B,D] here
+                            # would silently compare the wrong things.
+                            aux_target = (
+                                obs_actor_mb[None, ...]
+                                if rgb_fns.aux_has_skill_axis
+                                else obs_actor_mb
                             )
+                            aux_loss = jnp.mean(jnp.square(state_pred - aux_target))
                         else:
                             all_actions = _actor_apply(
                                 actor_params, obs_actor_mb, obs_pixels_mb
@@ -1113,19 +1272,57 @@ def make_train(config: dict[str, Any]) -> Callable[[jax.Array], NexusTrainOutput
                     (actor_loss, actor_info), actor_grads = jax.value_and_grad(
                         actor_loss_fn, has_aux=True
                     )(train_state.actor.params)
-                    actor_grad_norm = global_norm(actor_grads)
-                    actor_state = train_state.actor.apply_gradients(grads=actor_grads).replace(
-                        grad_steps=train_state.actor.grad_steps + 1
-                    )
 
                     meta_loss = jnp.asarray(0.0)
                     meta_info = {"meta_q": jnp.asarray(0.0), "meta_abs_td": jnp.asarray(0.0)}
                     meta_grad_norm = jnp.asarray(0.0)
+                    meta_encoder_grad_norm = jnp.asarray(0.0)
                     meta_state = train_state.meta
                     if train_state.meta is not None:
+                        # LEVER B, THE ONE THING THAT MUST NOT BE GOT WRONG.
+                        #
+                        # When the meta reads the shared CNN latent AND is supposed
+                        # to train it, the latent has to be recomputed INSIDE the
+                        # differentiated function, from the encoder parameters that
+                        # are being differentiated. Encoding outside would make the
+                        # latent a jax CONSTANT: the meta's TD gradient would then
+                        # never reach the encoder, and there would be no error, no
+                        # NaN, no shape mismatch and no metric that looks wrong --
+                        # the feature would ship looking perfect and be fake. The
+                        # regression guard is
+                        # tests/test_vision_rgb_smoke.py::
+                        #   test_meta_loss_sends_gradient_into_the_shared_encoder
+                        # which asserts global_norm(g["encoder"]) > 0.
+                        #
+                        # With RGB_META_LATENT_STOP_GRAD the latent SHOULD be a
+                        # constant, so the folding is skipped entirely (and the
+                        # differentiated argument stays the plain meta params, i.e.
+                        # byte-identical to the pre-lever-B code).
+                        fold_encoder = rgb_meta_sees_pixels and not rgb_meta_latent_stop_grad
 
-                        def meta_loss_fn(meta_params):
-                            q = _meta_values(meta_params, obs_actor_mb)  # [B, N]
+                        def meta_loss_fn(params):
+                            if fold_encoder:
+                                # `params` == {"meta": ..., "encoder": ...}.
+                                # `_meta_latent` only reads params["encoder"] (the
+                                # flag requires RGB_SHARED_ENCODER), so a one-key
+                                # dict is enough and keeps "heads" out of the
+                                # differentiated argument.
+                                meta_params = params["meta"]
+                                latent = _meta_latent(
+                                    {"encoder": params["encoder"]}, obs_pixels_mb
+                                )
+                            else:
+                                meta_params = params
+                                # stop-grad case: constant by design. None when the
+                                # flag is off, which _meta_values then ignores.
+                                latent = _meta_latent(train_state.actor.params, obs_pixels_mb)
+                            # `obs_pixels_mb` is the DrQ-AUGMENTED tensor (the actor
+                            # loss above consumes the very same one). Deliberate:
+                            # the meta and the actor must see the same image or the
+                            # shared latent would be trained on two different input
+                            # distributions, and reusing it is free -- re-deriving
+                            # the un-augmented stack would cost a second CNN pass.
+                            q = _meta_values(meta_params, obs_actor_mb, latent)  # [B, N]
                             selected_q = _select_rows(q, traj_mb.skill)
                             loss = jnp.mean(smooth_l1_loss(selected_q, meta_targets_mb))
                             return loss, {
@@ -1133,13 +1330,71 @@ def make_train(config: dict[str, Any]) -> Callable[[jax.Array], NexusTrainOutput
                                 "meta_abs_td": jnp.mean(jnp.abs(selected_q - meta_targets_mb)),
                             }
 
+                        meta_diff_arg = (
+                            {
+                                "meta": train_state.meta.params,
+                                "encoder": train_state.actor.params["encoder"],
+                            }
+                            if fold_encoder
+                            else train_state.meta.params
+                        )
                         (meta_loss, meta_info), meta_grads = jax.value_and_grad(
                             meta_loss_fn, has_aux=True
-                        )(train_state.meta.params)
+                        )(meta_diff_arg)
+                        if fold_encoder:
+                            encoder_grads = meta_grads["encoder"]
+                            meta_grads = meta_grads["meta"]
+                            meta_encoder_grad_norm = global_norm(encoder_grads)
+                            # The encoder lives in train_state.actor.params, so the
+                            # ACTOR's optimizer is the only one that owns it: add
+                            # the meta's TD gradient to the actor's gradient for
+                            # that subtree. It therefore passes through the actor's
+                            # optax.chain(clip_by_global_norm(MAX_GRAD_NORM),
+                            # radam(lr)) and moves train/actor_grad_norm, by an
+                            # amount that is invisible once the actor's own norm is
+                            # much larger (measured on the CPU smoke: 0.148 added
+                            # to ~88.8). That is exactly why
+                            # train/meta_encoder_grad_norm is logged separately
+                            # below -- the new signal must be attributable, not
+                            # buried in a sum. Note the clip is applied to the SUM,
+                            # so a large actor norm also shrinks the meta's
+                            # contribution proportionally.
+                            actor_grads = {
+                                **actor_grads,
+                                "encoder": jax.tree_util.tree_map(
+                                    jnp.add, actor_grads["encoder"], encoder_grads
+                                ),
+                            }
                         meta_grad_norm = global_norm(meta_grads)
                         meta_state = train_state.meta.apply_gradients(grads=meta_grads).replace(
                             grad_steps=train_state.meta.grad_steps + 1
                         )
+
+                    # MOVED BY LEVER B: the actor's optimizer step used to sit
+                    # directly under its value_and_grad, above the meta block. It
+                    # has to happen AFTER it now, because with RGB_META_SEES_PIXELS
+                    # the meta's gradient w.r.t. the shared encoder is folded into
+                    # `actor_grads` in the block above.
+                    #
+                    # The reorder is numerically INERT when the flag is off:
+                    #   * nothing between the old and the new position reads
+                    #     `actor_state` (the meta block does not; the next reader is
+                    #     the NexusTrainState construction below),
+                    #   * with the flag off `meta_loss_fn` closes only over
+                    #     `obs_actor_mb`, `traj_mb.skill`, `meta_targets_mb` and an
+                    #     unused `obs_pixels_mb` (`_meta_latent` returns None), none
+                    #     of which depend on the actor's parameters or its optimizer
+                    #     state,
+                    #   * neither loss nor `apply_gradients` consumes `rng`, so the
+                    #     PRNG stream is untouched.
+                    # Verified empirically as well: the sha256 of every final
+                    # parameter tree across the smoke configs (RGB default /
+                    # shared / shared+aux / no-augment, and the state-based nesy
+                    # and neural metas) is unchanged by this commit.
+                    actor_grad_norm = global_norm(actor_grads)
+                    actor_state = train_state.actor.apply_gradients(grads=actor_grads).replace(
+                        grad_steps=train_state.actor.grad_steps + 1
+                    )
 
                     new_state = NexusTrainState(actor=actor_state, critic=critic_state, meta=meta_state)
                     losses = {
@@ -1168,6 +1423,16 @@ def make_train(config: dict[str, Any]) -> Callable[[jax.Array], NexusTrainOutput
                         losses["train/rgb/pixel_sensitivity"] = actor_info[
                             "rgb/pixel_sensitivity"
                         ]
+                        # LEVER B attribution. The norm of the meta's TD gradient
+                        # w.r.t. the SHARED ENCODER, before it is folded into the
+                        # actor's gradient and clipped with it. Without this the
+                        # only visible effect would be train/actor_grad_norm
+                        # jumping, with no way to tell how much of it came from the
+                        # meta. 0.0 whenever RGB_META_SEES_PIXELS is off or
+                        # RGB_META_LATENT_STOP_GRAD is on -- so a run where the
+                        # meta was supposed to train the encoder but silently did
+                        # not is visible here as a flat zero line.
+                        losses["train/meta_encoder_grad_norm"] = meta_encoder_grad_norm
                     return (new_state, rng), losses
 
                 (train_state, rng), losses = jax.lax.scan(
