@@ -37,6 +37,27 @@ Reading the result:
                                       necessary, not just the skill switching.
   * shuffle_frames << intact       -> it uses motion, not just a static pose.
 
+THE 30% BOOLEAN IS CALIBRATED FOR `RGB_PROPRIO: none` AND UNDER-READS OTHERWISE
+-------------------------------------------------------------------------------
+`actor_uses_pixels` thresholds the MEDIAN of {frozen_first, random_replay,
+zeros} at 30%. That bar was set against pixels-only actors, whose sole input is
+the camera: corrupt it and there is nothing left, which is why those arms score
+94-99%. A `RGB_PROPRIO: full` actor also holds the privileged state, so it can
+ride the state through a corrupted frame and STILL be genuinely using the
+camera while scoring far below 30%. Two further failure modes of the boolean:
+
+  * the MEDIAN discards disagreement. WalkerWalk seed 0 scores
+    frozen_first 94.9% / random_replay 4.8% / zeros 4.4%; the median is 4.8%
+    and the run is labelled "ignores" even though holding the image fixed
+    destroys the policy;
+  * a single threshold cannot express "uses the image's variation but not its
+    content", which is exactly what that 94.9%/4.8% split means.
+
+So the file also records `verdict_caveat`, and the honest read is the
+per-condition table in `performance_drop_fraction` alongside the independent
+in-training probe `train/rgb/pixel_sensitivity`. Never quote the boolean alone
+for a `RGB_PROPRIO: full` run.
+
 ATTRIBUTION UNDER RGB_META_SEES_PIXELS (lever B)
 ------------------------------------------------
 All six conditions above are designed to isolate the ACTOR, and that works only
@@ -568,13 +589,28 @@ def main(argv: list[str] | None = None) -> None:
         rps = np.array([r["reward_per_step"] for r in runs])
         entry = {
             "reward_per_step_mean": float(rps.mean()),
+            # POPULATION s.d. (np.std, ddof=0). Kept for backward compatibility
+            # with every JSON already on disk; `*_std_sample` below is the
+            # unbiased (ddof=1) estimate and is the one to quote. At n=5 the
+            # population form understates the spread by sqrt(5/4) = 1.12x.
             "reward_per_step_std": float(rps.std()),
+            "reward_per_step_std_sample": float(rps.std(ddof=1)) if rps.size > 1 else None,
             "per_episode": rps.tolist(),
         }
         if is_cartpole:
             up = np.array([r["upright_fraction"] for r in runs])
             entry["upright_fraction_mean"] = float(up.mean())
             entry["upright_fraction_std"] = float(up.std())
+            entry["upright_fraction_std_sample"] = (
+                float(up.std(ddof=1)) if up.size > 1 else None)
+            # PER-EPISODE upright fractions. Without these, cartpole's HEADLINE
+            # metric could only be compared arm-to-arm as a mean, which rules
+            # out the paired-episode analysis that the shared reset keys
+            # (PRNGKey(9000 + 97*ep + seed) -- a function of episode and seed
+            # only) make available: both arms start every episode from the
+            # SAME initial state, so episode e of one arm is the matched
+            # control for episode e of the other.
+            entry["upright_fraction_per_episode"] = up.tolist()
         results[cond] = entry
         extra = (f" | upright {entry['upright_fraction_mean']:.3f}" if is_cartpole else "")
         print(f"    {cond:>15s}: {rps.mean():.4f} +/- {rps.std():.4f} reward/step{extra}")
@@ -653,6 +689,31 @@ def main(argv: list[str] | None = None) -> None:
         "actor_variation_needed": needs_variation,
         "motion_sensitive": (None if state_only
                              else bool(drops["shuffle_frames"] > 0.15)),
+        # THE BINARY VERDICT ABOVE IS NOT SAFE TO QUOTE ON ITS OWN. Recorded in
+        # the file so it cannot be dropped between the run and the write-up.
+        "verdict_caveat": (None if state_only else (
+            "`actor_uses_pixels` thresholds the MEDIAN of three corruptions at "
+            "30%. That threshold was calibrated on RGB_PROPRIO: none actors, "
+            "whose ONLY input is the camera, so a corruption there removes "
+            f"everything. This run has RGB_PROPRIO={proprio_mode!r}"
+            + ("" if proprio_mode == "none" else
+               ", i.e. the actor also reads the privileged state, so it can "
+               "ride the state through a corrupted frame and a genuinely "
+               "pixel-using actor is EXPECTED to score well under 30%. The "
+               "threshold under-reads in this regime and the median hides "
+               "disagreement between the three corruptions") + ". Read "
+            "`performance_drop_fraction` condition by condition, together "
+            "with the independent in-training `pixel_sensitivity` probe, "
+            "rather than this boolean.")),
+        "sd_convention": (
+            "*_std keys are numpy's POPULATION s.d. (ddof=0); *_std_sample are "
+            "the unbiased sample s.d. (ddof=1). Quote the sample form."),
+        "eval_reset_key_formula": "jax.random.PRNGKey(9000 + 97*episode + seed)",
+        "eval_pairing_note": (
+            "The reset key depends only on (episode, seed) and NOT on the arm, "
+            "so episode e of this run started from the same initial state as "
+            "episode e of the matched arm at the same seed. Arms are therefore "
+            "PAIRED episode-by-episode and a paired analysis is valid."),
         "results": results,
     }
     (out / "pixel_ablation.json").write_text(json.dumps(verdict, indent=2))
@@ -668,7 +729,16 @@ def main(argv: list[str] | None = None) -> None:
               "same metric as the RGB arms, in the same environment.")
     else:
         print(f"\n  actor USES the pixels          : {'YES' if uses_pixels else 'NO -- claim unsupported'}"
-              "   (all pixel corruptions cost >30%)")
+              "   (MEDIAN of frozen/replay/blank costs >30%)")
+        if proprio_mode != "none":
+            print("  ^^ DO NOT QUOTE THAT BOOLEAN ON ITS OWN. The 30% bar was "
+                  f"calibrated on RGB_PROPRIO: none actors; with "
+                  f"RGB_PROPRIO={proprio_mode!r} the actor can ride the state "
+                  "through a corrupted\n     frame, so an actor that really "
+                  "does use its camera is EXPECTED to land under 30%. Read the "
+                  "per-condition drops above and the in-training\n     "
+                  "pixel_sensitivity probe instead (see `verdict_caveat` in "
+                  "the JSON).")
         print(f"  pixel-conditioned variation is : {'NECESSARY' if needs_variation else 'NOT necessary'}"
               f"   (dropping the actor for a constant action costs "
               f"{100 * drops['const_action']:.1f}%)")

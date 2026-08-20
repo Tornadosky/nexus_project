@@ -29,10 +29,10 @@ were comparable. They are not:
 ## What to use instead
 
 `results/rgb/state_plus_rgb/figures/` -- `fig1_headline_learning_curves.png`
-for baseline-vs-extension and `fig6_all_variants.png` for where every variant
-lands. Those state baselines are measured in the SAME environment, at the SAME
-budget, through the SAME evaluation code as the RGB arms, from configs that a
-generator asserts differ in exactly one key.
+for baseline-vs-extension on the primary metric and `fig6_all_variants.png`
+for where every variant lands. Those state baselines are measured in the SAME
+environment, at the SAME budget, through the SAME evaluation code as the RGB
+arms, from configs that a generator asserts differ in exactly one key.
 
 The original image is preserved unaltered as
 `method_comparison_nesy.SUPERSEDED.png`; the file under the original name now

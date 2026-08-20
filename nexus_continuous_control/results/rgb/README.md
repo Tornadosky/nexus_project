@@ -20,6 +20,27 @@
 > The numbers below are kept as the original historical record (nothing was
 > deleted) but should be read through the correction above, not at face value.
 
+> **THE BASELINE-VS-EXTENSION QUESTION IS ANSWERED IN
+> [`state_plus_rgb/figures/README.md`](state_plus_rgb/figures/README.md).**
+> Everything above and below tests pixels *replacing* the state. A separate
+> campaign tests the paper's actual suggestion -- pixels *added to* the state
+> (`RGB_PROPRIO: full`) against a state-only control at an identical
+> environment-step budget, 3 envs x 2 arms x 3 seeds, with the two arms'
+> configs differing in exactly one key. Its answer is per-environment and does
+> not generalise:
+> **WalkerWalk the camera HELPS** (+7.2% training return, 3/3 seeds,
+> non-overlapping, p = 0.054, and the actor demonstrably uses the camera);
+> **CheetahRun a small consistent cost** and, more interestingly, adding the
+> state vector makes the encoder ~370x less pixel-sensitive than the
+> pixels-only arm at the same budget -- a cheaper channel stops perception
+> being learned at all; **CartpoleBalance parity when training was stable**,
+> with 2 of 3 seeds collapsing late.
+> That README is a CORRECTED version: the first write-up quoted a 5-episode
+> eval whose achieved power was 0.16 where the training return's was 0.78, and
+> binarised camera use with a threshold calibrated on a different actor type.
+> Both are fixed there, with the original JSONs untouched on disk and the
+> recomputation in `state_plus_rgb/corrected_analysis.json`.
+
 Two ways to give NEXUS's disentangled skills **raw-pixel** input while keeping the
 interpretable meta-policy on privileged state (asymmetric / privileged-critic
 design, Pinto et al. 2017):
@@ -192,6 +213,22 @@ run-to-run (GPU nondeterminism in teacher training); the retention *ordering*
   responsiveness probes, and cross-run summary figures, organized as
   `<env>/<meta>_<status>[_seedN]/`. See `ablation/README.md` for the naming
   legend.
+- `state_plus_rgb/` — **state-only vs state+RGB at a matched budget** (the
+  baseline-vs-extension comparison; second banner at the top of this file).
+  `<env>/<arm>_seed<n>/` holds each arm's raw `pixel_ablation.json`
+  (5-episode eval, six conditions) and `training_curves.json` (250 updates x
+  128 envs) exactly as produced -- these are never rewritten.
+  `figures/README.md` is the document to cite: both metrics side by side,
+  the paired analysis, the per-condition camera table, and the
+  per-environment conclusions. `corrected_analysis.json` is the same numbers
+  machine-readable, with the source path of every input.
+  `video/` holds captioned rollouts. Regenerate with
+  `tools/analyze_state_plus_rgb.py --readme` and
+  `tools/plot_state_plus_rgb_figures.py --figure all` (no GPU needed).
+- `state_plus_rgb_eval30/` — the SAME 18 frozen policies from `~/runs_spr/`
+  re-scored at 30 evaluation episodes instead of 5, no retraining
+  (`tools/run_state_plus_rgb_eval30.sh`). Kept alongside the 5-episode runs
+  rather than replacing them.
 
 Run environment: TU student pool `mlsp2` (RTX 2080 Ti), jax 0.11 CUDA, mujoco 3.11 +
 mujoco-warp 3.11; distillation renders offline via software-EGL (llvmpipe), in-loop

@@ -1,0 +1,3823 @@
+{
+  "_what": "Corrected analysis of the state-only vs state+RGB campaign.",
+  "_generated_by": "tools/analyze_state_plus_rgb.py",
+  "_supersedes": "the headline tables in results/rgb/state_plus_rgb/figures/README.md as first committed, which quoted the 5-episode eval only and binarised the camera verdict at a 30% median",
+  "_does_not_modify": "No existing result JSON is written. Every source path is recorded per run under runs[*].sources.",
+  "_primary_metric": "curves.episode_return, mean of the last 20 of 250 updates, each update already a mean over 128 parallel envs",
+  "_secondary_metric": "pixel_ablation.json results.intact, deterministic eval of the final weights",
+  "_sd_convention": "SAMPLE s.d. (ddof=1) everywhere in this file",
+  "_budget": "250 updates x 128 envs x 64 steps = 2,048,000 env steps",
+  "_seeds": [
+    0,
+    1,
+    2
+  ],
+  "eval30_available": true,
+  "metric_order": [
+    [
+      "train_return",
+      "PRIMARY train return (last 20 upd)"
+    ],
+    [
+      "eval5",
+      "SECONDARY eval, 5 episodes"
+    ],
+    [
+      "eval30",
+      "SECONDARY eval, 30 episodes"
+    ]
+  ],
+  "runs": {
+    "cartpole|state_matched|0": {
+      "env": "cartpole",
+      "arm": "state_matched",
+      "seed": 0,
+      "train_return_last20": 22.73397855758667,
+      "train_curve_updates": 250,
+      "eval5_mean": 1.0,
+      "eval5_episodes": null,
+      "eval5_episodes_reward_per_step": [
+        0.09517700091004372,
+        0.09477673569321632,
+        0.09342836079001426,
+        0.09453730976581573,
+        0.09404759818315506
+      ],
+      "eval5_n_episodes": 5,
+      "eval30_mean": 1.0,
+      "eval30_episodes": [
+        1.0,
+        1.0,
+        1.0,
+        1.0,
+        1.0,
+        1.0,
+        1.0,
+        1.0,
+        1.0,
+        1.0,
+        1.0,
+        1.0,
+        1.0,
+        1.0,
+        1.0,
+        1.0,
+        1.0,
+        1.0,
+        1.0,
+        1.0,
+        1.0,
+        1.0,
+        1.0,
+        1.0,
+        1.0,
+        1.0,
+        1.0,
+        1.0,
+        1.0,
+        1.0
+      ],
+      "eval30_n_episodes": 30,
+      "pixel_sensitivity_last20": null,
+      "sources": {
+        "eval5": "results/rgb/state_plus_rgb/cartpole/state_matched_seed0/pixel_ablation.json",
+        "training_curves": "results/rgb/state_plus_rgb/cartpole/state_matched_seed0/training_curves.json",
+        "eval30": "results/rgb/state_plus_rgb_eval30/cartpole/state_matched_seed0/pixel_ablation.json"
+      }
+    },
+    "cartpole|state_matched|1": {
+      "env": "cartpole",
+      "arm": "state_matched",
+      "seed": 1,
+      "train_return_last20": 24.850687313079835,
+      "train_curve_updates": 250,
+      "eval5_mean": 1.0,
+      "eval5_episodes": null,
+      "eval5_episodes_reward_per_step": [
+        0.09835331094264985,
+        0.09931982976198196,
+        0.09952630788087845,
+        0.0995407831966877,
+        0.09806622552871704
+      ],
+      "eval5_n_episodes": 5,
+      "eval30_mean": 1.0,
+      "eval30_episodes": [
+        1.0,
+        1.0,
+        1.0,
+        1.0,
+        1.0,
+        1.0,
+        1.0,
+        1.0,
+        1.0,
+        1.0,
+        1.0,
+        1.0,
+        1.0,
+        1.0,
+        1.0,
+        1.0,
+        1.0,
+        1.0,
+        1.0,
+        1.0,
+        1.0,
+        1.0,
+        1.0,
+        1.0,
+        1.0,
+        1.0,
+        1.0,
+        1.0,
+        1.0,
+        1.0
+      ],
+      "eval30_n_episodes": 30,
+      "pixel_sensitivity_last20": null,
+      "sources": {
+        "eval5": "results/rgb/state_plus_rgb/cartpole/state_matched_seed1/pixel_ablation.json",
+        "training_curves": "results/rgb/state_plus_rgb/cartpole/state_matched_seed1/training_curves.json",
+        "eval30": "results/rgb/state_plus_rgb_eval30/cartpole/state_matched_seed1/pixel_ablation.json"
+      }
+    },
+    "cartpole|state_matched|2": {
+      "env": "cartpole",
+      "arm": "state_matched",
+      "seed": 2,
+      "train_return_last20": 24.714692783355712,
+      "train_curve_updates": 250,
+      "eval5_mean": 1.0,
+      "eval5_episodes": null,
+      "eval5_episodes_reward_per_step": [
+        0.09926522913575173,
+        0.09947897630929947,
+        0.0993427984714508,
+        0.0992371937930584,
+        0.09896357420086861
+      ],
+      "eval5_n_episodes": 5,
+      "eval30_mean": 1.0,
+      "eval30_episodes": [
+        1.0,
+        1.0,
+        1.0,
+        1.0,
+        1.0,
+        1.0,
+        1.0,
+        1.0,
+        1.0,
+        1.0,
+        1.0,
+        1.0,
+        1.0,
+        1.0,
+        1.0,
+        1.0,
+        1.0,
+        1.0,
+        1.0,
+        1.0,
+        1.0,
+        1.0,
+        1.0,
+        1.0,
+        1.0,
+        1.0,
+        1.0,
+        1.0,
+        1.0,
+        1.0
+      ],
+      "eval30_n_episodes": 30,
+      "pixel_sensitivity_last20": null,
+      "sources": {
+        "eval5": "results/rgb/state_plus_rgb/cartpole/state_matched_seed2/pixel_ablation.json",
+        "training_curves": "results/rgb/state_plus_rgb/cartpole/state_matched_seed2/training_curves.json",
+        "eval30": "results/rgb/state_plus_rgb_eval30/cartpole/state_matched_seed2/pixel_ablation.json"
+      }
+    },
+    "cartpole|state_plus_rgb|0": {
+      "env": "cartpole",
+      "arm": "state_plus_rgb",
+      "seed": 0,
+      "train_return_last20": 23.279466724395753,
+      "train_curve_updates": 250,
+      "eval5_mean": 0.6824000000000001,
+      "eval5_episodes": null,
+      "eval5_episodes_reward_per_step": [
+        0.04466170618310571,
+        0.042856643728911875,
+        0.025870987541973593,
+        0.0431957352720201,
+        0.02479146144539118
+      ],
+      "eval5_n_episodes": 5,
+      "eval30_mean": 0.7193333333333333,
+      "eval30_episodes": [
+        0.708,
+        0.708,
+        0.656,
+        0.724,
+        0.616,
+        0.704,
+        0.804,
+        0.712,
+        0.692,
+        0.632,
+        0.632,
+        0.664,
+        0.616,
+        0.728,
+        0.656,
+        0.828,
+        0.804,
+        0.712,
+        0.612,
+        0.624,
+        0.804,
+        0.828,
+        0.704,
+        0.64,
+        0.808,
+        0.708,
+        0.816,
+        0.716,
+        1.0,
+        0.724
+      ],
+      "eval30_n_episodes": 30,
+      "pixel_sensitivity_last20": 0.0041786546120420095,
+      "sources": {
+        "eval5": "results/rgb/state_plus_rgb/cartpole/state_plus_rgb_seed0/pixel_ablation.json",
+        "training_curves": "results/rgb/state_plus_rgb/cartpole/state_plus_rgb_seed0/training_curves.json",
+        "eval30": "results/rgb/state_plus_rgb_eval30/cartpole/state_plus_rgb_seed0/pixel_ablation.json"
+      }
+    },
+    "cartpole|state_plus_rgb|1": {
+      "env": "cartpole",
+      "arm": "state_plus_rgb",
+      "seed": 1,
+      "train_return_last20": 24.68189239501953,
+      "train_curve_updates": 250,
+      "eval5_mean": 1.0,
+      "eval5_episodes": null,
+      "eval5_episodes_reward_per_step": [
+        0.09891983726620675,
+        0.09904320269823075,
+        0.09431484833359718,
+        0.09824337282776832,
+        0.09947400188446046
+      ],
+      "eval5_n_episodes": 5,
+      "eval30_mean": 0.9998666666666666,
+      "eval30_episodes": [
+        1.0,
+        1.0,
+        1.0,
+        1.0,
+        1.0,
+        1.0,
+        1.0,
+        1.0,
+        1.0,
+        1.0,
+        1.0,
+        1.0,
+        1.0,
+        1.0,
+        1.0,
+        1.0,
+        1.0,
+        1.0,
+        1.0,
+        1.0,
+        1.0,
+        1.0,
+        1.0,
+        1.0,
+        1.0,
+        1.0,
+        0.996,
+        1.0,
+        1.0,
+        1.0
+      ],
+      "eval30_n_episodes": 30,
+      "pixel_sensitivity_last20": 0.0030218481202609836,
+      "sources": {
+        "eval5": "results/rgb/state_plus_rgb/cartpole/state_plus_rgb_seed1/pixel_ablation.json",
+        "training_curves": "results/rgb/state_plus_rgb/cartpole/state_plus_rgb_seed1/training_curves.json",
+        "eval30": "results/rgb/state_plus_rgb_eval30/cartpole/state_plus_rgb_seed1/pixel_ablation.json"
+      }
+    },
+    "cartpole|state_plus_rgb|2": {
+      "env": "cartpole",
+      "arm": "state_plus_rgb",
+      "seed": 2,
+      "train_return_last20": 0.9107397586107254,
+      "train_curve_updates": 250,
+      "eval5_mean": 0.2864,
+      "eval5_episodes": null,
+      "eval5_episodes_reward_per_step": [
+        0.03924466586112976,
+        0.035105139151215554,
+        0.0387603632286191,
+        0.03755132525227964,
+        0.03216534092836082
+      ],
+      "eval5_n_episodes": 5,
+      "eval30_mean": 0.2550666666666667,
+      "eval30_episodes": [
+        0.296,
+        0.288,
+        0.296,
+        0.296,
+        0.256,
+        0.22,
+        0.232,
+        0.232,
+        0.232,
+        0.232,
+        0.264,
+        0.256,
+        0.296,
+        0.264,
+        0.248,
+        0.264,
+        0.256,
+        0.264,
+        0.216,
+        0.248,
+        0.272,
+        0.24,
+        0.248,
+        0.224,
+        0.24,
+        0.248,
+        0.248,
+        0.24,
+        0.288,
+        0.248
+      ],
+      "eval30_n_episodes": 30,
+      "pixel_sensitivity_last20": 0.026286569144576787,
+      "sources": {
+        "eval5": "results/rgb/state_plus_rgb/cartpole/state_plus_rgb_seed2/pixel_ablation.json",
+        "training_curves": "results/rgb/state_plus_rgb/cartpole/state_plus_rgb_seed2/training_curves.json",
+        "eval30": "results/rgb/state_plus_rgb_eval30/cartpole/state_plus_rgb_seed2/pixel_ablation.json"
+      }
+    },
+    "walker|state_matched|0": {
+      "env": "walker",
+      "arm": "state_matched",
+      "seed": 0,
+      "train_return_last20": 188.0881591796875,
+      "train_curve_updates": 250,
+      "eval5_mean": 0.6161411106562242,
+      "eval5_episodes": [
+        0.6420523367878049,
+        0.788393247121945,
+        0.8327270289361477,
+        0.7629070509150624,
+        0.054625889520160856
+      ],
+      "eval5_episodes_reward_per_step": [
+        0.6420523367878049,
+        0.788393247121945,
+        0.8327270289361477,
+        0.7629070509150624,
+        0.054625889520160856
+      ],
+      "eval5_n_episodes": 5,
+      "eval30_mean": 0.6151196179026893,
+      "eval30_episodes": [
+        0.6420523367878049,
+        0.788393247121945,
+        0.8327270289361477,
+        0.7629070509150624,
+        0.054625889520160856,
+        0.7564041475057602,
+        0.7419935684204102,
+        0.6401179858297109,
+        0.22799960446357728,
+        0.05881062614172697,
+        0.7061008975952864,
+        0.052006442122161385,
+        0.6827439080998301,
+        0.7028246622681618,
+        0.792809818059206,
+        0.7301253552436828,
+        0.811221223115921,
+        0.8256925148367882,
+        0.43945314060896634,
+        0.05649529272736981,
+        0.7913427532315255,
+        0.8265060786306858,
+        0.7588786781430245,
+        0.7605745218470693,
+        0.7149571986794472,
+        0.6262483773222193,
+        0.7675535801649094,
+        0.8083529927134514,
+        0.3715111724436283,
+        0.7221584435850382
+      ],
+      "eval30_n_episodes": 30,
+      "pixel_sensitivity_last20": null,
+      "sources": {
+        "eval5": "results/rgb/state_plus_rgb/walker/state_matched_seed0/pixel_ablation.json",
+        "training_curves": "results/rgb/state_plus_rgb/walker/state_matched_seed0/training_curves.json",
+        "eval30": "results/rgb/state_plus_rgb_eval30/walker/state_matched_seed0/pixel_ablation.json"
+      }
+    },
+    "walker|state_matched|1": {
+      "env": "walker",
+      "arm": "state_matched",
+      "seed": 1,
+      "train_return_last20": 191.53581924438475,
+      "train_curve_updates": 250,
+      "eval5_mean": 0.7260781056471168,
+      "eval5_episodes": [
+        0.6399831079505384,
+        0.7573483950197697,
+        0.7468596879839897,
+        0.7969592660069466,
+        0.6892400712743402
+      ],
+      "eval5_episodes_reward_per_step": [
+        0.6399831079505384,
+        0.7573483950197697,
+        0.7468596879839897,
+        0.7969592660069466,
+        0.6892400712743402
+      ],
+      "eval5_n_episodes": 5,
+      "eval30_mean": 0.7581433130539954,
+      "eval30_episodes": [
+        0.6399831079505384,
+        0.7573483950197697,
+        0.7468596879839897,
+        0.7969592660069466,
+        0.6892400712743402,
+        0.7202367777526378,
+        0.8313951385617256,
+        0.8183207166194916,
+        0.8209613360762597,
+        0.8140683355927467,
+        0.7642453783899545,
+        0.7258555791005492,
+        0.7317313598021865,
+        0.7001838818192482,
+        0.7777969117760658,
+        0.7717359224557877,
+        0.7627311170101165,
+        0.809312043249607,
+        0.7874165452718734,
+        0.7948187850564719,
+        0.7466415103301406,
+        0.7432719342783094,
+        0.7101194120049477,
+        0.6754045654796064,
+        0.7561022582054138,
+        0.7509275936707854,
+        0.7767632405012846,
+        0.8059835825562477,
+        0.7809398880004883,
+        0.7369450498223304
+      ],
+      "eval30_n_episodes": 30,
+      "pixel_sensitivity_last20": null,
+      "sources": {
+        "eval5": "results/rgb/state_plus_rgb/walker/state_matched_seed1/pixel_ablation.json",
+        "training_curves": "results/rgb/state_plus_rgb/walker/state_matched_seed1/training_curves.json",
+        "eval30": "results/rgb/state_plus_rgb_eval30/walker/state_matched_seed1/pixel_ablation.json"
+      }
+    },
+    "walker|state_matched|2": {
+      "env": "walker",
+      "arm": "state_matched",
+      "seed": 2,
+      "train_return_last20": 188.91020126342772,
+      "train_curve_updates": 250,
+      "eval5_mean": 0.7991352910377085,
+      "eval5_episodes": [
+        0.7505380744561553,
+        0.9229055691957474,
+        0.7653607258088887,
+        0.7381887395754456,
+        0.8186833461523056
+      ],
+      "eval5_episodes_reward_per_step": [
+        0.7505380744561553,
+        0.9229055691957474,
+        0.7653607258088887,
+        0.7381887395754456,
+        0.8186833461523056
+      ],
+      "eval5_n_episodes": 5,
+      "eval30_mean": 0.7657719388825819,
+      "eval30_episodes": [
+        0.7505380744561553,
+        0.9229055691957474,
+        0.7653607258088887,
+        0.7381887395754456,
+        0.8186833461523056,
+        0.6151130014955998,
+        0.7791642202436924,
+        0.697180616132915,
+        0.7766579254865646,
+        0.5597310127951205,
+        0.9174499675035477,
+        0.7465676517486572,
+        0.6637585717514157,
+        0.795048228174448,
+        0.6141230887509882,
+        0.6049567473269999,
+        0.8530571497082711,
+        0.7198383347988129,
+        0.759418433740735,
+        0.838407273709774,
+        0.922770020544529,
+        0.8271939968205988,
+        0.8890807129740715,
+        0.6569603821169585,
+        0.8650851480960846,
+        0.8571910746097565,
+        0.7515783560723066,
+        0.7152108509540558,
+        0.8110537245385349,
+        0.7408852211944759
+      ],
+      "eval30_n_episodes": 30,
+      "pixel_sensitivity_last20": null,
+      "sources": {
+        "eval5": "results/rgb/state_plus_rgb/walker/state_matched_seed2/pixel_ablation.json",
+        "training_curves": "results/rgb/state_plus_rgb/walker/state_matched_seed2/training_curves.json",
+        "eval30": "results/rgb/state_plus_rgb_eval30/walker/state_matched_seed2/pixel_ablation.json"
+      }
+    },
+    "walker|state_plus_rgb|0": {
+      "env": "walker",
+      "arm": "state_plus_rgb",
+      "seed": 0,
+      "train_return_last20": 204.2862808227539,
+      "train_curve_updates": 250,
+      "eval5_mean": 0.7363933706503362,
+      "eval5_episodes": [
+        0.6238969954084606,
+        0.7555699544046074,
+        0.8705359283685684,
+        0.7801191805358976,
+        0.6518447945341468
+      ],
+      "eval5_episodes_reward_per_step": [
+        0.6238969954084606,
+        0.7555699544046074,
+        0.8705359283685684,
+        0.7801191805358976,
+        0.6518447945341468
+      ],
+      "eval5_n_episodes": 5,
+      "eval30_mean": 0.8009722915600054,
+      "eval30_episodes": [
+        0.6238969954084606,
+        0.7555699544046074,
+        0.8705359283685684,
+        0.7801191805358976,
+        0.6518447945341468,
+        0.5642904097661376,
+        0.9041141338348389,
+        0.8190504084974527,
+        0.8843367809057235,
+        0.728463489998132,
+        0.8237286293879151,
+        0.7430179702118039,
+        0.8117713282778859,
+        0.8676705911159516,
+        0.8000662793554366,
+        0.6953450991660357,
+        0.8807624486088753,
+        0.8662697350978852,
+        0.7950963153578341,
+        0.7266641045957803,
+        0.8670852368474007,
+        0.8460404928326607,
+        0.8394427871704102,
+        0.8048064882010222,
+        0.9076487738490104,
+        0.7776044921278954,
+        0.8729356422424316,
+        0.8618924396634102,
+        0.8172902835607528,
+        0.8418075328757987
+      ],
+      "eval30_n_episodes": 30,
+      "pixel_sensitivity_last20": 0.09826786257326603,
+      "sources": {
+        "eval5": "results/rgb/state_plus_rgb/walker/state_plus_rgb_seed0/pixel_ablation.json",
+        "training_curves": "results/rgb/state_plus_rgb/walker/state_plus_rgb_seed0/training_curves.json",
+        "eval30": "results/rgb/state_plus_rgb_eval30/walker/state_plus_rgb_seed0/pixel_ablation.json"
+      }
+    },
+    "walker|state_plus_rgb|1": {
+      "env": "walker",
+      "arm": "state_plus_rgb",
+      "seed": 1,
+      "train_return_last20": 208.82906494140624,
+      "train_curve_updates": 250,
+      "eval5_mean": 0.7995040448382496,
+      "eval5_episodes": [
+        0.6931062415540218,
+        0.7384336522296071,
+        0.8159403678029775,
+        0.9272713567614556,
+        0.8227686058431863
+      ],
+      "eval5_episodes_reward_per_step": [
+        0.6931062415540218,
+        0.7384336522296071,
+        0.8159403678029775,
+        0.9272713567614556,
+        0.8227686058431863
+      ],
+      "eval5_n_episodes": 5,
+      "eval30_mean": 0.8337874251767062,
+      "eval30_episodes": [
+        0.6931062415540218,
+        0.7384336522296071,
+        0.8159403678029775,
+        0.9272713567614556,
+        0.8227686058431863,
+        0.7859896836951376,
+        0.9164835650324822,
+        0.864150709092617,
+        0.9255517278909683,
+        0.8952094964981079,
+        0.7556773610115052,
+        0.7248300952836871,
+        0.8058572417721153,
+        0.8121681604534388,
+        0.8839962624907494,
+        0.9204422780871391,
+        0.9245402037501335,
+        0.893627064049244,
+        0.863102183163166,
+        0.8302739129625261,
+        0.7978558960855007,
+        0.8292146196588874,
+        0.7956363776549696,
+        0.7838123285332694,
+        0.8473828739523888,
+        0.7750642526447773,
+        0.8067801920175552,
+        0.8302328782081604,
+        0.8846442885994911,
+        0.8635788785219193
+      ],
+      "eval30_n_episodes": 30,
+      "pixel_sensitivity_last20": 0.09873315803706646,
+      "sources": {
+        "eval5": "results/rgb/state_plus_rgb/walker/state_plus_rgb_seed1/pixel_ablation.json",
+        "training_curves": "results/rgb/state_plus_rgb/walker/state_plus_rgb_seed1/training_curves.json",
+        "eval30": "results/rgb/state_plus_rgb_eval30/walker/state_plus_rgb_seed1/pixel_ablation.json"
+      }
+    },
+    "walker|state_plus_rgb|2": {
+      "env": "walker",
+      "arm": "state_plus_rgb",
+      "seed": 2,
+      "train_return_last20": 196.47755279541016,
+      "train_curve_updates": 250,
+      "eval5_mean": 0.8205526509664953,
+      "eval5_episodes": [
+        0.7813790289871395,
+        0.8655146592259407,
+        0.81357803145051,
+        0.7650785510241985,
+        0.8772129841446876
+      ],
+      "eval5_episodes_reward_per_step": [
+        0.7813790289871395,
+        0.8655146592259407,
+        0.81357803145051,
+        0.7650785510241985,
+        0.8772129841446876
+      ],
+      "eval5_n_episodes": 5,
+      "eval30_mean": 0.8123279331785317,
+      "eval30_episodes": [
+        0.7813790289871395,
+        0.8655146592259407,
+        0.81357803145051,
+        0.7650785510241985,
+        0.8772129841446876,
+        0.786494109429419,
+        0.7703002585321664,
+        0.8287290692403912,
+        0.8320033375620842,
+        0.7680248271003366,
+        0.907350216627121,
+        0.8878270676136016,
+        0.7870347771048546,
+        0.8757390311360359,
+        0.8447880975306034,
+        0.8309470722526312,
+        0.8771940003633499,
+        0.8522127236127853,
+        0.7962952122092247,
+        0.8989732125997544,
+        0.6314679728895426,
+        0.7752412647567689,
+        0.889666906774044,
+        0.761788100451231,
+        0.8903924278616905,
+        0.8676043021082878,
+        0.5997375576272607,
+        0.7846524504162371,
+        0.7379799779765308,
+        0.7846307667475194
+      ],
+      "eval30_n_episodes": 30,
+      "pixel_sensitivity_last20": 0.11703124530613422,
+      "sources": {
+        "eval5": "results/rgb/state_plus_rgb/walker/state_plus_rgb_seed2/pixel_ablation.json",
+        "training_curves": "results/rgb/state_plus_rgb/walker/state_plus_rgb_seed2/training_curves.json",
+        "eval30": "results/rgb/state_plus_rgb_eval30/walker/state_plus_rgb_seed2/pixel_ablation.json"
+      }
+    },
+    "cheetah|state_matched|0": {
+      "env": "cheetah",
+      "arm": "state_matched",
+      "seed": 0,
+      "train_return_last20": 121.620072555542,
+      "train_curve_updates": 250,
+      "eval5_mean": 0.48483456382751466,
+      "eval5_episodes": [
+        0.48329548358917235,
+        0.49197561979293825,
+        0.4812864797115326,
+        0.4833477396965027,
+        0.4842674963474274
+      ],
+      "eval5_episodes_reward_per_step": [
+        0.48329548358917235,
+        0.49197561979293825,
+        0.4812864797115326,
+        0.4833477396965027,
+        0.4842674963474274
+      ],
+      "eval5_n_episodes": 5,
+      "eval30_mean": 0.48281795206864675,
+      "eval30_episodes": [
+        0.48329548358917235,
+        0.49197561979293825,
+        0.4812864797115326,
+        0.4833477396965027,
+        0.4842674963474274,
+        0.4771020858287811,
+        0.48030292224884036,
+        0.4965417675971985,
+        0.49276656937599184,
+        0.4758857114315033,
+        0.488490514755249,
+        0.47802006793022156,
+        0.48667825198173525,
+        0.48226202273368834,
+        0.4769234375953674,
+        0.4817728691101074,
+        0.4818514368534088,
+        0.48545212054252623,
+        0.4767902991771698,
+        0.4882655429840088,
+        0.4759046530723572,
+        0.48942990136146547,
+        0.4883914222717285,
+        0.49129782128334043,
+        0.46312523126602173,
+        0.48545693039894106,
+        0.4866029329299927,
+        0.48209591102600097,
+        0.4801313126087189,
+        0.4688240065574646
+      ],
+      "eval30_n_episodes": 30,
+      "pixel_sensitivity_last20": null,
+      "sources": {
+        "eval5": "results/rgb/state_plus_rgb/cheetah/state_matched_seed0/pixel_ablation.json",
+        "training_curves": "results/rgb/state_plus_rgb/cheetah/state_matched_seed0/training_curves.json",
+        "eval30": "results/rgb/state_plus_rgb_eval30/cheetah/state_matched_seed0/pixel_ablation.json"
+      }
+    },
+    "cheetah|state_matched|1": {
+      "env": "cheetah",
+      "arm": "state_matched",
+      "seed": 1,
+      "train_return_last20": 122.23863830566407,
+      "train_curve_updates": 250,
+      "eval5_mean": 0.5037827568531036,
+      "eval5_episodes": [
+        0.5047232584953308,
+        0.51220365858078,
+        0.5020969753265381,
+        0.5027390656471252,
+        0.497150826215744
+      ],
+      "eval5_episodes_reward_per_step": [
+        0.5047232584953308,
+        0.51220365858078,
+        0.5020969753265381,
+        0.5027390656471252,
+        0.497150826215744
+      ],
+      "eval5_n_episodes": 5,
+      "eval30_mean": 0.5000081916252772,
+      "eval30_episodes": [
+        0.5047232584953308,
+        0.51220365858078,
+        0.5020969753265381,
+        0.5027390656471252,
+        0.497150826215744,
+        0.49592777514457703,
+        0.5115430240631104,
+        0.515944198846817,
+        0.505389475107193,
+        0.487128173828125,
+        0.5079431402683258,
+        0.5007389764785767,
+        0.49922509694099426,
+        0.4786998281478882,
+        0.5018181569576263,
+        0.50679470038414,
+        0.49124942111968994,
+        0.5003041110038757,
+        0.5071282598972321,
+        0.49776636266708374,
+        0.5026480324268341,
+        0.4908501603603363,
+        0.5043457839488983,
+        0.4808695421218872,
+        0.5023414986133575,
+        0.4904476728439331,
+        0.5039496874809265,
+        0.5076594769954681,
+        0.4839763531684875,
+        0.506643055677414
+      ],
+      "eval30_n_episodes": 30,
+      "pixel_sensitivity_last20": null,
+      "sources": {
+        "eval5": "results/rgb/state_plus_rgb/cheetah/state_matched_seed1/pixel_ablation.json",
+        "training_curves": "results/rgb/state_plus_rgb/cheetah/state_matched_seed1/training_curves.json",
+        "eval30": "results/rgb/state_plus_rgb_eval30/cheetah/state_matched_seed1/pixel_ablation.json"
+      }
+    },
+    "cheetah|state_matched|2": {
+      "env": "cheetah",
+      "arm": "state_matched",
+      "seed": 2,
+      "train_return_last20": 119.5963062286377,
+      "train_curve_updates": 250,
+      "eval5_mean": 0.45268920197486884,
+      "eval5_episodes": [
+        0.4262535443305969,
+        0.4607706489562988,
+        0.4689481647014618,
+        0.4410186543464661,
+        0.46645499753952024
+      ],
+      "eval5_episodes_reward_per_step": [
+        0.4262535443305969,
+        0.4607706489562988,
+        0.4689481647014618,
+        0.4410186543464661,
+        0.46645499753952024
+      ],
+      "eval5_n_episodes": 5,
+      "eval30_mean": 0.46085839161872866,
+      "eval30_episodes": [
+        0.4262535443305969,
+        0.4607706489562988,
+        0.4689481647014618,
+        0.4410186543464661,
+        0.46645499753952024,
+        0.4825423061847687,
+        0.47074064683914185,
+        0.44512813425064085,
+        0.45285156965255735,
+        0.4501540501117706,
+        0.46737775325775144,
+        0.4534594421386719,
+        0.47067593288421633,
+        0.45665885281562807,
+        0.4494589412212372,
+        0.4478839931488037,
+        0.4731421346664429,
+        0.4727622108459473,
+        0.44911570835113523,
+        0.47407877373695373,
+        0.4633473343849182,
+        0.4645589003562927,
+        0.4764422347545624,
+        0.45080851459503174,
+        0.4658785858154297,
+        0.46142873191833494,
+        0.4652892129421234,
+        0.4688160002231598,
+        0.47430807232856753,
+        0.4553977012634277
+      ],
+      "eval30_n_episodes": 30,
+      "pixel_sensitivity_last20": null,
+      "sources": {
+        "eval5": "results/rgb/state_plus_rgb/cheetah/state_matched_seed2/pixel_ablation.json",
+        "training_curves": "results/rgb/state_plus_rgb/cheetah/state_matched_seed2/training_curves.json",
+        "eval30": "results/rgb/state_plus_rgb_eval30/cheetah/state_matched_seed2/pixel_ablation.json"
+      }
+    },
+    "cheetah|state_plus_rgb|0": {
+      "env": "cheetah",
+      "arm": "state_plus_rgb",
+      "seed": 0,
+      "train_return_last20": 117.94572639465332,
+      "train_curve_updates": 250,
+      "eval5_mean": 0.4376099165439606,
+      "eval5_episodes": [
+        0.45525304007530215,
+        0.45524868488311765,
+        0.48057612013816836,
+        0.3730319766998291,
+        0.42393976092338564
+      ],
+      "eval5_episodes_reward_per_step": [
+        0.45525304007530215,
+        0.45524868488311765,
+        0.48057612013816836,
+        0.3730319766998291,
+        0.42393976092338564
+      ],
+      "eval5_n_episodes": 5,
+      "eval30_mean": 0.42197336154778803,
+      "eval30_episodes": [
+        0.45525304007530215,
+        0.45524868488311765,
+        0.48057612013816836,
+        0.3730319766998291,
+        0.42393976092338564,
+        0.44576669931411744,
+        0.46914232611656187,
+        0.1837512674331665,
+        0.4244522070884705,
+        0.4698334491252899,
+        0.19857627320289611,
+        0.44975562357902527,
+        0.44689440274238584,
+        0.4545476715564728,
+        0.4215067729949951,
+        0.4687594347000122,
+        0.44769114518165587,
+        0.39994616651535037,
+        0.4038847601413727,
+        0.45248765897750853,
+        0.4035505361557007,
+        0.45994039249420166,
+        0.42185263013839724,
+        0.47759458565711976,
+        0.3850608761310577,
+        0.41457772779464724,
+        0.4401459941864014,
+        0.45959250736236573,
+        0.4364670679569244,
+        0.43537308716773987
+      ],
+      "eval30_n_episodes": 30,
+      "pixel_sensitivity_last20": 0.000759738136548549,
+      "sources": {
+        "eval5": "results/rgb/state_plus_rgb/cheetah/state_plus_rgb_seed0/pixel_ablation.json",
+        "training_curves": "results/rgb/state_plus_rgb/cheetah/state_plus_rgb_seed0/training_curves.json",
+        "eval30": "results/rgb/state_plus_rgb_eval30/cheetah/state_plus_rgb_seed0/pixel_ablation.json"
+      }
+    },
+    "cheetah|state_plus_rgb|1": {
+      "env": "cheetah",
+      "arm": "state_plus_rgb",
+      "seed": 1,
+      "train_return_last20": 120.241162109375,
+      "train_curve_updates": 250,
+      "eval5_mean": 0.5079389088153838,
+      "eval5_episodes": [
+        0.5192257175445557,
+        0.5242023317813873,
+        0.48523938035964964,
+        0.4791431059837341,
+        0.5318840084075928
+      ],
+      "eval5_episodes_reward_per_step": [
+        0.5192257175445557,
+        0.5242023317813873,
+        0.48523938035964964,
+        0.4791431059837341,
+        0.5318840084075928
+      ],
+      "eval5_n_episodes": 5,
+      "eval30_mean": 0.5167160881519318,
+      "eval30_episodes": [
+        0.5192257175445557,
+        0.5242023317813873,
+        0.48523938035964964,
+        0.4791431059837341,
+        0.5318840084075928,
+        0.5138434689044953,
+        0.551119356393814,
+        0.505168039560318,
+        0.5279838116168976,
+        0.5314489436149598,
+        0.5193413898944855,
+        0.5188740887641907,
+        0.5273547308444977,
+        0.49890551590919496,
+        0.5246121520996094,
+        0.5211658446788788,
+        0.4786593449115753,
+        0.5051949133872986,
+        0.5055099449157715,
+        0.5228555867671967,
+        0.5298120062351227,
+        0.5263129498958588,
+        0.5289228854179382,
+        0.4952868523597717,
+        0.5244430613517761,
+        0.5397764115333558,
+        0.5130394809246063,
+        0.5147996401786804,
+        0.5108040316104889,
+        0.5265536487102509
+      ],
+      "eval30_n_episodes": 30,
+      "pixel_sensitivity_last20": 0.0018470087205059826,
+      "sources": {
+        "eval5": "results/rgb/state_plus_rgb/cheetah/state_plus_rgb_seed1/pixel_ablation.json",
+        "training_curves": "results/rgb/state_plus_rgb/cheetah/state_plus_rgb_seed1/training_curves.json",
+        "eval30": "results/rgb/state_plus_rgb_eval30/cheetah/state_plus_rgb_seed1/pixel_ablation.json"
+      }
+    },
+    "cheetah|state_plus_rgb|2": {
+      "env": "cheetah",
+      "arm": "state_plus_rgb",
+      "seed": 2,
+      "train_return_last20": 116.87376289367675,
+      "train_curve_updates": 250,
+      "eval5_mean": 0.5091283979892731,
+      "eval5_episodes": [
+        0.5156500103473663,
+        0.5206127324104309,
+        0.507606701374054,
+        0.5064910163879395,
+        0.4952815294265747
+      ],
+      "eval5_episodes_reward_per_step": [
+        0.5156500103473663,
+        0.5206127324104309,
+        0.507606701374054,
+        0.5064910163879395,
+        0.4952815294265747
+      ],
+      "eval5_n_episodes": 5,
+      "eval30_mean": 0.5017121753851572,
+      "eval30_episodes": [
+        0.5156500103473663,
+        0.5206127324104309,
+        0.507606701374054,
+        0.5064910163879395,
+        0.4952815294265747,
+        0.43991030430793765,
+        0.46419943833351135,
+        0.5008874101638794,
+        0.5336415343284607,
+        0.5176876378059387,
+        0.5221130223274231,
+        0.4964193077087402,
+        0.5242340502738952,
+        0.5207143061161041,
+        0.5394105224609375,
+        0.5108809626102447,
+        0.48624508309364317,
+        0.5044757156372071,
+        0.5282386503219605,
+        0.4534691755771637,
+        0.5268618779182435,
+        0.5086637670993805,
+        0.5223132133483886,
+        0.4571778659820557,
+        0.4341954367160797,
+        0.5125488295555115,
+        0.5322871046066284,
+        0.4947592158317566,
+        0.45176971626281737,
+        0.5226191232204437
+      ],
+      "eval30_n_episodes": 30,
+      "pixel_sensitivity_last20": 0.0007131198915885761,
+      "sources": {
+        "eval5": "results/rgb/state_plus_rgb/cheetah/state_plus_rgb_seed2/pixel_ablation.json",
+        "training_curves": "results/rgb/state_plus_rgb/cheetah/state_plus_rgb_seed2/training_curves.json",
+        "eval30": "results/rgb/state_plus_rgb_eval30/cheetah/state_plus_rgb_seed2/pixel_ablation.json"
+      }
+    }
+  },
+  "per_env": {
+    "cartpole": {
+      "train_return": {
+        "metric": "training episode return (last 20 updates)",
+        "unit": "env return",
+        "state_only": {
+          "per_seed": [
+            22.73397855758667,
+            24.850687313079835,
+            24.714692783355712
+          ],
+          "mean": 24.099786218007406,
+          "sd_sample": 1.1847770051687756,
+          "n": 3
+        },
+        "state_plus_rgb": {
+          "per_seed": [
+            23.279466724395753,
+            24.68189239501953,
+            0.9107397586107254
+          ],
+          "mean": 16.29069962600867,
+          "sd_sample": 13.337881150410835,
+          "n": 3
+        },
+        "difference": -7.809086591998735,
+        "relative_difference_pct": -32.403136365432864,
+        "seed_ranges_overlap": true,
+        "welch": {
+          "t": -1.0101069664198536,
+          "p": 0.41736450103262474,
+          "cohens_d": -0.824748884453088,
+          "hedges_g": -0.6597991075624705,
+          "pooled_sd": 9.468441533179083,
+          "degenerate_zero_variance": false
+        },
+        "achieved_power_at_observed_effect": 0.12373257842177891,
+        "paired_by_seed": {
+          "n_pairs": 3,
+          "mean_diff": -7.809086591998736,
+          "sd_diff_sample": 13.856563940327243,
+          "wins_b": 1,
+          "wins_a": 2,
+          "ties": 0,
+          "min_diff": -23.803953024744988,
+          "max_diff": 0.5454881668090827,
+          "paired_t": -0.9761247302213418,
+          "paired_p": 0.4319496045494369,
+          "cohens_dz": -0.5635658757559425,
+          "ci95_low": -42.23069963144539,
+          "ci95_high": 26.61252644744792,
+          "sign_test_p": 1.0
+        },
+        "sd_convention": "sample s.d., ddof=1"
+      },
+      "eval5": {
+        "metric": "deterministic eval, 5 episodes",
+        "unit": "upright fraction",
+        "state_only": {
+          "per_seed": [
+            1.0,
+            1.0,
+            1.0
+          ],
+          "mean": 1.0,
+          "sd_sample": 0.0,
+          "n": 3
+        },
+        "state_plus_rgb": {
+          "per_seed": [
+            0.6824000000000001,
+            1.0,
+            0.2864
+          ],
+          "mean": 0.6562666666666667,
+          "sd_sample": 0.35751706719167037,
+          "n": 3
+        },
+        "difference": -0.34373333333333334,
+        "relative_difference_pct": -34.373333333333335,
+        "seed_ranges_overlap": true,
+        "welch": {
+          "t": -1.665273219723406,
+          "p": 0.2377742018056762,
+          "cohens_d": -1.3596898902146668,
+          "hedges_g": -1.0877519121717334,
+          "pooled_sd": 0.25280274260115665,
+          "degenerate_zero_variance": false
+        },
+        "achieved_power_at_observed_effect": 0.25086226761453073,
+        "paired_by_seed": {
+          "n_pairs": 3,
+          "mean_diff": -0.3437333333333333,
+          "sd_diff_sample": 0.35751706719167037,
+          "wins_b": 0,
+          "wins_a": 2,
+          "ties": 1,
+          "min_diff": -0.7136,
+          "max_diff": 0.0,
+          "paired_t": -1.6652732197234053,
+          "paired_p": 0.2377742018056764,
+          "cohens_dz": -0.9614459416815829,
+          "ci95_low": -1.2318549625385382,
+          "ci95_high": 0.5443882958718718,
+          "sign_test_p": 0.5
+        },
+        "sd_convention": "sample s.d., ddof=1"
+      },
+      "eval30": {
+        "metric": "deterministic eval, 30 episodes",
+        "unit": "upright fraction",
+        "state_only": {
+          "per_seed": [
+            1.0,
+            1.0,
+            1.0
+          ],
+          "mean": 1.0,
+          "sd_sample": 0.0,
+          "n": 3
+        },
+        "state_plus_rgb": {
+          "per_seed": [
+            0.7193333333333333,
+            0.9998666666666666,
+            0.2550666666666667
+          ],
+          "mean": 0.6580888888888888,
+          "sd_sample": 0.37615810702612995,
+          "n": 3
+        },
+        "difference": -0.34191111111111117,
+        "relative_difference_pct": -34.19111111111112,
+        "seed_ranges_overlap": false,
+        "welch": {
+          "t": -1.5743577103753192,
+          "p": 0.2560698316241382,
+          "cohens_d": -1.2854576876786512,
+          "hedges_g": -1.028366150142921,
+          "pooled_sd": 0.2659839482764716,
+          "degenerate_zero_variance": false
+        },
+        "achieved_power_at_observed_effect": 0.2298079339101063,
+        "paired_by_seed": {
+          "n_pairs": 3,
+          "mean_diff": -0.3419111111111111,
+          "sd_diff_sample": 0.3761581070261299,
+          "wins_b": 0,
+          "wins_a": 3,
+          "ties": 0,
+          "min_diff": -0.7449333333333332,
+          "max_diff": -0.00013333333333342967,
+          "paired_t": -1.574357710375319,
+          "paired_p": 0.2560698316241382,
+          "cohens_dz": -0.9089558478859534,
+          "ci95_low": -1.2763396503553373,
+          "ci95_high": 0.5925174281331149,
+          "sign_test_p": 0.25
+        },
+        "sd_convention": "sample s.d., ddof=1"
+      }
+    },
+    "walker": {
+      "train_return": {
+        "metric": "training episode return (last 20 updates)",
+        "unit": "env return",
+        "state_only": {
+          "per_seed": [
+            188.0881591796875,
+            191.53581924438475,
+            188.91020126342772
+          ],
+          "mean": 189.51139322916666,
+          "sd_sample": 1.8007397966332785,
+          "n": 3
+        },
+        "state_plus_rgb": {
+          "per_seed": [
+            204.2862808227539,
+            208.82906494140624,
+            196.47755279541016
+          ],
+          "mean": 203.19763285319007,
+          "sd_sample": 6.247305729224296,
+          "n": 3
+        },
+        "difference": 13.686239624023415,
+        "relative_difference_pct": 7.221855842447071,
+        "seed_ranges_overlap": false,
+        "welch": {
+          "t": 3.6460361887949944,
+          "p": 0.053527208425188925,
+          "cohens_d": 2.97697608208987,
+          "hedges_g": 2.381580865671896,
+          "pooled_sd": 4.59736297727173,
+          "degenerate_zero_variance": false
+        },
+        "achieved_power_at_observed_effect": 0.7766951521841361,
+        "paired_by_seed": {
+          "n_pairs": 3,
+          "mean_diff": 13.686239624023443,
+          "sd_diff_sample": 5.327327452445425,
+          "wins_b": 3,
+          "wins_a": 0,
+          "ties": 0,
+          "min_diff": 7.567351531982439,
+          "max_diff": 17.29324569702149,
+          "paired_t": 4.4497475713623444,
+          "paired_p": 0.04697431968721029,
+          "cohens_dz": 2.569062958151933,
+          "ci95_low": 0.4524245965609506,
+          "ci95_high": 26.920054651485934,
+          "sign_test_p": 0.25
+        },
+        "sd_convention": "sample s.d., ddof=1"
+      },
+      "eval5": {
+        "metric": "deterministic eval, 5 episodes",
+        "unit": "reward / step",
+        "state_only": {
+          "per_seed": [
+            0.6161411106562242,
+            0.7260781056471168,
+            0.7991352910377085
+          ],
+          "mean": 0.7137848357803499,
+          "sd_sample": 0.09211439016997112,
+          "n": 3
+        },
+        "state_plus_rgb": {
+          "per_seed": [
+            0.7363933706503362,
+            0.7995040448382496,
+            0.8205526509664953
+          ],
+          "mean": 0.785483355485027,
+          "sd_sample": 0.043796471470749096,
+          "n": 3
+        },
+        "difference": 0.07169851970467711,
+        "relative_difference_pct": 10.044836498423539,
+        "seed_ranges_overlap": true,
+        "welch": {
+          "t": 1.217551987899867,
+          "p": 0.31423436817480205,
+          "cohens_d": 0.9941270352219974,
+          "hedges_g": 0.795301628177598,
+          "pooled_sd": 0.07212209020013845,
+          "degenerate_zero_variance": false
+        },
+        "achieved_power_at_observed_effect": 0.1575072495717799,
+        "paired_by_seed": {
+          "n_pairs": 3,
+          "mean_diff": 0.07169851970467715,
+          "sd_diff_sample": 0.0494400885040909,
+          "wins_b": 3,
+          "wins_a": 0,
+          "ties": 0,
+          "min_diff": 0.021417359928786794,
+          "max_diff": 0.12025225999411193,
+          "paired_t": 2.511837715373496,
+          "paired_p": 0.1286179542675558,
+          "cohens_dz": 1.4502101811315424,
+          "ci95_low": -0.05111746862060902,
+          "ci95_high": 0.19451450802996334,
+          "sign_test_p": 0.25
+        },
+        "sd_convention": "sample s.d., ddof=1"
+      },
+      "eval30": {
+        "metric": "deterministic eval, 30 episodes",
+        "unit": "reward / step",
+        "state_only": {
+          "per_seed": [
+            0.6151196179026893,
+            0.7581433130539954,
+            0.7657719388825819
+          ],
+          "mean": 0.7130116232797555,
+          "sd_sample": 0.08486272751076183,
+          "n": 3
+        },
+        "state_plus_rgb": {
+          "per_seed": [
+            0.8009722915600054,
+            0.8337874251767062,
+            0.8123279331785317
+          ],
+          "mean": 0.815695883305081,
+          "sd_sample": 0.016664800167168994,
+          "n": 3
+        },
+        "difference": 0.10268426002532549,
+        "relative_difference_pct": 14.40148472657318,
+        "seed_ranges_overlap": false,
+        "welch": {
+          "t": 2.056511681438121,
+          "p": 0.16683361113895445,
+          "cohens_d": 1.6791347565321548,
+          "hedges_g": 1.343307805225724,
+          "pooled_sd": 0.061153078766230114,
+          "degenerate_zero_variance": false
+        },
+        "achieved_power_at_observed_effect": 0.3513071307018994,
+        "paired_by_seed": {
+          "n_pairs": 3,
+          "mean_diff": 0.10268426002532556,
+          "sd_diff_sample": 0.07347971433819186,
+          "wins_b": 3,
+          "wins_a": 0,
+          "ties": 0,
+          "min_diff": 0.04655599429594981,
+          "max_diff": 0.18585267365731606,
+          "paired_t": 2.4204551841736817,
+          "paired_p": 0.1365755098812029,
+          "cohens_dz": 1.3974504521441005,
+          "ci95_low": -0.07984946941081829,
+          "ci95_high": 0.2852179894614694,
+          "sign_test_p": 0.25
+        },
+        "sd_convention": "sample s.d., ddof=1"
+      }
+    },
+    "cheetah": {
+      "train_return": {
+        "metric": "training episode return (last 20 updates)",
+        "unit": "env return",
+        "state_only": {
+          "per_seed": [
+            121.620072555542,
+            122.23863830566407,
+            119.5963062286377
+          ],
+          "mean": 121.15167236328125,
+          "sd_sample": 1.3820378997708576,
+          "n": 3
+        },
+        "state_plus_rgb": {
+          "per_seed": [
+            117.94572639465332,
+            120.241162109375,
+            116.87376289367675
+          ],
+          "mean": 118.3535504659017,
+          "sd_sample": 1.7203443621230259,
+          "n": 3
+        },
+        "difference": -2.798121897379545,
+        "relative_difference_pct": -2.309602370976104,
+        "seed_ranges_overlap": true,
+        "welch": {
+          "t": -2.196241087066716,
+          "p": 0.09619518599555202,
+          "cohens_d": -1.7932233384829661,
+          "hedges_g": -1.434578670786373,
+          "pooled_sd": 1.5603867278164607,
+          "degenerate_zero_variance": false
+        },
+        "achieved_power_at_observed_effect": 0.39013184143604906,
+        "paired_by_seed": {
+          "n_pairs": 3,
+          "mean_diff": -2.798121897379564,
+          "sd_diff_sample": 0.8409859147851513,
+          "wins_b": 0,
+          "wins_a": 3,
+          "ties": 0,
+          "min_diff": -3.6743461608886747,
+          "max_diff": -1.997476196289071,
+          "paired_t": -5.762866186968872,
+          "paired_p": 0.02881568891090804,
+          "cohens_dz": -3.3271923443502702,
+          "ci95_low": -4.887246723348207,
+          "ci95_high": -0.7089970714109204,
+          "sign_test_p": 0.25
+        },
+        "sd_convention": "sample s.d., ddof=1"
+      },
+      "eval5": {
+        "metric": "deterministic eval, 5 episodes",
+        "unit": "reward / step",
+        "state_only": {
+          "per_seed": [
+            0.48483456382751466,
+            0.5037827568531036,
+            0.45268920197486884
+          ],
+          "mean": 0.480435507551829,
+          "sd_sample": 0.025829278147313436,
+          "n": 3
+        },
+        "state_plus_rgb": {
+          "per_seed": [
+            0.4376099165439606,
+            0.5079389088153838,
+            0.5091283979892731
+          ],
+          "mean": 0.4848924077828725,
+          "sd_sample": 0.04095215750655925,
+          "n": 3
+        },
+        "difference": 0.0044569002310435035,
+        "relative_difference_pct": 0.9276791912726593,
+        "seed_ranges_overlap": true,
+        "welch": {
+          "t": 0.15943855681036576,
+          "p": 0.8823997633286152,
+          "cohens_d": 0.13018103650371465,
+          "hedges_g": 0.10414482920297173,
+          "pooled_sd": 0.03423617103337726,
+          "degenerate_zero_variance": false
+        },
+        "achieved_power_at_observed_effect": 0.05180657717520899,
+        "paired_by_seed": {
+          "n_pairs": 3,
+          "mean_diff": 0.004456900231043485,
+          "sd_diff_sample": 0.051832576040235445,
+          "wins_b": 2,
+          "wins_a": 1,
+          "ties": 0,
+          "min_diff": -0.04722464728355408,
+          "max_diff": 0.05643919601440428,
+          "paired_t": 0.14893293434693275,
+          "paired_p": 0.8952676782007021,
+          "cohens_dz": 0.08598646973640248,
+          "ci95_low": -0.12430235660767198,
+          "ci95_high": 0.13321615706975895,
+          "sign_test_p": 1.0
+        },
+        "sd_convention": "sample s.d., ddof=1"
+      },
+      "eval30": {
+        "metric": "deterministic eval, 30 episodes",
+        "unit": "reward / step",
+        "state_only": {
+          "per_seed": [
+            0.48281795206864675,
+            0.5000081916252772,
+            0.46085839161872866
+          ],
+          "mean": 0.4812281784375509,
+          "sd_sample": 0.01962325776436683,
+          "n": 3
+        },
+        "state_plus_rgb": {
+          "per_seed": [
+            0.42197336154778803,
+            0.5167160881519318,
+            0.5017121753851572
+          ],
+          "mean": 0.48013387502829236,
+          "sd_sample": 0.050924093961652275,
+          "n": 3
+        },
+        "difference": -0.0010943034092585346,
+        "relative_difference_pct": -0.2273980324285068,
+        "seed_ranges_overlap": true,
+        "welch": {
+          "t": -0.034730542242770036,
+          "p": 0.9748011674026578,
+          "cohens_d": -0.028357368994987697,
+          "hedges_g": -0.02268589519599016,
+          "pooled_sd": 0.03858973691995044,
+          "degenerate_zero_variance": false
+        },
+        "achieved_power_at_observed_effect": 0.050085672093573064,
+        "paired_by_seed": {
+          "n_pairs": 3,
+          "mean_diff": -0.0010943034092585162,
+          "sd_diff_sample": 0.05313500329432532,
+          "wins_b": 2,
+          "wins_a": 1,
+          "ties": 0,
+          "min_diff": -0.06084459052085872,
+          "max_diff": 0.040853783766428564,
+          "paired_t": -0.03567119575080578,
+          "paired_p": 0.974784675526516,
+          "cohens_dz": -0.020594774469043554,
+          "ci95_low": -0.13308896890667007,
+          "ci95_high": 0.13090036208815306,
+          "sign_test_p": 1.0
+        },
+        "sd_convention": "sample s.d., ddof=1"
+      }
+    }
+  },
+  "paired_episodes": {
+    "cartpole": {
+      "eval5": {
+        "n_pairs": 15,
+        "mean_diff": -0.04059084019735456,
+        "sd_diff_sample": 0.02957397188753172,
+        "wins_b": 2,
+        "wins_a": 13,
+        "ties": 0,
+        "min_diff": -0.06925613673776387,
+        "max_diff": 0.0014077763557434203,
+        "paired_t": -5.315743475065618,
+        "paired_p": 0.00010901107222159226,
+        "cohens_dz": -1.372519063442659,
+        "ci95_low": -0.05696835993942794,
+        "ci95_high": -0.024213320455281177,
+        "sign_test_p": 0.00738525390625,
+        "wilcoxon_p": 0.0008544921875,
+        "pair_labels": [
+          "s0e0",
+          "s0e1",
+          "s0e2",
+          "s0e3",
+          "s0e4",
+          "s1e0",
+          "s1e1",
+          "s1e2",
+          "s1e3",
+          "s1e4",
+          "s2e0",
+          "s2e1",
+          "s2e2",
+          "s2e3",
+          "s2e4"
+        ],
+        "state_only_episodes": [
+          0.09517700091004372,
+          0.09477673569321632,
+          0.09342836079001426,
+          0.09453730976581573,
+          0.09404759818315506,
+          0.09835331094264985,
+          0.09931982976198196,
+          0.09952630788087845,
+          0.0995407831966877,
+          0.09806622552871704,
+          0.09926522913575173,
+          0.09947897630929947,
+          0.0993427984714508,
+          0.0992371937930584,
+          0.09896357420086861
+        ],
+        "state_plus_rgb_episodes": [
+          0.04466170618310571,
+          0.042856643728911875,
+          0.025870987541973593,
+          0.0431957352720201,
+          0.02479146144539118,
+          0.09891983726620675,
+          0.09904320269823075,
+          0.09431484833359718,
+          0.09824337282776832,
+          0.09947400188446046,
+          0.03924466586112976,
+          0.035105139151215554,
+          0.0387603632286191,
+          0.03755132525227964,
+          0.03216534092836082
+        ],
+        "metric": "reward / step",
+        "is_headline_metric": false,
+        "metric_note": "the 5-episode JSONs stored per-episode reward/step only, so the episode-level pairing for this env uses reward/step, not the headline upright fraction (the re-evaluation stores both)",
+        "pseudoreplication_warning": "Episodes within a seed share one trained policy, so these n pairs are NOT n independent replications. This test answers 'for these particular policies, does the extension score higher from the same initial states', which is the right question for the excluded-episode dispute. For generalisation across training runs use paired_by_seed (n=3)."
+      },
+      "eval30": {
+        "n_pairs": 90,
+        "mean_diff": -0.3419111111111111,
+        "sd_diff_sample": 0.31307749855247524,
+        "wins_b": 0,
+        "wins_a": 60,
+        "ties": 30,
+        "min_diff": -0.784,
+        "max_diff": 0.0,
+        "paired_t": -10.360545297209768,
+        "paired_p": 5.782970616057825e-17,
+        "cohens_dz": -1.0920973646843004,
+        "ci95_low": -0.4074839236816296,
+        "ci95_high": -0.2763382985405926,
+        "sign_test_p": 1.734723475976807e-18,
+        "wilcoxon_p": 1.6069409575228294e-11,
+        "pair_labels": [
+          "s0e0",
+          "s0e1",
+          "s0e2",
+          "s0e3",
+          "s0e4",
+          "s0e5",
+          "s0e6",
+          "s0e7",
+          "s0e8",
+          "s0e9",
+          "s0e10",
+          "s0e11",
+          "s0e12",
+          "s0e13",
+          "s0e14",
+          "s0e15",
+          "s0e16",
+          "s0e17",
+          "s0e18",
+          "s0e19",
+          "s0e20",
+          "s0e21",
+          "s0e22",
+          "s0e23",
+          "s0e24",
+          "s0e25",
+          "s0e26",
+          "s0e27",
+          "s0e28",
+          "s0e29",
+          "s1e0",
+          "s1e1",
+          "s1e2",
+          "s1e3",
+          "s1e4",
+          "s1e5",
+          "s1e6",
+          "s1e7",
+          "s1e8",
+          "s1e9",
+          "s1e10",
+          "s1e11",
+          "s1e12",
+          "s1e13",
+          "s1e14",
+          "s1e15",
+          "s1e16",
+          "s1e17",
+          "s1e18",
+          "s1e19",
+          "s1e20",
+          "s1e21",
+          "s1e22",
+          "s1e23",
+          "s1e24",
+          "s1e25",
+          "s1e26",
+          "s1e27",
+          "s1e28",
+          "s1e29",
+          "s2e0",
+          "s2e1",
+          "s2e2",
+          "s2e3",
+          "s2e4",
+          "s2e5",
+          "s2e6",
+          "s2e7",
+          "s2e8",
+          "s2e9",
+          "s2e10",
+          "s2e11",
+          "s2e12",
+          "s2e13",
+          "s2e14",
+          "s2e15",
+          "s2e16",
+          "s2e17",
+          "s2e18",
+          "s2e19",
+          "s2e20",
+          "s2e21",
+          "s2e22",
+          "s2e23",
+          "s2e24",
+          "s2e25",
+          "s2e26",
+          "s2e27",
+          "s2e28",
+          "s2e29"
+        ],
+        "state_only_episodes": [
+          1.0,
+          1.0,
+          1.0,
+          1.0,
+          1.0,
+          1.0,
+          1.0,
+          1.0,
+          1.0,
+          1.0,
+          1.0,
+          1.0,
+          1.0,
+          1.0,
+          1.0,
+          1.0,
+          1.0,
+          1.0,
+          1.0,
+          1.0,
+          1.0,
+          1.0,
+          1.0,
+          1.0,
+          1.0,
+          1.0,
+          1.0,
+          1.0,
+          1.0,
+          1.0,
+          1.0,
+          1.0,
+          1.0,
+          1.0,
+          1.0,
+          1.0,
+          1.0,
+          1.0,
+          1.0,
+          1.0,
+          1.0,
+          1.0,
+          1.0,
+          1.0,
+          1.0,
+          1.0,
+          1.0,
+          1.0,
+          1.0,
+          1.0,
+          1.0,
+          1.0,
+          1.0,
+          1.0,
+          1.0,
+          1.0,
+          1.0,
+          1.0,
+          1.0,
+          1.0,
+          1.0,
+          1.0,
+          1.0,
+          1.0,
+          1.0,
+          1.0,
+          1.0,
+          1.0,
+          1.0,
+          1.0,
+          1.0,
+          1.0,
+          1.0,
+          1.0,
+          1.0,
+          1.0,
+          1.0,
+          1.0,
+          1.0,
+          1.0,
+          1.0,
+          1.0,
+          1.0,
+          1.0,
+          1.0,
+          1.0,
+          1.0,
+          1.0,
+          1.0,
+          1.0
+        ],
+        "state_plus_rgb_episodes": [
+          0.708,
+          0.708,
+          0.656,
+          0.724,
+          0.616,
+          0.704,
+          0.804,
+          0.712,
+          0.692,
+          0.632,
+          0.632,
+          0.664,
+          0.616,
+          0.728,
+          0.656,
+          0.828,
+          0.804,
+          0.712,
+          0.612,
+          0.624,
+          0.804,
+          0.828,
+          0.704,
+          0.64,
+          0.808,
+          0.708,
+          0.816,
+          0.716,
+          1.0,
+          0.724,
+          1.0,
+          1.0,
+          1.0,
+          1.0,
+          1.0,
+          1.0,
+          1.0,
+          1.0,
+          1.0,
+          1.0,
+          1.0,
+          1.0,
+          1.0,
+          1.0,
+          1.0,
+          1.0,
+          1.0,
+          1.0,
+          1.0,
+          1.0,
+          1.0,
+          1.0,
+          1.0,
+          1.0,
+          1.0,
+          1.0,
+          0.996,
+          1.0,
+          1.0,
+          1.0,
+          0.296,
+          0.288,
+          0.296,
+          0.296,
+          0.256,
+          0.22,
+          0.232,
+          0.232,
+          0.232,
+          0.232,
+          0.264,
+          0.256,
+          0.296,
+          0.264,
+          0.248,
+          0.264,
+          0.256,
+          0.264,
+          0.216,
+          0.248,
+          0.272,
+          0.24,
+          0.248,
+          0.224,
+          0.24,
+          0.248,
+          0.248,
+          0.24,
+          0.288,
+          0.248
+        ],
+        "metric": "upright fraction",
+        "is_headline_metric": true,
+        "metric_note": "",
+        "pseudoreplication_warning": "Episodes within a seed share one trained policy, so these n pairs are NOT n independent replications. This test answers 'for these particular policies, does the extension score higher from the same initial states', which is the right question for the excluded-episode dispute. For generalisation across training runs use paired_by_seed (n=3)."
+      }
+    },
+    "walker": {
+      "eval5": {
+        "n_pairs": 15,
+        "mean_diff": 0.07169851970467717,
+        "sd_diff_sample": 0.15495959510010746,
+        "wins_b": 11,
+        "wins_a": 4,
+        "ties": 0,
+        "min_diff": -0.05739090996980667,
+        "max_diff": 0.5972189050139859,
+        "paired_t": 1.791997278932916,
+        "paired_p": 0.0947649012546691,
+        "cohens_dz": 0.46269170785041275,
+        "ci95_low": -0.014115243750128098,
+        "ci95_high": 0.15751228315948243,
+        "sign_test_p": 0.11846923828124999,
+        "wilcoxon_p": 0.02557373046875,
+        "pair_labels": [
+          "s0e0",
+          "s0e1",
+          "s0e2",
+          "s0e3",
+          "s0e4",
+          "s1e0",
+          "s1e1",
+          "s1e2",
+          "s1e3",
+          "s1e4",
+          "s2e0",
+          "s2e1",
+          "s2e2",
+          "s2e3",
+          "s2e4"
+        ],
+        "state_only_episodes": [
+          0.6420523367878049,
+          0.788393247121945,
+          0.8327270289361477,
+          0.7629070509150624,
+          0.054625889520160856,
+          0.6399831079505384,
+          0.7573483950197697,
+          0.7468596879839897,
+          0.7969592660069466,
+          0.6892400712743402,
+          0.7505380744561553,
+          0.9229055691957474,
+          0.7653607258088887,
+          0.7381887395754456,
+          0.8186833461523056
+        ],
+        "state_plus_rgb_episodes": [
+          0.6238969954084606,
+          0.7555699544046074,
+          0.8705359283685684,
+          0.7801191805358976,
+          0.6518447945341468,
+          0.6931062415540218,
+          0.7384336522296071,
+          0.8159403678029775,
+          0.9272713567614556,
+          0.8227686058431863,
+          0.7813790289871395,
+          0.8655146592259407,
+          0.81357803145051,
+          0.7650785510241985,
+          0.8772129841446876
+        ],
+        "metric": "reward / step",
+        "is_headline_metric": true,
+        "metric_note": "",
+        "pseudoreplication_warning": "Episodes within a seed share one trained policy, so these n pairs are NOT n independent replications. This test answers 'for these particular policies, does the extension score higher from the same initial states', which is the right question for the excluded-episode dispute. For generalisation across training runs use paired_by_seed (n=3)."
+      },
+      "eval30": {
+        "n_pairs": 90,
+        "mean_diff": 0.10268426002532553,
+        "sd_diff_sample": 0.1657431319057198,
+        "wins_b": 76,
+        "wins_a": 14,
+        "ties": 0,
+        "min_diff": -0.29130204765498635,
+        "max_diff": 0.6910115280896425,
+        "paired_t": 5.8774587724162926,
+        "paired_p": 7.12711505487359e-08,
+        "cohens_dz": 0.6195385524857571,
+        "ci95_low": 0.06797003312127081,
+        "ci95_high": 0.13739848692938025,
+        "sign_test_p": 1.777795331222257e-11,
+        "wilcoxon_p": 4.8094140791483424e-11,
+        "pair_labels": [
+          "s0e0",
+          "s0e1",
+          "s0e2",
+          "s0e3",
+          "s0e4",
+          "s0e5",
+          "s0e6",
+          "s0e7",
+          "s0e8",
+          "s0e9",
+          "s0e10",
+          "s0e11",
+          "s0e12",
+          "s0e13",
+          "s0e14",
+          "s0e15",
+          "s0e16",
+          "s0e17",
+          "s0e18",
+          "s0e19",
+          "s0e20",
+          "s0e21",
+          "s0e22",
+          "s0e23",
+          "s0e24",
+          "s0e25",
+          "s0e26",
+          "s0e27",
+          "s0e28",
+          "s0e29",
+          "s1e0",
+          "s1e1",
+          "s1e2",
+          "s1e3",
+          "s1e4",
+          "s1e5",
+          "s1e6",
+          "s1e7",
+          "s1e8",
+          "s1e9",
+          "s1e10",
+          "s1e11",
+          "s1e12",
+          "s1e13",
+          "s1e14",
+          "s1e15",
+          "s1e16",
+          "s1e17",
+          "s1e18",
+          "s1e19",
+          "s1e20",
+          "s1e21",
+          "s1e22",
+          "s1e23",
+          "s1e24",
+          "s1e25",
+          "s1e26",
+          "s1e27",
+          "s1e28",
+          "s1e29",
+          "s2e0",
+          "s2e1",
+          "s2e2",
+          "s2e3",
+          "s2e4",
+          "s2e5",
+          "s2e6",
+          "s2e7",
+          "s2e8",
+          "s2e9",
+          "s2e10",
+          "s2e11",
+          "s2e12",
+          "s2e13",
+          "s2e14",
+          "s2e15",
+          "s2e16",
+          "s2e17",
+          "s2e18",
+          "s2e19",
+          "s2e20",
+          "s2e21",
+          "s2e22",
+          "s2e23",
+          "s2e24",
+          "s2e25",
+          "s2e26",
+          "s2e27",
+          "s2e28",
+          "s2e29"
+        ],
+        "state_only_episodes": [
+          0.6420523367878049,
+          0.788393247121945,
+          0.8327270289361477,
+          0.7629070509150624,
+          0.054625889520160856,
+          0.7564041475057602,
+          0.7419935684204102,
+          0.6401179858297109,
+          0.22799960446357728,
+          0.05881062614172697,
+          0.7061008975952864,
+          0.052006442122161385,
+          0.6827439080998301,
+          0.7028246622681618,
+          0.792809818059206,
+          0.7301253552436828,
+          0.811221223115921,
+          0.8256925148367882,
+          0.43945314060896634,
+          0.05649529272736981,
+          0.7913427532315255,
+          0.8265060786306858,
+          0.7588786781430245,
+          0.7605745218470693,
+          0.7149571986794472,
+          0.6262483773222193,
+          0.7675535801649094,
+          0.8083529927134514,
+          0.3715111724436283,
+          0.7221584435850382,
+          0.6399831079505384,
+          0.7573483950197697,
+          0.7468596879839897,
+          0.7969592660069466,
+          0.6892400712743402,
+          0.7202367777526378,
+          0.8313951385617256,
+          0.8183207166194916,
+          0.8209613360762597,
+          0.8140683355927467,
+          0.7642453783899545,
+          0.7258555791005492,
+          0.7317313598021865,
+          0.7001838818192482,
+          0.7777969117760658,
+          0.7717359224557877,
+          0.7627311170101165,
+          0.809312043249607,
+          0.7874165452718734,
+          0.7948187850564719,
+          0.7466415103301406,
+          0.7432719342783094,
+          0.7101194120049477,
+          0.6754045654796064,
+          0.7561022582054138,
+          0.7509275936707854,
+          0.7767632405012846,
+          0.8059835825562477,
+          0.7809398880004883,
+          0.7369450498223304,
+          0.7505380744561553,
+          0.9229055691957474,
+          0.7653607258088887,
+          0.7381887395754456,
+          0.8186833461523056,
+          0.6151130014955998,
+          0.7791642202436924,
+          0.697180616132915,
+          0.7766579254865646,
+          0.5597310127951205,
+          0.9174499675035477,
+          0.7465676517486572,
+          0.6637585717514157,
+          0.795048228174448,
+          0.6141230887509882,
+          0.6049567473269999,
+          0.8530571497082711,
+          0.7198383347988129,
+          0.759418433740735,
+          0.838407273709774,
+          0.922770020544529,
+          0.8271939968205988,
+          0.8890807129740715,
+          0.6569603821169585,
+          0.8650851480960846,
+          0.8571910746097565,
+          0.7515783560723066,
+          0.7152108509540558,
+          0.8110537245385349,
+          0.7408852211944759
+        ],
+        "state_plus_rgb_episodes": [
+          0.6238969954084606,
+          0.7555699544046074,
+          0.8705359283685684,
+          0.7801191805358976,
+          0.6518447945341468,
+          0.5642904097661376,
+          0.9041141338348389,
+          0.8190504084974527,
+          0.8843367809057235,
+          0.728463489998132,
+          0.8237286293879151,
+          0.7430179702118039,
+          0.8117713282778859,
+          0.8676705911159516,
+          0.8000662793554366,
+          0.6953450991660357,
+          0.8807624486088753,
+          0.8662697350978852,
+          0.7950963153578341,
+          0.7266641045957803,
+          0.8670852368474007,
+          0.8460404928326607,
+          0.8394427871704102,
+          0.8048064882010222,
+          0.9076487738490104,
+          0.7776044921278954,
+          0.8729356422424316,
+          0.8618924396634102,
+          0.8172902835607528,
+          0.8418075328757987,
+          0.6931062415540218,
+          0.7384336522296071,
+          0.8159403678029775,
+          0.9272713567614556,
+          0.8227686058431863,
+          0.7859896836951376,
+          0.9164835650324822,
+          0.864150709092617,
+          0.9255517278909683,
+          0.8952094964981079,
+          0.7556773610115052,
+          0.7248300952836871,
+          0.8058572417721153,
+          0.8121681604534388,
+          0.8839962624907494,
+          0.9204422780871391,
+          0.9245402037501335,
+          0.893627064049244,
+          0.863102183163166,
+          0.8302739129625261,
+          0.7978558960855007,
+          0.8292146196588874,
+          0.7956363776549696,
+          0.7838123285332694,
+          0.8473828739523888,
+          0.7750642526447773,
+          0.8067801920175552,
+          0.8302328782081604,
+          0.8846442885994911,
+          0.8635788785219193,
+          0.7813790289871395,
+          0.8655146592259407,
+          0.81357803145051,
+          0.7650785510241985,
+          0.8772129841446876,
+          0.786494109429419,
+          0.7703002585321664,
+          0.8287290692403912,
+          0.8320033375620842,
+          0.7680248271003366,
+          0.907350216627121,
+          0.8878270676136016,
+          0.7870347771048546,
+          0.8757390311360359,
+          0.8447880975306034,
+          0.8309470722526312,
+          0.8771940003633499,
+          0.8522127236127853,
+          0.7962952122092247,
+          0.8989732125997544,
+          0.6314679728895426,
+          0.7752412647567689,
+          0.889666906774044,
+          0.761788100451231,
+          0.8903924278616905,
+          0.8676043021082878,
+          0.5997375576272607,
+          0.7846524504162371,
+          0.7379799779765308,
+          0.7846307667475194
+        ],
+        "metric": "reward / step",
+        "is_headline_metric": true,
+        "metric_note": "",
+        "pseudoreplication_warning": "Episodes within a seed share one trained policy, so these n pairs are NOT n independent replications. This test answers 'for these particular policies, does the extension score higher from the same initial states', which is the right question for the excluded-episode dispute. For generalisation across training runs use paired_by_seed (n=3)."
+      }
+    },
+    "cheetah": {
+      "eval5": {
+        "n_pairs": 15,
+        "mean_diff": 0.004456900231043507,
+        "sd_diff_sample": 0.052258499479201054,
+        "wins_b": 8,
+        "wins_a": 7,
+        "ties": 0,
+        "min_diff": -0.11031576299667356,
+        "max_diff": 0.08939646601676943,
+        "paired_t": 0.33030991212079464,
+        "paired_p": 0.7460568006186445,
+        "cohens_dz": 0.08528565258207153,
+        "ci95_low": -0.0244828921704153,
+        "ci95_high": 0.03339669263250231,
+        "sign_test_p": 1.0,
+        "wilcoxon_p": 0.67877197265625,
+        "pair_labels": [
+          "s0e0",
+          "s0e1",
+          "s0e2",
+          "s0e3",
+          "s0e4",
+          "s1e0",
+          "s1e1",
+          "s1e2",
+          "s1e3",
+          "s1e4",
+          "s2e0",
+          "s2e1",
+          "s2e2",
+          "s2e3",
+          "s2e4"
+        ],
+        "state_only_episodes": [
+          0.48329548358917235,
+          0.49197561979293825,
+          0.4812864797115326,
+          0.4833477396965027,
+          0.4842674963474274,
+          0.5047232584953308,
+          0.51220365858078,
+          0.5020969753265381,
+          0.5027390656471252,
+          0.497150826215744,
+          0.4262535443305969,
+          0.4607706489562988,
+          0.4689481647014618,
+          0.4410186543464661,
+          0.46645499753952024
+        ],
+        "state_plus_rgb_episodes": [
+          0.45525304007530215,
+          0.45524868488311765,
+          0.48057612013816836,
+          0.3730319766998291,
+          0.42393976092338564,
+          0.5192257175445557,
+          0.5242023317813873,
+          0.48523938035964964,
+          0.4791431059837341,
+          0.5318840084075928,
+          0.5156500103473663,
+          0.5206127324104309,
+          0.507606701374054,
+          0.5064910163879395,
+          0.4952815294265747
+        ],
+        "metric": "reward / step",
+        "is_headline_metric": true,
+        "metric_note": "",
+        "pseudoreplication_warning": "Episodes within a seed share one trained policy, so these n pairs are NOT n independent replications. This test answers 'for these particular policies, does the extension score higher from the same initial states', which is the right question for the excluded-episode dispute. For generalisation across training runs use paired_by_seed (n=3)."
+      },
+      "eval30": {
+        "n_pairs": 90,
+        "mean_diff": -0.0010943034092585173,
+        "sd_diff_sample": 0.06355495639919269,
+        "wins_b": 50,
+        "wins_a": 40,
+        "ties": 0,
+        "min_diff": -0.312790500164032,
+        "max_diff": 0.08995158123970026,
+        "paired_t": -0.16334640540741185,
+        "paired_p": 0.8706160474454135,
+        "cohens_dz": -0.017218222956288862,
+        "ci95_low": -0.014405631317396963,
+        "ci95_high": 0.012217024498879929,
+        "sign_test_p": 0.34283311942078787,
+        "wilcoxon_p": 0.3858845178941922,
+        "pair_labels": [
+          "s0e0",
+          "s0e1",
+          "s0e2",
+          "s0e3",
+          "s0e4",
+          "s0e5",
+          "s0e6",
+          "s0e7",
+          "s0e8",
+          "s0e9",
+          "s0e10",
+          "s0e11",
+          "s0e12",
+          "s0e13",
+          "s0e14",
+          "s0e15",
+          "s0e16",
+          "s0e17",
+          "s0e18",
+          "s0e19",
+          "s0e20",
+          "s0e21",
+          "s0e22",
+          "s0e23",
+          "s0e24",
+          "s0e25",
+          "s0e26",
+          "s0e27",
+          "s0e28",
+          "s0e29",
+          "s1e0",
+          "s1e1",
+          "s1e2",
+          "s1e3",
+          "s1e4",
+          "s1e5",
+          "s1e6",
+          "s1e7",
+          "s1e8",
+          "s1e9",
+          "s1e10",
+          "s1e11",
+          "s1e12",
+          "s1e13",
+          "s1e14",
+          "s1e15",
+          "s1e16",
+          "s1e17",
+          "s1e18",
+          "s1e19",
+          "s1e20",
+          "s1e21",
+          "s1e22",
+          "s1e23",
+          "s1e24",
+          "s1e25",
+          "s1e26",
+          "s1e27",
+          "s1e28",
+          "s1e29",
+          "s2e0",
+          "s2e1",
+          "s2e2",
+          "s2e3",
+          "s2e4",
+          "s2e5",
+          "s2e6",
+          "s2e7",
+          "s2e8",
+          "s2e9",
+          "s2e10",
+          "s2e11",
+          "s2e12",
+          "s2e13",
+          "s2e14",
+          "s2e15",
+          "s2e16",
+          "s2e17",
+          "s2e18",
+          "s2e19",
+          "s2e20",
+          "s2e21",
+          "s2e22",
+          "s2e23",
+          "s2e24",
+          "s2e25",
+          "s2e26",
+          "s2e27",
+          "s2e28",
+          "s2e29"
+        ],
+        "state_only_episodes": [
+          0.48329548358917235,
+          0.49197561979293825,
+          0.4812864797115326,
+          0.4833477396965027,
+          0.4842674963474274,
+          0.4771020858287811,
+          0.48030292224884036,
+          0.4965417675971985,
+          0.49276656937599184,
+          0.4758857114315033,
+          0.488490514755249,
+          0.47802006793022156,
+          0.48667825198173525,
+          0.48226202273368834,
+          0.4769234375953674,
+          0.4817728691101074,
+          0.4818514368534088,
+          0.48545212054252623,
+          0.4767902991771698,
+          0.4882655429840088,
+          0.4759046530723572,
+          0.48942990136146547,
+          0.4883914222717285,
+          0.49129782128334043,
+          0.46312523126602173,
+          0.48545693039894106,
+          0.4866029329299927,
+          0.48209591102600097,
+          0.4801313126087189,
+          0.4688240065574646,
+          0.5047232584953308,
+          0.51220365858078,
+          0.5020969753265381,
+          0.5027390656471252,
+          0.497150826215744,
+          0.49592777514457703,
+          0.5115430240631104,
+          0.515944198846817,
+          0.505389475107193,
+          0.487128173828125,
+          0.5079431402683258,
+          0.5007389764785767,
+          0.49922509694099426,
+          0.4786998281478882,
+          0.5018181569576263,
+          0.50679470038414,
+          0.49124942111968994,
+          0.5003041110038757,
+          0.5071282598972321,
+          0.49776636266708374,
+          0.5026480324268341,
+          0.4908501603603363,
+          0.5043457839488983,
+          0.4808695421218872,
+          0.5023414986133575,
+          0.4904476728439331,
+          0.5039496874809265,
+          0.5076594769954681,
+          0.4839763531684875,
+          0.506643055677414,
+          0.4262535443305969,
+          0.4607706489562988,
+          0.4689481647014618,
+          0.4410186543464661,
+          0.46645499753952024,
+          0.4825423061847687,
+          0.47074064683914185,
+          0.44512813425064085,
+          0.45285156965255735,
+          0.4501540501117706,
+          0.46737775325775144,
+          0.4534594421386719,
+          0.47067593288421633,
+          0.45665885281562807,
+          0.4494589412212372,
+          0.4478839931488037,
+          0.4731421346664429,
+          0.4727622108459473,
+          0.44911570835113523,
+          0.47407877373695373,
+          0.4633473343849182,
+          0.4645589003562927,
+          0.4764422347545624,
+          0.45080851459503174,
+          0.4658785858154297,
+          0.46142873191833494,
+          0.4652892129421234,
+          0.4688160002231598,
+          0.47430807232856753,
+          0.4553977012634277
+        ],
+        "state_plus_rgb_episodes": [
+          0.45525304007530215,
+          0.45524868488311765,
+          0.48057612013816836,
+          0.3730319766998291,
+          0.42393976092338564,
+          0.44576669931411744,
+          0.46914232611656187,
+          0.1837512674331665,
+          0.4244522070884705,
+          0.4698334491252899,
+          0.19857627320289611,
+          0.44975562357902527,
+          0.44689440274238584,
+          0.4545476715564728,
+          0.4215067729949951,
+          0.4687594347000122,
+          0.44769114518165587,
+          0.39994616651535037,
+          0.4038847601413727,
+          0.45248765897750853,
+          0.4035505361557007,
+          0.45994039249420166,
+          0.42185263013839724,
+          0.47759458565711976,
+          0.3850608761310577,
+          0.41457772779464724,
+          0.4401459941864014,
+          0.45959250736236573,
+          0.4364670679569244,
+          0.43537308716773987,
+          0.5192257175445557,
+          0.5242023317813873,
+          0.48523938035964964,
+          0.4791431059837341,
+          0.5318840084075928,
+          0.5138434689044953,
+          0.551119356393814,
+          0.505168039560318,
+          0.5279838116168976,
+          0.5314489436149598,
+          0.5193413898944855,
+          0.5188740887641907,
+          0.5273547308444977,
+          0.49890551590919496,
+          0.5246121520996094,
+          0.5211658446788788,
+          0.4786593449115753,
+          0.5051949133872986,
+          0.5055099449157715,
+          0.5228555867671967,
+          0.5298120062351227,
+          0.5263129498958588,
+          0.5289228854179382,
+          0.4952868523597717,
+          0.5244430613517761,
+          0.5397764115333558,
+          0.5130394809246063,
+          0.5147996401786804,
+          0.5108040316104889,
+          0.5265536487102509,
+          0.5156500103473663,
+          0.5206127324104309,
+          0.507606701374054,
+          0.5064910163879395,
+          0.4952815294265747,
+          0.43991030430793765,
+          0.46419943833351135,
+          0.5008874101638794,
+          0.5336415343284607,
+          0.5176876378059387,
+          0.5221130223274231,
+          0.4964193077087402,
+          0.5242340502738952,
+          0.5207143061161041,
+          0.5394105224609375,
+          0.5108809626102447,
+          0.48624508309364317,
+          0.5044757156372071,
+          0.5282386503219605,
+          0.4534691755771637,
+          0.5268618779182435,
+          0.5086637670993805,
+          0.5223132133483886,
+          0.4571778659820557,
+          0.4341954367160797,
+          0.5125488295555115,
+          0.5322871046066284,
+          0.4947592158317566,
+          0.45176971626281737,
+          0.5226191232204437
+        ],
+        "metric": "reward / step",
+        "is_headline_metric": true,
+        "metric_note": "",
+        "pseudoreplication_warning": "Episodes within a seed share one trained policy, so these n pairs are NOT n independent replications. This test answers 'for these particular policies, does the extension score higher from the same initial states', which is the right question for the excluded-episode dispute. For generalisation across training runs use paired_by_seed (n=3)."
+      }
+    }
+  },
+  "camera_use": {
+    "cartpole": {
+      "eval5": [
+        {
+          "seed": 0,
+          "intact": 0.6824000000000001,
+          "conditions": {
+            "intact": {
+              "value": 0.6824000000000001,
+              "drop_fraction": 0.0
+            },
+            "frozen_first": {
+              "value": 0.6864,
+              "drop_fraction": -0.00586166471277827
+            },
+            "random_replay": {
+              "value": 0.6880000000000001,
+              "drop_fraction": -0.00820633059788971
+            },
+            "shuffle_frames": {
+              "value": 0.6832,
+              "drop_fraction": -0.0011723329425555565
+            },
+            "zeros": {
+              "value": 0.6808000000000001,
+              "drop_fraction": 0.0023446658851114383
+            },
+            "const_action": {
+              "value": 0.6256,
+              "drop_fraction": 0.08323563892145379
+            }
+          },
+          "stored_verdict_actor_uses_pixels": false,
+          "stored_pixel_drop_median": -0.00586166471277827,
+          "pixel_drop_max": 0.0023446658851114383,
+          "pixel_drop_min": -0.00820633059788971,
+          "pixel_sensitivity_last20": 0.0041786546120420095,
+          "rgb_proprio": "full",
+          "corrected_uses_camera": false
+        },
+        {
+          "seed": 1,
+          "intact": 1.0,
+          "conditions": {
+            "intact": {
+              "value": 1.0,
+              "drop_fraction": 0.0
+            },
+            "frozen_first": {
+              "value": 1.0,
+              "drop_fraction": 0.0
+            },
+            "random_replay": {
+              "value": 1.0,
+              "drop_fraction": 0.0
+            },
+            "shuffle_frames": {
+              "value": 1.0,
+              "drop_fraction": 0.0
+            },
+            "zeros": {
+              "value": 1.0,
+              "drop_fraction": 0.0
+            },
+            "const_action": {
+              "value": 0.7168000000000001,
+              "drop_fraction": 0.2831999999999999
+            }
+          },
+          "stored_verdict_actor_uses_pixels": false,
+          "stored_pixel_drop_median": 0.0,
+          "pixel_drop_max": 0.0,
+          "pixel_drop_min": 0.0,
+          "pixel_sensitivity_last20": 0.0030218481202609836,
+          "rgb_proprio": "full",
+          "corrected_uses_camera": false
+        },
+        {
+          "seed": 2,
+          "intact": 0.2864,
+          "conditions": {
+            "intact": {
+              "value": 0.2864,
+              "drop_fraction": 0.0
+            },
+            "frozen_first": {
+              "value": 0.28480000000000005,
+              "drop_fraction": 0.005586592178770723
+            },
+            "random_replay": {
+              "value": 0.276,
+              "drop_fraction": 0.03631284916201105
+            },
+            "shuffle_frames": {
+              "value": 0.2864,
+              "drop_fraction": 0.0
+            },
+            "zeros": {
+              "value": 0.2896,
+              "drop_fraction": -0.011173184357542026
+            },
+            "const_action": {
+              "value": 0.46240000000000003,
+              "drop_fraction": -0.6145251396648046
+            }
+          },
+          "stored_verdict_actor_uses_pixels": false,
+          "stored_pixel_drop_median": 0.005586592178770723,
+          "pixel_drop_max": 0.03631284916201105,
+          "pixel_drop_min": -0.011173184357542026,
+          "pixel_sensitivity_last20": 0.026286569144576787,
+          "rgb_proprio": "full",
+          "corrected_uses_camera": false
+        }
+      ],
+      "eval30": [
+        {
+          "seed": 0,
+          "intact": 0.7193333333333333,
+          "conditions": {
+            "intact": {
+              "value": 0.7193333333333333,
+              "drop_fraction": 0.0
+            },
+            "frozen_first": {
+              "value": 0.7212,
+              "drop_fraction": -0.0025949953660797265
+            },
+            "random_replay": {
+              "value": 0.7145333333333334,
+              "drop_fraction": 0.006672845227061978
+            },
+            "shuffle_frames": {
+              "value": 0.7202666666666666,
+              "drop_fraction": -0.0012974976830398633
+            },
+            "zeros": {
+              "value": 0.6862666666666666,
+              "drop_fraction": 0.04596848934198335
+            },
+            "const_action": {
+              "value": 0.5978666666666668,
+              "drop_fraction": 0.16886005560704334
+            }
+          },
+          "stored_verdict_actor_uses_pixels": false,
+          "stored_pixel_drop_median": 0.006672845227061978,
+          "pixel_drop_max": 0.04596848934198335,
+          "pixel_drop_min": -0.0025949953660797265,
+          "pixel_sensitivity_last20": 0.0041786546120420095,
+          "rgb_proprio": "full",
+          "corrected_uses_camera": false
+        },
+        {
+          "seed": 1,
+          "intact": 0.9998666666666666,
+          "conditions": {
+            "intact": {
+              "value": 0.9998666666666666,
+              "drop_fraction": 0.0
+            },
+            "frozen_first": {
+              "value": 0.9998666666666666,
+              "drop_fraction": 0.0
+            },
+            "random_replay": {
+              "value": 1.0,
+              "drop_fraction": -0.00013335111348189394
+            },
+            "shuffle_frames": {
+              "value": 0.9997333333333334,
+              "drop_fraction": 0.00013335111348167187
+            },
+            "zeros": {
+              "value": 0.9953333333333333,
+              "drop_fraction": 0.0045339378583810624
+            },
+            "const_action": {
+              "value": 0.7353333333333332,
+              "drop_fraction": 0.2645686091478865
+            }
+          },
+          "stored_verdict_actor_uses_pixels": false,
+          "stored_pixel_drop_median": 0.0,
+          "pixel_drop_max": 0.0045339378583810624,
+          "pixel_drop_min": -0.00013335111348189394,
+          "pixel_sensitivity_last20": 0.0030218481202609836,
+          "rgb_proprio": "full",
+          "corrected_uses_camera": false
+        },
+        {
+          "seed": 2,
+          "intact": 0.2550666666666667,
+          "conditions": {
+            "intact": {
+              "value": 0.2550666666666667,
+              "drop_fraction": 0.0
+            },
+            "frozen_first": {
+              "value": 0.25546666666666673,
+              "drop_fraction": -0.0015682174594877601
+            },
+            "random_replay": {
+              "value": 0.24800000000000003,
+              "drop_fraction": 0.027705175117616408
+            },
+            "shuffle_frames": {
+              "value": 0.25533333333333336,
+              "drop_fraction": -0.0010454783063250284
+            },
+            "zeros": {
+              "value": 0.2878666666666667,
+              "drop_fraction": -0.12859383167799263
+            },
+            "const_action": {
+              "value": 0.32026666666666664,
+              "drop_fraction": -0.2556194458964973
+            }
+          },
+          "stored_verdict_actor_uses_pixels": false,
+          "stored_pixel_drop_median": -0.0015682174594877601,
+          "pixel_drop_max": 0.027705175117616408,
+          "pixel_drop_min": -0.12859383167799263,
+          "pixel_sensitivity_last20": 0.026286569144576787,
+          "rgb_proprio": "full",
+          "corrected_uses_camera": false
+        }
+      ]
+    },
+    "walker": {
+      "eval5": [
+        {
+          "seed": 0,
+          "intact": 0.7363933706503362,
+          "conditions": {
+            "intact": {
+              "value": 0.7363933706503362,
+              "drop_fraction": 0.0
+            },
+            "frozen_first": {
+              "value": 0.037359267064463346,
+              "drop_fraction": 0.9492672414589094
+            },
+            "random_replay": {
+              "value": 0.7012368459258228,
+              "drop_fraction": 0.04774150084141216
+            },
+            "shuffle_frames": {
+              "value": 0.7400611377440394,
+              "drop_fraction": -0.004980717154561101
+            },
+            "zeros": {
+              "value": 0.7042831103824078,
+              "drop_fraction": 0.04360476553390295
+            },
+            "const_action": {
+              "value": 0.02957986223436892,
+              "drop_fraction": 0.9598314387210658
+            }
+          },
+          "stored_verdict_actor_uses_pixels": false,
+          "stored_pixel_drop_median": 0.04774150084141216,
+          "pixel_drop_max": 0.9492672414589094,
+          "pixel_drop_min": 0.04360476553390295,
+          "pixel_sensitivity_last20": 0.09826786257326603,
+          "rgb_proprio": "full",
+          "corrected_uses_camera": true
+        },
+        {
+          "seed": 1,
+          "intact": 0.7995040448382496,
+          "conditions": {
+            "intact": {
+              "value": 0.7995040448382496,
+              "drop_fraction": 0.0
+            },
+            "frozen_first": {
+              "value": 0.20593067240044474,
+              "drop_fraction": 0.7424269786626192
+            },
+            "random_replay": {
+              "value": 0.28961039649844167,
+              "drop_fraction": 0.637762437390753
+            },
+            "shuffle_frames": {
+              "value": 0.8121402422297747,
+              "drop_fraction": -0.015805044981456698
+            },
+            "zeros": {
+              "value": 0.2750399999991059,
+              "drop_fraction": 0.655986731055563
+            },
+            "const_action": {
+              "value": 0.050127084228396415,
+              "drop_fraction": 0.9373022756394712
+            }
+          },
+          "stored_verdict_actor_uses_pixels": true,
+          "stored_pixel_drop_median": 0.655986731055563,
+          "pixel_drop_max": 0.7424269786626192,
+          "pixel_drop_min": 0.637762437390753,
+          "pixel_sensitivity_last20": 0.09873315803706646,
+          "rgb_proprio": "full",
+          "corrected_uses_camera": true
+        },
+        {
+          "seed": 2,
+          "intact": 0.8205526509664953,
+          "conditions": {
+            "intact": {
+              "value": 0.8205526509664953,
+              "drop_fraction": 0.0
+            },
+            "frozen_first": {
+              "value": 0.16266818367773667,
+              "drop_fraction": 0.8017577744875525
+            },
+            "random_replay": {
+              "value": 0.7427664507597684,
+              "drop_fraction": 0.09479732972053129
+            },
+            "shuffle_frames": {
+              "value": 0.8106542183570564,
+              "drop_fraction": 0.012063129157866887
+            },
+            "zeros": {
+              "value": 0.4685989511301741,
+              "drop_fraction": 0.42892275032171234
+            },
+            "const_action": {
+              "value": 0.030787000092491506,
+              "drop_fraction": 0.9624801649763379
+            }
+          },
+          "stored_verdict_actor_uses_pixels": true,
+          "stored_pixel_drop_median": 0.42892275032171234,
+          "pixel_drop_max": 0.8017577744875525,
+          "pixel_drop_min": 0.09479732972053129,
+          "pixel_sensitivity_last20": 0.11703124530613422,
+          "rgb_proprio": "full",
+          "corrected_uses_camera": true
+        }
+      ],
+      "eval30": [
+        {
+          "seed": 0,
+          "intact": 0.8009722915600054,
+          "conditions": {
+            "intact": {
+              "value": 0.8009722915600054,
+              "drop_fraction": 0.0
+            },
+            "frozen_first": {
+              "value": 0.2236069958079606,
+              "drop_fraction": 0.7208305478676987
+            },
+            "random_replay": {
+              "value": 0.7536446749452346,
+              "drop_fraction": 0.05908770766913006
+            },
+            "shuffle_frames": {
+              "value": 0.8116513974071791,
+              "drop_fraction": -0.01333267824580378
+            },
+            "zeros": {
+              "value": 0.6903502855073661,
+              "drop_fraction": 0.1381096540021222
+            },
+            "const_action": {
+              "value": 0.03512553513444339,
+              "drop_fraction": 0.9561463792136535
+            }
+          },
+          "stored_verdict_actor_uses_pixels": false,
+          "stored_pixel_drop_median": 0.1381096540021222,
+          "pixel_drop_max": 0.7208305478676987,
+          "pixel_drop_min": 0.05908770766913006,
+          "pixel_sensitivity_last20": 0.09826786257326603,
+          "rgb_proprio": "full",
+          "corrected_uses_camera": true
+        },
+        {
+          "seed": 1,
+          "intact": 0.8337874251767062,
+          "conditions": {
+            "intact": {
+              "value": 0.8337874251767062,
+              "drop_fraction": 0.0
+            },
+            "frozen_first": {
+              "value": 0.315522327520481,
+              "drop_fraction": 0.6215794122181543
+            },
+            "random_replay": {
+              "value": 0.49353798362445084,
+              "drop_fraction": 0.4080769645574178
+            },
+            "shuffle_frames": {
+              "value": 0.8180696693285678,
+              "drop_fraction": 0.01885103489634339
+            },
+            "zeros": {
+              "value": 0.38971769441564874,
+              "drop_fraction": 0.5325934612973383
+            },
+            "const_action": {
+              "value": 0.040558457347874846,
+              "drop_fraction": 0.9513563576000451
+            }
+          },
+          "stored_verdict_actor_uses_pixels": true,
+          "stored_pixel_drop_median": 0.5325934612973383,
+          "pixel_drop_max": 0.6215794122181543,
+          "pixel_drop_min": 0.4080769645574178,
+          "pixel_sensitivity_last20": 0.09873315803706646,
+          "rgb_proprio": "full",
+          "corrected_uses_camera": true
+        },
+        {
+          "seed": 2,
+          "intact": 0.8123279331785317,
+          "conditions": {
+            "intact": {
+              "value": 0.8123279331785317,
+              "drop_fraction": 0.0
+            },
+            "frozen_first": {
+              "value": 0.22531090292683806,
+              "drop_fraction": 0.7226355345861045
+            },
+            "random_replay": {
+              "value": 0.7293299498240463,
+              "drop_fraction": 0.10217300177001824
+            },
+            "shuffle_frames": {
+              "value": 0.8011098444239235,
+              "drop_fraction": 0.013809803032025838
+            },
+            "zeros": {
+              "value": 0.5041956690259899,
+              "drop_fraction": 0.3793200400568044
+            },
+            "const_action": {
+              "value": 0.040219365550608684,
+              "drop_fraction": 0.9504887571781071
+            }
+          },
+          "stored_verdict_actor_uses_pixels": true,
+          "stored_pixel_drop_median": 0.3793200400568044,
+          "pixel_drop_max": 0.7226355345861045,
+          "pixel_drop_min": 0.10217300177001824,
+          "pixel_sensitivity_last20": 0.11703124530613422,
+          "rgb_proprio": "full",
+          "corrected_uses_camera": true
+        }
+      ]
+    },
+    "cheetah": {
+      "eval5": [
+        {
+          "seed": 0,
+          "intact": 0.4376099165439606,
+          "conditions": {
+            "intact": {
+              "value": 0.4376099165439606,
+              "drop_fraction": 0.0
+            },
+            "frozen_first": {
+              "value": 0.3923150841236115,
+              "drop_fraction": 0.10350504115187013
+            },
+            "random_replay": {
+              "value": 0.445557942533493,
+              "drop_fraction": -0.018162353477503973
+            },
+            "shuffle_frames": {
+              "value": 0.42758239483833316,
+              "drop_fraction": 0.02291429267604383
+            },
+            "zeros": {
+              "value": 0.4569050317764283,
+              "drop_fraction": -0.044092042942837265
+            },
+            "const_action": {
+              "value": 0.005916410636901856,
+              "drop_fraction": 0.986480172379029
+            }
+          },
+          "stored_verdict_actor_uses_pixels": false,
+          "stored_pixel_drop_median": -0.018162353477503973,
+          "pixel_drop_max": 0.10350504115187013,
+          "pixel_drop_min": -0.044092042942837265,
+          "pixel_sensitivity_last20": 0.000759738136548549,
+          "rgb_proprio": "full",
+          "corrected_uses_camera": false
+        },
+        {
+          "seed": 1,
+          "intact": 0.5079389088153838,
+          "conditions": {
+            "intact": {
+              "value": 0.5079389088153838,
+              "drop_fraction": 0.0
+            },
+            "frozen_first": {
+              "value": 0.5174631837368011,
+              "drop_fraction": -0.018750827621435436
+            },
+            "random_replay": {
+              "value": 0.5119579098701477,
+              "drop_fraction": -0.007912370926922981
+            },
+            "shuffle_frames": {
+              "value": 0.5172411433696747,
+              "drop_fraction": -0.018313687714897844
+            },
+            "zeros": {
+              "value": 0.5190120074272155,
+              "drop_fraction": -0.021800059849040515
+            },
+            "const_action": {
+              "value": 0.004252778482437133,
+              "drop_fraction": 0.9916273819378093
+            }
+          },
+          "stored_verdict_actor_uses_pixels": false,
+          "stored_pixel_drop_median": -0.018750827621435436,
+          "pixel_drop_max": -0.007912370926922981,
+          "pixel_drop_min": -0.021800059849040515,
+          "pixel_sensitivity_last20": 0.0018470087205059826,
+          "rgb_proprio": "full",
+          "corrected_uses_camera": false
+        },
+        {
+          "seed": 2,
+          "intact": 0.5091283979892731,
+          "conditions": {
+            "intact": {
+              "value": 0.5091283979892731,
+              "drop_fraction": 0.0
+            },
+            "frozen_first": {
+              "value": 0.5129515886306762,
+              "drop_fraction": -0.007509285784297737
+            },
+            "random_replay": {
+              "value": 0.48955202355384825,
+              "drop_fraction": 0.03845076116896808
+            },
+            "shuffle_frames": {
+              "value": 0.5051500467300416,
+              "drop_fraction": 0.00781404312731999
+            },
+            "zeros": {
+              "value": 0.4313971862792969,
+              "drop_fraction": 0.15267506589096988
+            },
+            "const_action": {
+              "value": 0.00037820696830749513,
+              "drop_fraction": 0.9992571481579083
+            }
+          },
+          "stored_verdict_actor_uses_pixels": false,
+          "stored_pixel_drop_median": 0.03845076116896808,
+          "pixel_drop_max": 0.15267506589096988,
+          "pixel_drop_min": -0.007509285784297737,
+          "pixel_sensitivity_last20": 0.0007131198915885761,
+          "rgb_proprio": "full",
+          "corrected_uses_camera": false
+        }
+      ],
+      "eval30": [
+        {
+          "seed": 0,
+          "intact": 0.42197336154778803,
+          "conditions": {
+            "intact": {
+              "value": 0.42197336154778803,
+              "drop_fraction": 0.0
+            },
+            "frozen_first": {
+              "value": 0.4267215331395467,
+              "drop_fraction": -0.011252301743272342
+            },
+            "random_replay": {
+              "value": 0.426520448366801,
+              "drop_fraction": -0.01077576746156284
+            },
+            "shuffle_frames": {
+              "value": 0.43106325062910716,
+              "drop_fraction": -0.021541381304207553
+            },
+            "zeros": {
+              "value": 0.43114877022107445,
+              "drop_fraction": -0.021744047158880474
+            },
+            "const_action": {
+              "value": 0.006060938270886739,
+              "drop_fraction": 0.9856366803613968
+            }
+          },
+          "stored_verdict_actor_uses_pixels": false,
+          "stored_pixel_drop_median": -0.011252301743272342,
+          "pixel_drop_max": -0.01077576746156284,
+          "pixel_drop_min": -0.021744047158880474,
+          "pixel_sensitivity_last20": 0.000759738136548549,
+          "rgb_proprio": "full",
+          "corrected_uses_camera": false
+        },
+        {
+          "seed": 1,
+          "intact": 0.5167160881519318,
+          "conditions": {
+            "intact": {
+              "value": 0.5167160881519318,
+              "drop_fraction": 0.0
+            },
+            "frozen_first": {
+              "value": 0.5165265765666962,
+              "drop_fraction": 0.0003667615341984292
+            },
+            "random_replay": {
+              "value": 0.512331887682279,
+              "drop_fraction": 0.008484737692865719
+            },
+            "shuffle_frames": {
+              "value": 0.5140176315784454,
+              "drop_fraction": 0.005222319636180951
+            },
+            "zeros": {
+              "value": 0.5212579966227213,
+              "drop_fraction": -0.008789949790481517
+            },
+            "const_action": {
+              "value": 0.0043180421034495035,
+              "drop_fraction": 0.9916432985106128
+            }
+          },
+          "stored_verdict_actor_uses_pixels": false,
+          "stored_pixel_drop_median": 0.0003667615341984292,
+          "pixel_drop_max": 0.008484737692865719,
+          "pixel_drop_min": -0.008789949790481517,
+          "pixel_sensitivity_last20": 0.0018470087205059826,
+          "rgb_proprio": "full",
+          "corrected_uses_camera": false
+        },
+        {
+          "seed": 2,
+          "intact": 0.5017121753851572,
+          "conditions": {
+            "intact": {
+              "value": 0.5017121753851572,
+              "drop_fraction": 0.0
+            },
+            "frozen_first": {
+              "value": 0.4915017007350922,
+              "drop_fraction": 0.020351259449158457
+            },
+            "random_replay": {
+              "value": 0.5027399297078452,
+              "drop_fraction": -0.002048493883767096
+            },
+            "shuffle_frames": {
+              "value": 0.5101479876200359,
+              "drop_fraction": -0.016814047274022415
+            },
+            "zeros": {
+              "value": 0.4950465974966685,
+              "drop_fraction": 0.01328566101345186
+            },
+            "const_action": {
+              "value": 0.00038869242668151846,
+              "drop_fraction": 0.9992252681004141
+            }
+          },
+          "stored_verdict_actor_uses_pixels": false,
+          "stored_pixel_drop_median": 0.01328566101345186,
+          "pixel_drop_max": 0.020351259449158457,
+          "pixel_drop_min": -0.002048493883767096,
+          "pixel_sensitivity_last20": 0.0007131198915885761,
+          "rgb_proprio": "full",
+          "corrected_uses_camera": false
+        }
+      ]
+    }
+  },
+  "blind_encoder": {
+    "cartpole": {
+      "one_key_contrast": false,
+      "pixels_only_provenance": "configs/cartpole_balance_nesy_rgb_aux.yaml (ALSO has RGB_AUX_STATE_COEF 1.0 and META_DECISION_INTERVAL 4)",
+      "pixels_only": [
+        {
+          "tag": "nesy_fixed_seed0",
+          "pixel_sensitivity_last20": 0.19215431585907936,
+          "pixel_drop_median": 0.4344,
+          "pixel_drop_max": 0.6016,
+          "intact": 1.0,
+          "train_return_last20": 23.63378734588623,
+          "updates": 250,
+          "num_envs": 128
+        },
+        {
+          "tag": "nesy_fixed_seed1",
+          "pixel_sensitivity_last20": 0.11619781441986561,
+          "pixel_drop_median": 0.40633019674935844,
+          "pixel_drop_max": 0.5508982035928144,
+          "intact": 0.9352,
+          "train_return_last20": 24.42924451828003,
+          "updates": 250,
+          "num_envs": 128
+        },
+        {
+          "tag": "nesy_fixed_seed2",
+          "pixel_sensitivity_last20": 0.19229500517249107,
+          "pixel_drop_median": 0.472,
+          "pixel_drop_max": 0.5248,
+          "intact": 1.0,
+          "train_return_last20": 24.09102840423584,
+          "updates": 250,
+          "num_envs": 128
+        }
+      ],
+      "state_plus_rgb_pixel_sensitivity": [
+        0.0041786546120420095,
+        0.0030218481202609836,
+        0.026286569144576787
+      ],
+      "mean_pixel_sensitivity_pixels_only": 0.16688237848381202,
+      "mean_pixel_sensitivity_state_plus_rgb": 0.011162357292293262,
+      "sensitivity_ratio_pixels_only_over_state_plus_rgb": 14.950460204228662
+    },
+    "walker": {
+      "one_key_contrast": false,
+      "pixels_only_provenance": "configs/walker_walk_nesy_rgb_aux.yaml (ALSO has RGB_AUX_STATE_COEF 1.0 and META_DECISION_INTERVAL 4)",
+      "pixels_only": [
+        {
+          "tag": "nesy_fixed_seed0",
+          "pixel_sensitivity_last20": 0.3983591333031654,
+          "pixel_drop_median": 0.942630259684975,
+          "pixel_drop_max": 0.9466829784492068,
+          "intact": 0.7303330976867116,
+          "train_return_last20": 192.17446517944336,
+          "updates": 250,
+          "num_envs": 128
+        },
+        {
+          "tag": "nesy_fixed_seed1",
+          "pixel_sensitivity_last20": 0.35763252079486846,
+          "pixel_drop_median": 0.9224468283267881,
+          "pixel_drop_max": 0.9405575405048427,
+          "intact": 0.4713107585728169,
+          "train_return_last20": 159.41684646606444,
+          "updates": 250,
+          "num_envs": 128
+        },
+        {
+          "tag": "nesy_fixed_seed2",
+          "pixel_sensitivity_last20": 0.4113157257437706,
+          "pixel_drop_median": 0.9520708682744558,
+          "pixel_drop_max": 0.9580047907026109,
+          "intact": 0.7424491695220583,
+          "train_return_last20": 189.6395462036133,
+          "updates": 250,
+          "num_envs": 128
+        }
+      ],
+      "state_plus_rgb_pixel_sensitivity": [
+        0.09826786257326603,
+        0.09873315803706646,
+        0.11703124530613422
+      ],
+      "mean_pixel_sensitivity_pixels_only": 0.3891024599472681,
+      "mean_pixel_sensitivity_state_plus_rgb": 0.10467742197215557,
+      "sensitivity_ratio_pixels_only_over_state_plus_rgb": 3.71715745971247,
+      "extra_one_key_single_seed": {
+        "provenance": "configs/walker_walk_nesy.yaml (USE_RGB forced on; RGB_PROPRIO defaults to none) -- one-key but a SINGLE seed",
+        "runs": [
+          {
+            "tag": "nesy_blind",
+            "pixel_sensitivity_last20": 0.0752070877701044,
+            "pixel_drop_median": 0.6389642175285846,
+            "intact": 0.3255303032384254,
+            "train_return_last20": 99.30830383300781
+          }
+        ],
+        "one_key_contrast": true
+      }
+    },
+    "cheetah": {
+      "one_key_contrast": true,
+      "pixels_only_provenance": "configs/cheetah_run_nesy.yaml (USE_RGB forced on; RGB_PROPRIO defaults to none)",
+      "pixels_only": [
+        {
+          "tag": "nesy_seed0",
+          "pixel_sensitivity_last20": 0.4118895962834358,
+          "pixel_drop_median": 0.9727993337046688,
+          "pixel_drop_max": 0.987880893378782,
+          "intact": 0.30693155908584596,
+          "train_return_last20": 110.47183036804199,
+          "updates": 250,
+          "num_envs": 128
+        },
+        {
+          "tag": "nesy_seed1",
+          "pixel_sensitivity_last20": 0.41862939596176146,
+          "pixel_drop_median": 0.9926090023991364,
+          "pixel_drop_max": 0.9974435477932121,
+          "intact": 0.4082088881969452,
+          "train_return_last20": 98.45854377746582,
+          "updates": 250,
+          "num_envs": 128
+        },
+        {
+          "tag": "nesy_seed2",
+          "pixel_sensitivity_last20": 0.4104085057973862,
+          "pixel_drop_median": 0.9810530653717904,
+          "pixel_drop_max": 0.9947634691992101,
+          "intact": 0.4851510221004486,
+          "train_return_last20": 112.76974411010742,
+          "updates": 250,
+          "num_envs": 128
+        }
+      ],
+      "state_plus_rgb_pixel_sensitivity": [
+        0.000759738136548549,
+        0.0018470087205059826,
+        0.0007131198915885761
+      ],
+      "mean_pixel_sensitivity_pixels_only": 0.4136424993475278,
+      "mean_pixel_sensitivity_state_plus_rgb": 0.0011066222495477026,
+      "sensitivity_ratio_pixels_only_over_state_plus_rgb": 373.7883451345672
+    }
+  },
+  "window_sensitivity": {
+    "cartpole": [
+      {
+        "last_n_updates": 5,
+        "state_only_mean": 24.273666763305666,
+        "state_only_sd_sample": 0.8766422974640451,
+        "state_plus_rgb_mean": 14.842383050918578,
+        "state_plus_rgb_sd_sample": 12.226147525902407,
+        "difference": -9.431283712387089,
+        "relative_difference_pct": -38.85397210216421,
+        "wins_state_plus_rgb": 0,
+        "seed_ranges_overlap": true,
+        "welch_p": 0.31304188199985156
+      },
+      {
+        "last_n_updates": 10,
+        "state_only_mean": 24.193027369181312,
+        "state_only_sd_sample": 1.0217862385066656,
+        "state_plus_rgb_mean": 15.796089174350103,
+        "state_plus_rgb_sd_sample": 12.906228616201211,
+        "difference": -8.39693819483121,
+        "relative_difference_pct": -34.70809199152888,
+        "wins_state_plus_rgb": 0,
+        "seed_ranges_overlap": true,
+        "welch_p": 0.37677599104788084
+      },
+      {
+        "last_n_updates": 20,
+        "state_only_mean": 24.099786218007406,
+        "state_only_sd_sample": 1.1847770051687756,
+        "state_plus_rgb_mean": 16.29069962600867,
+        "state_plus_rgb_sd_sample": 13.337881150410835,
+        "difference": -7.809086591998735,
+        "relative_difference_pct": -32.403136365432864,
+        "wins_state_plus_rgb": 1,
+        "seed_ranges_overlap": true,
+        "welch_p": 0.41736450103262474
+      },
+      {
+        "last_n_updates": 30,
+        "state_only_mean": 23.968985239664715,
+        "state_only_sd_sample": 1.386737289614533,
+        "state_plus_rgb_mean": 16.47532633807924,
+        "state_plus_rgb_sd_sample": 13.475705377434076,
+        "difference": -7.493658901585476,
+        "relative_difference_pct": -31.263980626032964,
+        "wins_state_plus_rgb": 1,
+        "seed_ranges_overlap": true,
+        "welch_p": 0.4373118590655966
+      },
+      {
+        "last_n_updates": 50,
+        "state_only_mean": 23.38880165735881,
+        "state_only_sd_sample": 2.1916836457332027,
+        "state_plus_rgb_mean": 16.568510741939146,
+        "state_plus_rgb_sd_sample": 13.686398660411317,
+        "difference": -6.820290915419662,
+        "relative_difference_pct": -29.160497469410952,
+        "wins_state_plus_rgb": 2,
+        "seed_ranges_overlap": true,
+        "welch_p": 0.4800384861576564
+      },
+      {
+        "last_n_updates": 100,
+        "state_only_mean": 20.118093957901,
+        "state_only_sd_sample": 3.611586733318641,
+        "state_plus_rgb_mean": 16.38604678673049,
+        "state_plus_rgb_sd_sample": 13.599137079450061,
+        "difference": -3.7320471711705103,
+        "relative_difference_pct": -18.550699579096158,
+        "wins_state_plus_rgb": 2,
+        "seed_ranges_overlap": true,
+        "welch_p": 0.6860688220217265
+      },
+      {
+        "last_n_updates": 250,
+        "state_only_mean": 10.664462344023088,
+        "state_only_sd_sample": 2.619239415625982,
+        "state_plus_rgb_mean": 9.913394635915756,
+        "state_plus_rgb_sd_sample": 6.473393334147646,
+        "difference": -0.7510677081073318,
+        "relative_difference_pct": -7.042715177556689,
+        "wins_state_plus_rgb": 2,
+        "seed_ranges_overlap": true,
+        "welch_p": 0.8656046136953041
+      }
+    ],
+    "walker": [
+      {
+        "last_n_updates": 5,
+        "state_only_mean": 188.95534973144535,
+        "state_only_sd_sample": 5.409970893498314,
+        "state_plus_rgb_mean": 204.31918538411458,
+        "state_plus_rgb_sd_sample": 5.486799973761169,
+        "difference": 15.363835652669223,
+        "relative_difference_pct": 8.130934463885371,
+        "wins_state_plus_rgb": 3,
+        "seed_ranges_overlap": false,
+        "welch_p": 0.025978202253910072
+      },
+      {
+        "last_n_updates": 10,
+        "state_only_mean": 189.1111811319987,
+        "state_only_sd_sample": 2.6161399240787584,
+        "state_plus_rgb_mean": 203.8094757080078,
+        "state_plus_rgb_sd_sample": 5.642191129502646,
+        "difference": 14.69829457600909,
+        "relative_difference_pct": 7.772303302230315,
+        "wins_state_plus_rgb": 3,
+        "seed_ranges_overlap": false,
+        "welch_p": 0.02960462518370067
+      },
+      {
+        "last_n_updates": 20,
+        "state_only_mean": 189.51139322916666,
+        "state_only_sd_sample": 1.8007397966332785,
+        "state_plus_rgb_mean": 203.19763285319007,
+        "state_plus_rgb_sd_sample": 6.247305729224296,
+        "difference": 13.686239624023415,
+        "relative_difference_pct": 7.221855842447071,
+        "wins_state_plus_rgb": 3,
+        "seed_ranges_overlap": false,
+        "welch_p": 0.053527208425188925
+      },
+      {
+        "last_n_updates": 30,
+        "state_only_mean": 189.61749708387586,
+        "state_only_sd_sample": 0.6060678554715917,
+        "state_plus_rgb_mean": 202.05474514431424,
+        "state_plus_rgb_sd_sample": 5.577269203464863,
+        "difference": 12.437248060438378,
+        "relative_difference_pct": 6.5591246861236945,
+        "wins_state_plus_rgb": 3,
+        "seed_ranges_overlap": false,
+        "welch_p": 0.05937231429186394
+      },
+      {
+        "last_n_updates": 50,
+        "state_only_mean": 187.41252614339191,
+        "state_only_sd_sample": 3.0276050669512187,
+        "state_plus_rgb_mean": 199.06597778320315,
+        "state_plus_rgb_sd_sample": 6.980290314429081,
+        "difference": 11.653451639811237,
+        "relative_difference_pct": 6.218075109288597,
+        "wins_state_plus_rgb": 3,
+        "seed_ranges_overlap": false,
+        "welch_p": 0.08496028107414942
+      },
+      {
+        "last_n_updates": 100,
+        "state_only_mean": 177.44531921386718,
+        "state_only_sd_sample": 12.23051792192379,
+        "state_plus_rgb_mean": 188.56352884928387,
+        "state_plus_rgb_sd_sample": 16.63645461688404,
+        "difference": 11.11820963541669,
+        "relative_difference_pct": 6.265710295810279,
+        "wins_state_plus_rgb": 2,
+        "seed_ranges_overlap": true,
+        "welch_p": 0.4081576438887609
+      },
+      {
+        "last_n_updates": 250,
+        "state_only_mean": 121.6902977625529,
+        "state_only_sd_sample": 13.014526166154807,
+        "state_plus_rgb_mean": 133.41111469650266,
+        "state_plus_rgb_sd_sample": 12.188219265875368,
+        "difference": 11.720816933949763,
+        "relative_difference_pct": 9.631677421662573,
+        "wins_state_plus_rgb": 2,
+        "seed_ranges_overlap": true,
+        "welch_p": 0.3187048595806974
+      }
+    ],
+    "cheetah": [
+      {
+        "last_n_updates": 5,
+        "state_only_mean": 121.45491333007813,
+        "state_only_sd_sample": 3.6821549140420498,
+        "state_plus_rgb_mean": 119.83448740641275,
+        "state_plus_rgb_sd_sample": 0.6575323591498204,
+        "difference": -1.6204259236653797,
+        "relative_difference_pct": -1.3341789798668306,
+        "wins_state_plus_rgb": 1,
+        "seed_ranges_overlap": true,
+        "welch_p": 0.5271976276517789
+      },
+      {
+        "last_n_updates": 10,
+        "state_only_mean": 121.43274485270183,
+        "state_only_sd_sample": 0.9416414003349562,
+        "state_plus_rgb_mean": 119.80070139567057,
+        "state_plus_rgb_sd_sample": 3.2650383802074563,
+        "difference": -1.6320434570312585,
+        "relative_difference_pct": -1.343989596060709,
+        "wins_state_plus_rgb": 1,
+        "seed_ranges_overlap": true,
+        "welch_p": 0.48204764729725125
+      },
+      {
+        "last_n_updates": 20,
+        "state_only_mean": 121.15167236328125,
+        "state_only_sd_sample": 1.3820378997708576,
+        "state_plus_rgb_mean": 118.3535504659017,
+        "state_plus_rgb_sd_sample": 1.7203443621230259,
+        "difference": -2.798121897379545,
+        "relative_difference_pct": -2.309602370976104,
+        "wins_state_plus_rgb": 0,
+        "seed_ranges_overlap": true,
+        "welch_p": 0.09619518599555202
+      },
+      {
+        "last_n_updates": 30,
+        "state_only_mean": 119.56917911105684,
+        "state_only_sd_sample": 1.1591421583492463,
+        "state_plus_rgb_mean": 115.97021272447374,
+        "state_plus_rgb_sd_sample": 4.430621354078654,
+        "difference": -3.5989663865831005,
+        "relative_difference_pct": -3.009944881565467,
+        "wins_state_plus_rgb": 1,
+        "seed_ranges_overlap": true,
+        "welch_p": 0.29270430862611774
+      },
+      {
+        "last_n_updates": 50,
+        "state_only_mean": 117.08130915323893,
+        "state_only_sd_sample": 2.3934140448658603,
+        "state_plus_rgb_mean": 114.52496409098308,
+        "state_plus_rgb_sd_sample": 4.391492769266939,
+        "difference": -2.5563450622558577,
+        "relative_difference_pct": -2.1833929606219638,
+        "wins_state_plus_rgb": 1,
+        "seed_ranges_overlap": true,
+        "welch_p": 0.4394306412413295
+      },
+      {
+        "last_n_updates": 100,
+        "state_only_mean": 113.72775718688963,
+        "state_only_sd_sample": 2.545288311344908,
+        "state_plus_rgb_mean": 111.24470049540201,
+        "state_plus_rgb_sd_sample": 3.922762979449054,
+        "difference": -2.4830566914876187,
+        "relative_difference_pct": -2.183333913291892,
+        "wins_state_plus_rgb": 1,
+        "seed_ranges_overlap": true,
+        "welch_p": 0.41772151058324475
+      },
+      {
+        "last_n_updates": 250,
+        "state_only_mean": 86.31469517376024,
+        "state_only_sd_sample": 1.0924562747456494,
+        "state_plus_rgb_mean": 81.03632509044807,
+        "state_plus_rgb_sd_sample": 3.1065985372840186,
+        "difference": -5.2783700833121685,
+        "relative_difference_pct": -6.115262381088496,
+        "wins_state_plus_rgb": 0,
+        "seed_ranges_overlap": false,
+        "welch_p": 0.08551979214508364
+      }
+    ]
+  }
+}

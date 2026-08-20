@@ -3,18 +3,32 @@
 Reads the committed run JSON only (no GPU, no retraining) and writes the figure
 set plus a README describing what each one does and does not claim.
 
+CORRECTION PASS (see `tools/analyze_state_plus_rgb.py` for the full argument).
+The first version of these figures took the 5-episode deterministic evaluation
+as the headline number while labelling the training curves "PRIMARY", and
+binarised camera use at a single 30% median. Both were wrong:
+
+  * the 5-episode eval has an achieved power of 0.16 at this effect size where
+    the training return has 0.78, and the two metrics DISAGREE on WalkerWalk --
+    the eval shows overlapping ranges, the training return shows complete
+    separation (189.5 +/- 1.8 vs 203.2 +/- 6.2, 3/3 seeds, p = 0.054);
+  * the 30% median rule reported walker as 2/3 seeds, but `frozen_first` alone
+    costs 94.9% / 74.2% / 80.2% on the three seeds and the independent
+    in-training probe reads 0.098 / 0.099 / 0.117. Walker is 3/3.
+
+So: the TRAINING RETURN is the primary metric in every figure here and is
+labelled as such; the evaluation is shown beside it, never instead of it; and
+camera use is drawn condition by condition rather than as one thresholded bar.
+
 Honesty rules are enforced here rather than left to the caller:
-  * every panel states its METRIC, its BUDGET and its seed count;
-  * cartpole (upright fraction) and walker/cheetah (reward per step) never share
-    an axis -- each environment gets its own panel and its own y-label;
-  * per-SEED points are always drawn, never only a mean. Camera use in
-    particular is seed-dependent (walker returns 4.8% / 65.6% / 42.9% median
-    pixel drop on three seeds of the identical config), so a mean would describe
-    no run that actually happened;
-  * a run the rescore guard marks INCONCLUSIVE is drawn grey and labelled, never
-    given a verdict colour;
-  * the 52.4M-step state baseline is plotted only if a run artifact exists; it
-    is otherwise omitted with a visible note, never estimated.
+  * every panel states its METRIC, its BUDGET, its n and its s.d. convention;
+  * s.d. is the SAMPLE s.d. (ddof=1) everywhere. The earlier figures used
+    numpy's default population s.d., which at n=3 understates spread by 1.22x;
+  * cartpole (upright fraction) and walker/cheetah (reward per step) never
+    share an axis;
+  * per-SEED points are always drawn, never only a mean;
+  * a run the rescore guard marks INCONCLUSIVE is drawn grey and labelled;
+  * the 52.4M-step state baseline is plotted only if a run artifact exists.
 
     python tools/plot_state_plus_rgb_figures.py --figure all
     python tools/plot_state_plus_rgb_figures.py --figure curves --outdir /tmp/f
@@ -24,6 +38,8 @@ from __future__ import annotations
 
 import argparse
 import json
+import math
+import warnings
 from pathlib import Path
 
 # House palette (seaborn "deep"), matching tools/plot_rgb_ablation_comparison.py.
@@ -40,12 +56,28 @@ ENV_TITLE = {"cartpole": "CartpoleBalance", "walker": "WalkerWalk",
 ENVCOL = {"cartpole": "#4C72B0", "walker": "#DD8452", "cheetah": "#55A868"}
 
 NEW_ROOT = "results/rgb/state_plus_rgb"
+EVAL30_ROOT = "results/rgb/state_plus_rgb_eval30"
 OLD_ROOT = "results/rgb/ablation"
 
 NEW_ARMS = {
     "state_matched": ("state only (baseline)", C_STATE),
     "state_plus_rgb": ("state + RGB (extension)", C_SPRGB),
 }
+
+# The five pixel corruptions, in the order they are drawn. `const_action` is
+# kept visually apart: for a `RGB_PROPRIO: full` actor it removes the actor's
+# STATE-driven variation too, so it is not a pixel-specific control.
+CORRUPTIONS = ["frozen_first", "random_replay", "shuffle_frames", "zeros"]
+CORR_LABEL = {
+    "frozen_first": "frozen_first\n(image held at t=0)",
+    "random_replay": "random_replay\n(real frame, wrong t)",
+    "shuffle_frames": "shuffle_frames\n(motion destroyed)",
+    "zeros": "zeros\n(blank image)",
+    "const_action": "const_action\n(NOT pixel-specific)",
+}
+CORR_COL = {"frozen_first": "#C44E52", "random_replay": "#DD8452",
+            "shuffle_frames": "#8172B3", "zeros": "#64B5CD",
+            "const_action": "#B0B0B0"}
 
 OLD_VARIANTS = {
     "cartpole": [
@@ -75,16 +107,25 @@ LADDER_PIXEL = {
     "walker": ["nesy_blind"],
     "cheetah": ["nesy_seed0", "nesy_seed1", "nesy_seed2"],
 }
+# Matched-budget pixels-only arms used as the "an actor that MUST see" control.
+# `one_key` says whether the arm differs from the state+RGB arm in RGB_PROPRIO
+# alone; only cheetah does at 3 seeds (see analyze_state_plus_rgb.py).
 KNOWN_SEEING = {
     "cartpole": ("RGB aux-fix (pixels-only)",
-                 ["nesy_fixed_seed0", "nesy_fixed_seed1", "nesy_fixed_seed2"]),
+                 ["nesy_fixed_seed0", "nesy_fixed_seed1", "nesy_fixed_seed2"],
+                 False),
     "walker": ("RGB aux-fix (pixels-only)",
-               ["nesy_fixed_seed0", "nesy_fixed_seed1", "nesy_fixed_seed2"]),
-    "cheetah": ("RGB pixels-only", ["nesy_seed0", "nesy_seed1", "nesy_seed2"]),
+               ["nesy_fixed_seed0", "nesy_fixed_seed1", "nesy_fixed_seed2"],
+               False),
+    "cheetah": ("RGB pixels-only", ["nesy_seed0", "nesy_seed1", "nesy_seed2"],
+                True),
 }
 
 MATCHED_BUDGET = "2.05M env steps (250 updates x 128 envs x 64 steps)"
 SMOOTH_W = 11
+LAST_N = 20
+SD_NOTE = ("s.d. is the SAMPLE s.d. (ddof=1) across the 3 seeds, not numpy's "
+           "default population s.d.")
 
 
 # --------------------------------------------------------------------------- io
@@ -108,19 +149,31 @@ def metric_info(d):
     """(key, human label, value, per-episode std) for a run's intact condition."""
     i = d["results"]["intact"]
     if "upright_fraction_mean" in i:
+        sd = i.get("upright_fraction_std_sample") or i["upright_fraction_std"]
         return ("upright_fraction_mean", "upright fraction",
-                i["upright_fraction_mean"], i["upright_fraction_std"])
+                i["upright_fraction_mean"], sd)
+    sd = i.get("reward_per_step_std_sample") or i["reward_per_step_std"]
     return ("reward_per_step_mean", "reward / step",
-            i["reward_per_step_mean"], i["reward_per_step_std"])
+            i["reward_per_step_mean"], sd)
+
+
+def train_return(root: Path, env: str, tag: str):
+    """PRIMARY metric: last-20-update mean of the trainer's episode return."""
+    import numpy as np
+    c = load_curve(root, env, tag)
+    if not c:
+        return None
+    return float(np.asarray(c, float)[-LAST_N:].mean())
 
 
 def aggregate(runs):
-    """Mean plus an error bar whose MEANING is returned with it."""
+    """Mean plus an error bar whose MEANING is returned with it (ddof=1)."""
     import numpy as np
     vals = [metric_info(d)[2] for d in runs]
     if len(runs) == 1:
-        return float(vals[0]), float(metric_info(runs[0])[3]), 1, "5 eval episodes"
-    return float(np.mean(vals)), float(np.std(vals, ddof=0)), len(runs), \
+        return float(vals[0]), float(metric_info(runs[0])[3]), 1, \
+            "eval episodes of 1 seed"
+    return float(np.mean(vals)), float(np.std(vals, ddof=1)), len(runs), \
         f"{len(runs)} seeds"
 
 
@@ -149,13 +202,58 @@ def env_metric_label(new_root, env):
     return metric_info(r[0])[1] if r else "score"
 
 
+def stats_pair(a, b):
+    """Welch + paired-by-seed + Cohen's d on two arms' per-seed values."""
+    import numpy as np
+    from scipy import stats
+    a, b = np.asarray(a, float), np.asarray(b, float)
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore")
+        t, p = stats.ttest_ind(b, a, equal_var=False)
+        pt, pp = (stats.ttest_rel(b, a) if a.size > 1 and (b - a).std() > 0
+                  else (float("nan"), float("nan")))
+    n1, n2 = a.size, b.size
+    sp2 = ((n1 - 1) * a.std(ddof=1) ** 2 + (n2 - 1) * b.std(ddof=1) ** 2) / (n1 + n2 - 2)
+    d = (b.mean() - a.mean()) / math.sqrt(sp2) if sp2 > 0 else float("inf")
+    return {"welch_t": float(t), "welch_p": float(p), "d": d,
+            "paired_t": float(pt), "paired_p": float(pp),
+            "wins": int((b - a > 0).sum()), "n": int(n1),
+            "overlap": bool(a.min() <= b.max() and b.min() <= a.max())}
+
+
+def pixel_drops(d):
+    """{condition: drop fraction} recomputed from the stored per-condition means."""
+    if d is None or d.get("state_only"):
+        return {}
+    k = d.get("metric_key") or ("upright_fraction_mean"
+                                if "upright_fraction_mean" in d["results"]["intact"]
+                                else "reward_per_step_mean")
+    base = d["results"]["intact"][k]
+    return {c: float((base - d["results"][c][k]) / max(abs(base), 1e-9))
+            for c in d["results"] if c != "intact"}
+
+
+def uses_camera_corrected(d):
+    """Corrected verdict: ANY single pixel corruption costing >30%.
+
+    The stored `actor_uses_pixels` thresholds the MEDIAN of three corruptions
+    at 30%, a bar calibrated on `RGB_PROPRIO: none` actors whose only input is
+    the camera. A `RGB_PROPRIO: full` actor can ride the state through a
+    corrupted frame, so the median under-reads. A corruption changes nothing
+    but the actor's image, so one large drop is already proof of dependence.
+    """
+    dr = pixel_drops(d)
+    vals = [dr[c] for c in ("frozen_first", "random_replay", "zeros") if c in dr]
+    return bool(vals and max(vals) > 0.30)
+
+
 # ------------------------------------------------------- fig 1: LEARNING CURVES
 def fig_curves(new_root, out, plt, np):
-    """THE headline. Baseline vs extension as learning curves, seeds banded."""
-    fig, axes = plt.subplots(1, 3, figsize=(16.5, 5.2))
+    """THE headline, on the PRIMARY metric. Per-seed curves, sample-s.d. band."""
+    fig, axes = plt.subplots(1, 3, figsize=(17.5, 5.8))
     found = False
     for ax, env in zip(axes, ENVS):
-        ns, finals = {}, []
+        finals, per_arm = [], {}
         for arm, (lab, col) in NEW_ARMS.items():
             curves = [c for c in (load_curve(new_root, env, t)
                                   for t in seed_tags(arm)) if c]
@@ -165,60 +263,83 @@ def fig_curves(new_root, out, plt, np):
             n = min(len(c) for c in curves)
             raw = np.stack([np.asarray(c[:n], float) for c in curves])
             sm = np.stack([smooth(r) for r in raw])
-            mu, sd = sm.mean(0), sm.std(0)
+            mu = sm.mean(0)
+            sd = sm.std(0, ddof=1) if sm.shape[0] > 1 else np.zeros_like(mu)
             x = np.arange(n)
-            # Raw mean faintly behind, so heavy smoothing cannot hide instability.
-            ax.plot(x, raw.mean(0), color=col, lw=0.8, alpha=0.28, zorder=2)
-            ax.fill_between(x, mu - sd, mu + sd, color=col, alpha=0.20, lw=0,
-                            zorder=3)
-            ax.plot(x, mu, color=col, lw=2.4, label=f"{lab}  (n={len(curves)})",
+            # Every seed drawn: the band is a summary, the thin lines are the data.
+            for r in sm:
+                ax.plot(x, r, color=col, lw=0.9, alpha=0.55, zorder=3)
+            ax.fill_between(x, mu - sd, mu + sd, color=col, alpha=0.18, lw=0,
+                            zorder=2)
+            ax.plot(x, mu, color=col, lw=2.6, label=f"{lab}  (n={len(curves)})",
                     zorder=4)
-            ax.plot([x[-1]], [mu[-1]], marker="o", ms=7, color=col,
-                    mec="#222222", mew=1.2, zorder=5)
+            per_arm[arm] = raw[:, -LAST_N:].mean(1)
             finals.append((x[-1], float(mu[-1]), col))
-            ns[arm] = len(curves)
-        # Annotate the end points AFTER both arms are known, pushing the higher
-        # value up and the lower one down. Staggering by arm index instead would
-        # push them together whenever the second arm finishes higher (WalkerWalk).
-        for xf, yf, col in finals:
-            dy = 0
-            if len(finals) == 2:
-                other = [v for _x, v, _c in finals if v != yf]
-                if other:
-                    dy = 9 if yf >= other[0] else -9
-            ax.annotate(f"{yf:.1f}", (xf, yf), textcoords="offset points",
-                        xytext=(9, dy), ha="left", va="center", fontsize=10,
-                        fontweight="bold", color=col)
-        if not ns:
+        if not per_arm:
             ax.set_title(f"{ENV_TITLE[env]}\n(no runs)")
             ax.set_xticks([]); ax.set_yticks([])
             continue
+        # Mark the window the primary number is read from. No end-of-curve
+        # value is annotated: the smoothed last point is NOT the primary
+        # number and printing both invites quoting the wrong one.
+        lo = max(0, n - LAST_N)
+        ax.axvspan(lo, n - 1, color="#333333", alpha=0.10, zorder=1)
+        y0, y1 = ax.get_ylim()
+        # Reserve empty space under the data for the statistics box.
+        ax.set_ylim(y0 - 0.46 * (y1 - y0), y1)
+        ax.text(n + 12, y1, f"last {LAST_N} updates = the PRIMARY number",
+                rotation=90, fontsize=8, color="#333333", ha="left", va="top",
+                fontweight="bold")
         ax.set_title(f"{ENV_TITLE[env]}", fontsize=13, fontweight="bold")
         ax.set_xlabel("training update      (250 updates = 2.048M env steps)",
                       fontsize=9.5)
-        ax.set_ylabel("episode return during training", fontsize=10)
-        ax.set_xlim(0, 260)
+        ax.set_ylabel("episode return during training\n(mean over 128 parallel "
+                      "envs)", fontsize=9.5)
+        ax.set_xlim(0, 288)
         ax.grid(alpha=0.25)
         ax.set_axisbelow(True)
         ax.legend(loc="upper left", fontsize=9.5, framealpha=0.95)
+        if len(per_arm) == 2:
+            a, b = per_arm["state_matched"], per_arm["state_plus_rgb"]
+            st = stats_pair(a, b)
+            verdict = ("ranges OVERLAP" if st["overlap"] else "NO OVERLAP")
+            col = C_SPRGB if b.mean() > a.mean() else C_STATE
+            ax.text(0.5, 0.015,
+                    f"last-{LAST_N}-update mean +/- sample s.d. (n=3)\n"
+                    f"state only   {a.mean():8.2f} +/- {a.std(ddof=1):.2f}\n"
+                    f"state + RGB  {b.mean():8.2f} +/- {b.std(ddof=1):.2f}\n"
+                    f"diff {b.mean() - a.mean():+.2f} "
+                    f"({100 * (b.mean() - a.mean()) / abs(a.mean()):+.1f}%), "
+                    f"{st['wins']}/3 seeds, {verdict}\n"
+                    f"Welch p={st['welch_p']:.3f}, d={st['d']:+.2f}",
+                    transform=ax.transAxes, ha="center", va="bottom",
+                    fontsize=8.6, family="monospace", color=col,
+                    bbox=dict(boxstyle="round,pad=0.35", fc="white",
+                              ec=col, alpha=0.95))
     if not found:
         raise SystemExit("curves: nothing found")
-    fig.suptitle("Baseline vs extension: does adding a camera to a skill actor "
-                 "that ALREADY HAS the state help?\n"
+    fig.suptitle("PRIMARY METRIC. Does adding a camera to a skill actor that "
+                 "ALREADY HAS the state help?\n"
                  f"nesy meta, matched budget ({MATCHED_BUDGET}); each pair of arms "
-                 "differs in exactly ONE config key (RGB_ACTOR)",
-                 fontsize=13.5, y=1.04)
-    fig.text(0.5, -0.05,
-             f"Bold line = mean over seeds of each seed's curve after a centred "
-             f"rolling mean of {SMOOTH_W} updates. Shaded band = +/-1 s.d. ACROSS "
-             "SEEDS of those smoothed curves (it is seed spread, not update "
-             "noise).\nThe faint line behind is the unsmoothed mean, drawn so that "
-             "genuine late-training instability stays visible rather than being "
-             "smoothed away. The ringed marker is the final update, which is the "
-             "checkpoint the evaluation scores.\nCAUTION: this is the TRAINER's "
-             "episode return, collected with exploration noise across 128 envs. It "
-             "is NOT the deterministic evaluation metric used in the bar and "
-             "scatter figures, and the two can disagree.",
+                 "differs in exactly ONE config key (RGB_ACTOR); n = 3 seeds per arm",
+                 fontsize=13.5, y=1.05)
+    fig.text(0.5, -0.06,
+             "METRIC: the trainer's episode return, already a mean over 128 "
+             "parallel environments, summarised as the mean of its LAST 20 of "
+             f"250 updates (shaded). BUDGET: {MATCHED_BUDGET}. n = 3 seeds.\n"
+             f"{SD_NOTE} Thin lines are the individual seeds after an "
+             f"{SMOOTH_W}-update centred rolling mean; the bold line is their "
+             "mean and the band is +/-1 sample s.d. ACROSS SEEDS.\n"
+             "This is the PRIMARY metric because it is the one with the "
+             "resolution to answer the question: at this effect size its "
+             "achieved power at n=3 is 0.78, against 0.16 for the 5-episode "
+             "deterministic eval shown in fig5.\nThe 20-update window is not "
+             "load-bearing: WalkerWalk is 3/3 seeds with NON-OVERLAPPING "
+             "ranges at every window from 5 to 50 updates (+6.2% to +8.1%, p "
+             "0.026-0.085) -- the reported window is the middle of that "
+             "range, not its best end. See Table 6 of the README.\nIt carries "
+             "exploration noise and is not a deterministic score; fig5 gives "
+             "that, and where the two disagree the reason is stated there.",
              ha="center", va="top", fontsize=9,
              bbox=dict(boxstyle="round", fc="#F5F5F5", ec="#CCCCCC"))
     fig.tight_layout()
@@ -229,74 +350,85 @@ def fig_curves(new_root, out, plt, np):
 
 # ------------------------------------------------- fig 2: camera use (per seed)
 def fig_camera(new_root, old_root, out, plt, np):
-    data = []
-    for env in ENVS:
-        for tag in seed_tags("state_plus_rgb"):
+    """EVERY condition, every seed. No thresholded median anywhere."""
+    fig, axes = plt.subplots(1, 3, figsize=(17.5, 6.4), sharey=True)
+    conds = CORRUPTIONS + ["const_action"]
+    w = 0.15
+    for ax, env in zip(axes, ENVS):
+        seeds = []
+        for si, tag in enumerate(seed_tags("state_plus_rgb")):
             d = load(new_root, env, tag)
-            if d is None or d.get("pixel_drop_median") is None:
+            if d is None:
                 continue
-            data.append((f"{ENV_TITLE[env]}   state+RGB, seed "
-                         f"{tag.rsplit('seed', 1)[1]}",
-                         100 * float(d["pixel_drop_median"]), 0.0, [],
-                         bool(d.get("inconclusive")), True))
-    for env in ENVS:
-        lab, tags = KNOWN_SEEING[env]
-        runs = collect(old_root, env, tags)
-        vals = [r["pixel_drop_median"] for r in runs
-                if r.get("pixel_drop_median") is not None]
-        if not vals:
+            dr = pixel_drops(d)
+            seeds.append((si, tag.rsplit("seed", 1)[1], d, dr))
+        if not seeds:
+            ax.set_title(f"{ENV_TITLE[env]}\n(no runs)")
             continue
-        data.append((f"{ENV_TITLE[env]}   {lab}", 100 * float(np.mean(vals)),
-                     100 * float(np.std(vals)) if len(vals) > 1 else 0.0,
-                     [100 * v for v in vals],
-                     any(r.get("inconclusive") for r in runs), False))
-    if not data:
-        raise SystemExit("camera figure: nothing to plot")
-
-    fig, ax = plt.subplots(figsize=(13.5, 0.62 * len(data) + 4.2))
-    ypos = np.arange(len(data))[::-1]
-    for y, (lab, v, e, seeds, inc, is_new) in zip(ypos, data):
-        col = C_INCONC if inc else (C_SEES if v > 30 else C_BLIND)
-        ax.barh(y, v, xerr=e if e else None, capsize=5, color=col, height=0.6,
-                edgecolor="#333333" if is_new else "white",
-                linewidth=1.8 if is_new else 0.8)
-        for sv in seeds:
-            ax.plot(sv, y, marker="o", ms=5, mfc="white", mec="#333333", mew=1.2,
-                    ls="none", zorder=6)
-        tag = "INCONCLUSIVE" if inc else ("SEES" if v > 30 else "BLIND")
-        extra = "" if is_new else f"   (n={len(seeds)}, dots = seeds)"
-        ax.text(108, y, f"{v:+.1f}%   {tag}{extra}", va="center", ha="left",
-                fontsize=10.5, fontweight="bold" if is_new else "normal",
-                color=col if not inc else "#555555")
-    ax.axvline(30, ls="--", lw=2, color="#333333")
-    ax.text(30.8, len(data) - 0.5, "verdict threshold 30%", fontsize=9.5,
-            color="#333333", ha="left", va="center", fontweight="bold",
-            bbox=dict(boxstyle="round,pad=0.25", fc="white", ec="#BBBBBB"))
-    ax.set_ylim(-0.7, len(data) - 0.15)
-    ax.set_yticks(ypos)
-    ax.set_yticklabels([r[0] for r in data], fontsize=9.5)
-    ax.set_xlabel("median performance lost when the actor's camera is corrupted\n"
-                  "(median over frozen-first / wrong-timestep / blank-image, as % "
-                  "of that run's own intact score)", fontsize=10)
-    ax.set_xlim(min(-8, min(r[1] for r in data) - 8), 178)
-    ax.set_xticks(list(range(0, 101, 20)))
-    ax.grid(axis="x", alpha=0.25)
-    ax.set_axisbelow(True)
-    ax.set_title("Does the actor use the camera when it already has the state?\n"
-                 "ONE ROW PER SEED -- the verdict is not consistent across seeds\n"
-                 f"bold = this campaign's state+RGB arms; thin = committed "
-                 f"pixels-only reference arms. All at {MATCHED_BUDGET}",
-                 fontsize=12.5, fontweight="bold")
-    fig.text(0.5, -0.02,
-             "Higher = the actor depends on its camera; near 0% means blanking the "
-             "image changes nothing, i.e. that actor ignored the camera and rode "
-             "the state.\nSeeds are shown individually and deliberately NOT "
-             "averaged: on WalkerWalk three seeds of the identical config give "
-             "4.8%, 65.6% and 42.9%, so a mean would describe no run that "
-             "happened.\nThe reference arms have NO state input, so they must use "
-             "pixels or fail; they calibrate what a genuinely seeing actor looks "
-             "like under this identical protocol.",
-             ha="center", va="top", fontsize=9,
+        for j, c in enumerate(conds):
+            xs = [si + (j - (len(conds) - 1) / 2) * w for si, _s, _d, _dr in seeds]
+            ys = [100 * dr.get(c, 0.0) for _si, _s, _d, dr in seeds]
+            ax.bar(xs, ys, w * 0.92, color=CORR_COL[c],
+                   hatch="//" if c == "const_action" else None,
+                   edgecolor="white", linewidth=0.6,
+                   label=CORR_LABEL[c] if ax is axes[0] else None, zorder=3)
+            for x, y in zip(xs, ys):
+                if abs(y) > 6:
+                    ax.text(x, y + (1.6 if y > 0 else -4.6), f"{y:.0f}",
+                            ha="center", va="bottom" if y > 0 else "top",
+                            fontsize=6.8, rotation=90, zorder=4)
+        # The pixels-only control: what an actor that MUST see looks like here.
+        lab, tags, one_key = KNOWN_SEEING[env]
+        ref = [r for r in collect(old_root, env, tags)]
+        if ref:
+            fr = [100 * pixel_drops(r).get("frozen_first", np.nan) for r in ref]
+            m = float(np.nanmean(fr))
+            ax.axhline(m, ls=":", lw=2, color=C_PIXEL, zorder=2)
+            ax.text(-0.48, m + 1.5, f"pixels-only frozen_first {m:.0f}%"
+                    f"{'' if one_key else '  (NOT a one-key contrast)'}",
+                    fontsize=7.6, color=C_PIXEL, va="bottom", ha="left",
+                    fontweight="bold")
+        ax.axhline(30, ls="--", lw=1.6, color="#333333", zorder=2)
+        ax.axhline(0, lw=0.9, color="#666666", zorder=2)
+        ax.text(-0.48, 31, "old 30% verdict bar (median rule)", fontsize=7.6,
+                color="#333333", va="bottom")
+        ax.set_xticks(range(len(seeds)))
+        ax.set_xticklabels([
+            f"seed {s}\nold verdict: "
+            f"{'SEES' if d.get('actor_uses_pixels') else 'ignores'}\n"
+            f"corrected: {'USES CAMERA' if uses_camera_corrected(d) else 'no use detected'}\n"
+            f"pixel sens {sens_last(new_root, env, 'state_plus_rgb_seed' + s):.4f}"
+            for _si, s, d, _dr in seeds], fontsize=8)
+        ax.set_title(ENV_TITLE[env], fontsize=13, fontweight="bold")
+        ax.grid(axis="y", alpha=0.25)
+        ax.set_axisbelow(True)
+    axes[0].set_ylabel("% of that run's own intact score lost when ONLY the\n"
+                       "actor's image is corrupted (higher = more camera use)",
+                       fontsize=9.5)
+    axes[0].legend(fontsize=7.8, ncol=2, loc="upper left", framealpha=0.95)
+    fig.suptitle("Camera use, condition by condition -- the 30% median rule "
+                 "does not survive contact with the data\n"
+                 f"state+RGB arms only, one group per seed, {MATCHED_BUDGET}, "
+                 "nesy meta", fontsize=13, fontweight="bold", y=1.03)
+    fig.text(0.5, -0.10,
+             "METRIC: fraction of that run's OWN intact score lost under one "
+             "corruption, in %. BUDGET: 2.05M env steps. n = 3 seeds per env, "
+             "5 evaluation episodes per bar; bars are per-seed, never averaged.\n"
+             "THE OLD RULE: `median over {frozen_first, random_replay, zeros} > "
+             "30%`. That bar was calibrated on `RGB_PROPRIO: none` actors, whose "
+             "ONLY input is the camera -- corrupt it and nothing is left, which "
+             "is why those arms score 94-99% (dotted line).\n"
+             "These actors also hold the privileged state, so they can ride it "
+             "through a corrupted frame and score far below 30% while still "
+             "using the camera. `rgb_pixel_ablation.py` prints exactly that "
+             "warning on every one of these runs; it was dropped from the first "
+             "write-up.\nWALKER IS 3/3, NOT 2/3: holding the image at the t=0 "
+             "frame costs 94.9% / 74.2% / 80.2% on the three seeds. The median "
+             "rule labelled seed 0 'ignores' because its other two corruptions "
+             "happened to be cheap.\n`const_action` is hatched because it is NOT "
+             "a pixel-specific control for a state-reading actor: it removes the "
+             "actor's state-driven variation too.",
+             ha="center", va="top", fontsize=8.6,
              bbox=dict(boxstyle="round", fc="#F5F5F5", ec="#CCCCCC"))
     fig.tight_layout()
     fig.savefig(out, dpi=140, bbox_inches="tight")
@@ -304,44 +436,52 @@ def fig_camera(new_root, old_root, out, plt, np):
     print("wrote", out)
 
 
+def sens_last(root, env, tag):
+    import numpy as np
+    c = load_curve(root, env, tag, "pixel_sensitivity")
+    return float(np.asarray(c, float)[-LAST_N:].mean()) if c else float("nan")
+
+
 # ------------------------------------- fig 3: camera use vs performance
 def fig_payoff(new_root, out, plt, np):
-    fig, axes = plt.subplots(1, 3, figsize=(16.5, 5.4))
+    """Association only, and now against the PRIMARY metric."""
+    fig, axes = plt.subplots(1, 3, figsize=(16.5, 5.6))
     any_pt = False
     for ax, env in zip(axes, ENVS):
-        base = collect(new_root, env, seed_tags("state_matched"))
-        ylab = env_metric_label(new_root, env)
+        base = [train_return(new_root, env, t) for t in seed_tags("state_matched")]
+        base = [v for v in base if v is not None]
         if base:
-            bm, bs, bn, bkind = aggregate(base)
+            bm = float(np.mean(base))
+            bs = float(np.std(base, ddof=1)) if len(base) > 1 else 0.0
             ax.axhline(bm, color=C_STATE, lw=2.2, zorder=2)
-            if bn > 1:
-                ax.axhspan(bm - bs, bm + bs, color=C_STATE, alpha=0.15, zorder=1)
-            for r in base:      # the baseline's own seeds, so its spread is visible
-                ax.plot(-4, metric_info(r)[2], marker="_", ms=13, color=C_STATE,
-                        mew=2.5, ls="none", zorder=3)
-            ax.text(0.985, bm, f" state-only mean {bm:.3f} (n={bn}) ",
+            ax.axhspan(bm - bs, bm + bs, color=C_STATE, alpha=0.15, zorder=1)
+            for v in base:
+                ax.plot(-4, v, marker="_", ms=13, color=C_STATE, mew=2.5,
+                        ls="none", zorder=3)
+            ax.text(0.985, bm, f" state-only mean {bm:.1f} +/- {bs:.1f} (n={len(base)}) ",
                     transform=ax.get_yaxis_transform(), ha="right", va="bottom",
-                    fontsize=9, color=C_STATE, fontweight="bold",
+                    fontsize=8.5, color=C_STATE, fontweight="bold",
                     bbox=dict(boxstyle="round,pad=0.2", fc="white", ec=C_STATE))
         for tag in seed_tags("state_plus_rgb"):
             d = load(new_root, env, tag)
-            if d is None or d.get("pixel_drop_median") is None:
+            y = train_return(new_root, env, tag)
+            if d is None or y is None:
                 continue
             any_pt = True
-            x = 100 * float(d["pixel_drop_median"])
-            y = metric_info(d)[2]
-            sees = bool(d.get("actor_uses_pixels")) and not d.get("inconclusive")
-            ax.scatter(x, y, s=230, color=C_SEES if sees else C_BLIND,
+            x = 100 * pixel_drops(d).get("frozen_first", 0.0)
+            sees = uses_camera_corrected(d) and not d.get("inconclusive")
+            ax.scatter(x, y, s=250, color=C_SEES if sees else C_BLIND,
                        edgecolor="#222222", linewidth=1.4, zorder=5)
             ax.annotate(f"s{tag.rsplit('seed', 1)[1]}", (x, y),
                         textcoords="offset points", xytext=(0, -3), ha="center",
                         va="center", fontsize=8.5, color="white",
                         fontweight="bold", zorder=6)
         ax.axvline(30, ls="--", lw=1.8, color="#333333", zorder=1)
-        ax.set_xlim(-10, 105)
-        ax.set_xlabel("that seed's camera dependence (%)\n"
-                      "dashed line = 30% verdict threshold", fontsize=9.5)
-        ax.set_ylabel(f"{ylab}  (eval intact)", fontsize=10)
+        ax.set_xlim(-10, 108)
+        ax.set_xlabel("that seed's camera dependence: % lost when the image is\n"
+                      "held at the t=0 frame (dashed = the old 30% bar)",
+                      fontsize=9)
+        ax.set_ylabel("PRIMARY train return (last 20 updates)", fontsize=9.5)
         ax.set_title(ENV_TITLE[env], fontsize=13, fontweight="bold")
         ax.grid(alpha=0.25)
         ax.set_axisbelow(True)
@@ -352,25 +492,28 @@ def fig_payoff(new_root, out, plt, np):
         mlines.Line2D([], [], marker="o", ls="none", ms=11, mfc=C_SEES,
                       mec="#222222", label="state+RGB seed whose actor USED the camera"),
         mlines.Line2D([], [], marker="o", ls="none", ms=11, mfc=C_BLIND,
-                      mec="#222222", label="state+RGB seed that IGNORED the camera"),
+                      mec="#222222", label="state+RGB seed with no detected camera use"),
         mlines.Line2D([], [], color=C_STATE, lw=2.5,
-                      label="state-only mean (band = +/-1 s.d. across its seeds)"),
+                      label="state-only mean (band = +/-1 sample s.d. across its 3 seeds)"),
         mlines.Line2D([], [], marker="_", ls="none", ms=13, mec=C_STATE, mew=2.5,
                       label="individual state-only seeds"),
-    ], loc="upper center", ncol=4, fontsize=9.5, bbox_to_anchor=(0.5, 1.0),
+    ], loc="upper center", ncol=4, fontsize=9, bbox_to_anchor=(0.5, 1.0),
         framealpha=0.95)
     fig.suptitle("Does USING the camera pay off?   one point per state+RGB seed, "
-                 f"against the state-only control of the same environment\n"
-                 f"nesy meta, {MATCHED_BUDGET}", fontsize=13, y=1.10)
-    fig.text(0.5, -0.05,
-             "A point ABOVE the blue line beat the state-only baseline of its own "
-             "environment; below it, it lost. Points RIGHT of the dashed line are "
-             "the seeds whose actor genuinely depended on its camera.\n"
-             "Units differ between panels (upright fraction vs reward per step), so "
-             "heights are not comparable across panels -- only each point against "
-             "its own panel's blue line.\nThis shows ASSOCIATION over a handful of "
-             "seeds, not a causal effect of seeing on performance, and the "
-             "within-environment ordering is not monotone.",
+                 "against the state-only control of the same environment\n"
+                 f"PRIMARY metric (train return, last 20 updates); nesy meta, "
+                 f"{MATCHED_BUDGET}; n = 3 seeds per arm", fontsize=12.5, y=1.11)
+    fig.text(0.5, -0.06,
+             "METRIC: y is the primary train return (last-20-update mean over "
+             "128 envs); x is the % of intact performance lost when the actor's "
+             "image is held at the t=0 stack. BUDGET 2.05M steps, n=3 seeds. "
+             f"{SD_NOTE}\nx uses `frozen_first` rather than the old median of "
+             "three corruptions, because the median mixes conditions that "
+             "disagree: on walker seed 0 the same run scores 94.9% here and "
+             "4.8% on a wrong-timestep frame.\nUnits differ between panels, so "
+             "heights are comparable only against each panel's own blue line. "
+             "This is an ASSOCIATION over three seeds per environment, not a "
+             "causal effect of seeing on performance.",
              ha="center", va="top", fontsize=9,
              bbox=dict(boxstyle="round", fc="#F5F5F5", ec="#CCCCCC"))
     fig.tight_layout()
@@ -380,8 +523,8 @@ def fig_payoff(new_root, out, plt, np):
 
 
 # ---------------------------------- fig 4: pixel sensitivity during training
-def fig_sensitivity(new_root, out, plt, np):
-    fig, axes = plt.subplots(1, 3, figsize=(16.5, 5.0))
+def fig_sensitivity(new_root, old_root, out, plt, np):
+    fig, axes = plt.subplots(1, 3, figsize=(16.5, 5.4))
     found = False
     for ax, env in zip(axes, ENVS):
         for tag in seed_tags("state_plus_rgb"):
@@ -391,16 +534,23 @@ def fig_sensitivity(new_root, out, plt, np):
                 continue
             found = True
             seed = tag.rsplit("seed", 1)[1]
-            pd_ = d.get("pixel_drop_median") if d else None
-            sees = bool(d and d.get("actor_uses_pixels")
+            sees = bool(d and uses_camera_corrected(d)
                         and not d.get("inconclusive"))
             col = C_SEES if sees else C_BLIND
-            lab = f"seed {seed}"
-            if pd_ is not None:
-                lab += f" -- {'USES' if sees else 'ignores'} ({100 * pd_:+.0f}%)"
             y = np.asarray(c, float)
+            lab = f"seed {seed} -- last {LAST_N} upd = {y[-LAST_N:].mean():.4f}"
             ax.plot(np.arange(y.size), y, color=col, lw=0.7, alpha=0.25)
             ax.plot(np.arange(y.size), smooth(y), color=col, lw=2.2, label=lab)
+        # Pixels-only reference: an actor that has no choice but to see.
+        lab_r, tags_r, one_key = KNOWN_SEEING[env]
+        refs = [load_curve(old_root, env, t, "pixel_sensitivity") for t in tags_r]
+        refs = [np.asarray(r, float)[-LAST_N:].mean() for r in refs if r]
+        if refs:
+            m = float(np.mean(refs))
+            ax.axhline(m, ls=":", lw=2.2, color=C_PIXEL)
+            ax.text(4, m * 1.12, f"pixels-only reference {m:.3f}"
+                    f"{'' if one_key else '  (not a one-key contrast)'}",
+                    fontsize=8, color=C_PIXEL, va="bottom", fontweight="bold")
         if not ax.get_legend_handles_labels()[0]:
             ax.set_title(f"{ENV_TITLE[env]}\n(no pixel-sensitivity curve)")
             ax.set_xticks([]); ax.set_yticks([])
@@ -415,23 +565,28 @@ def fig_sensitivity(new_root, out, plt, np):
                       "when the image changes", fontsize=9)
         ax.grid(alpha=0.25, which="both")
         ax.set_axisbelow(True)
-        ax.legend(fontsize=9, loc="lower right", framealpha=0.95)
+        ax.legend(fontsize=8.5, loc="lower right", framealpha=0.95)
     if not found:
         raise SystemExit("sensitivity: no curves found")
-    fig.suptitle("Does the actor's camera reliance DEVELOP during training?\n"
-                 "state+RGB arms only, one line per seed "
-                 f"({SMOOTH_W}-update rolling mean, raw faint behind)",
-                 fontsize=13, y=1.03)
-    fig.text(0.5, -0.05,
-             "`train/rgb/pixel_sensitivity` is the trainer's own online probe: how "
-             "far the actor's output moves when its pixel input changes. It is an "
-             "OPEN-LOOP quantity measured during training, and it is NOT the same "
-             "number as the closed-loop pixel drop\nquoted in the legend -- that "
-             "one comes from the end-of-training ablation. They are shown together "
-             "because the question is whether the end verdict was already visible "
-             "in training.\nColour encodes the FINAL verdict, so a red line that "
-             "climbs is an actor that developed some sensitivity and still did not "
-             "depend on the camera by the end.",
+    fig.suptitle("CO-PRIMARY camera-use measure: the trainer's own online probe, "
+                 "taken WITHOUT any corruption\n"
+                 "state+RGB arms, one line per seed "
+                 f"({SMOOTH_W}-update rolling mean, raw faint behind); "
+                 f"{MATCHED_BUDGET}", fontsize=12.5, y=1.05)
+    fig.text(0.5, -0.06,
+             "METRIC: `train/rgb/pixel_sensitivity`, how far the actor's output "
+             "moves when its pixel input changes, logged every update during "
+             "training. BUDGET 2.05M steps, n = 3 seeds, legend quotes each "
+             f"seed's last-{LAST_N}-update mean.\nThis is an INDEPENDENT measure "
+             "of camera use: it is open-loop, measured during training, and does "
+             "not come from the end-of-training corruption rollouts at all. It "
+             "is shown as a co-primary because the corruption verdict was "
+             "contested.\nIT AGREES WITH THE CORRECTED READING AND NOT WITH THE "
+             "OLD ONE. Walker's three seeds read 0.098 / 0.099 / 0.117 -- "
+             "indistinguishable -- so the 'seed 0 is blind, seeds 1 and 2 see' "
+             "split was an artifact of the median rule.\nCheetah reads "
+             "0.0007-0.0019 and cartpole 0.003-0.026 on the same scale. Colour "
+             "encodes the CORRECTED verdict (any single corruption costing >30%).",
              ha="center", va="top", fontsize=9,
              bbox=dict(boxstyle="round", fc="#F5F5F5", ec="#CCCCCC"))
     fig.tight_layout()
@@ -441,92 +596,122 @@ def fig_sensitivity(new_root, out, plt, np):
 
 
 # --------------------------------------------------- fig 5: summary bars
-def fig_bars(new_root, out, plt, np):
-    fig, axes = plt.subplots(1, 3, figsize=(14.5, 5.6))
+def fig_bars(new_root, out, plt, np, eval30_root=None):
+    """Every metric side by side: primary on top, then the two eval samples."""
+    # The 30-episode row is the empirical resolution of the metric dispute:
+    # the SAME frozen policies, more evaluation, and walker's eval ranges stop
+    # overlapping. It is only drawn if the full 18-arm sweep exists.
+    have30 = bool(eval30_root) and all(
+        (Path(eval30_root) / e / f"{a}_seed{s}" / "pixel_ablation.json").exists()
+        for e in ENVS for a in NEW_ARMS for s in (0, 1, 2))
+    rows = [("PRIMARY: train return (last 20 of 250 updates, 128 envs)", "train"),
+            ("SECONDARY: deterministic eval, 5 episodes", "eval5")]
+    if have30:
+        rows.append(("SECONDARY: SAME weights, 30 episodes (no retraining)",
+                     "eval30"))
+    fig, axes = plt.subplots(len(rows), 3, figsize=(15.5, 5.1 * len(rows)))
+    axes = np.atleast_2d(axes)
     any_data = False
-    for ax, env in zip(axes, ENVS):
-        bars, labels, colors, errs, ns, seedvals = [], [], [], [], [], []
-        ylab = None
-        for arm, (lab, col) in NEW_ARMS.items():
-            runs = collect(new_root, env, seed_tags(arm))
-            if not runs:
+    for ri, (rowtitle, kind) in enumerate(rows):
+        for ci, env in enumerate(ENVS):
+            ax = axes[ri][ci]
+            bars, labels, colors, errs, seedvals = [], [], [], [], []
+            ylab = None
+            for arm, (lab, col) in NEW_ARMS.items():
+                if kind == "train":
+                    vals = [train_return(new_root, env, t) for t in seed_tags(arm)]
+                    vals = [v for v in vals if v is not None]
+                    ylab = "episode return during training"
+                else:
+                    root = new_root if kind == "eval5" else Path(eval30_root)
+                    n_ep = 5 if kind == "eval5" else 30
+                    runs = collect(root, env, seed_tags(arm))
+                    vals = [metric_info(r)[2] for r in runs]
+                    ylab = (f"{metric_info(runs[0])[1]}  ({n_ep} eval episodes)"
+                            if runs else "score")
+                if not vals:
+                    continue
+                bars.append(float(np.mean(vals)))
+                errs.append(float(np.std(vals, ddof=1)) if len(vals) > 1 else 0.0)
+                labels.append(lab.replace(" (", "\n("))
+                colors.append(col)
+                seedvals.append(vals)
+            if not bars:
+                ax.set_title(f"{ENV_TITLE[env]}\n(no runs)")
+                ax.set_xticks([]); ax.set_yticks([])
                 continue
-            ylab = metric_info(runs[0])[1]
-            m, e, n, _k = aggregate(runs)
-            bars.append(m); errs.append(e); labels.append(lab.replace(" (", "\n("))
-            colors.append(col); ns.append(n)
-            seedvals.append([metric_info(r)[2] for r in runs])
-        if not bars:
-            ax.set_title(f"{ENV_TITLE[env]}\n(no runs)")
-            ax.set_xticks([]); ax.set_yticks([])
-            continue
-        any_data = True
-        x = np.arange(len(bars))
-        b = ax.bar(x, bars, 0.55, yerr=errs, capsize=6, color=colors,
-                   edgecolor="white", linewidth=1.2)
-        top = max(max(v + e for v, e in zip(bars, errs)),
-                  max((max(sv) for sv in seedvals if sv), default=0.0))
-        ax.set_ylim(0, top * 1.55)
-        for i, sv in enumerate(seedvals):
-            for j, val in enumerate(sv):
-                # Jitter horizontally by seed: cartpole's state-only seeds are all
-                # exactly 1.0000, so stacked dots and labels would overprint.
-                xs = i + 0.16 + 0.075 * j
-                ax.plot(xs, val, marker="o", ms=7, mfc="white",
-                        mec="#222222", mew=1.5, ls="none", zorder=6)
-                ax.annotate(f"s{j}", (xs, val), textcoords="offset points",
-                            xytext=(0, 9), ha="center", va="bottom", fontsize=7.5,
-                            color="#333333", zorder=6)
-        for i, (v, e, n) in enumerate(zip(bars, errs, ns)):
-            ax.text(i, v + e + top * 0.03, f"{v:.3f}", ha="center", va="bottom",
-                    fontsize=12, fontweight="bold")
-            ax.text(i, v + e + top * 0.125, f"n={n} seed{'s' if n > 1 else ''}",
-                    ha="center", va="bottom", fontsize=8, color="#555555")
-        if len(bars) == 2:
-            w = int(np.argmax(bars))
-            d = bars[w] - bars[1 - w]
-            # Overlapping seed ranges are called out, not hidden behind an arrow.
-            overlap = (min(seedvals[0]) <= max(seedvals[1])
-                       and min(seedvals[1]) <= max(seedvals[0])
-                       and len(seedvals[0]) > 1 and len(seedvals[1]) > 1)
-            wl = "state only" if w == 0 else "state + RGB"
-            msg = f"{wl} higher by {d:.3f}"
-            if len(seedvals[0]) > 1 and len(seedvals[1]) > 1:
-                import warnings
-                from scipy import stats
-                with warnings.catch_warnings():
-                    warnings.simplefilter("ignore")
-                    _t, _p = stats.ttest_ind(seedvals[1], seedvals[0],
-                                             equal_var=False)
-                msg += f"\nWelch p={_p:.2f} at n=3"
-            if overlap:
-                msg += "  --  seed ranges OVERLAP"
-            # Axes coords: a data-coordinate y collided with the tick labels when
-            # the panel's range was small (CheetahRun).
-            ax.text(0.5, 0.995, msg, transform=ax.transAxes, ha="center", va="top",
-                    fontsize=9.5, fontweight="bold",
-                    color=colors[w] if not overlap else "#555555")
-            if not overlap:
-                b[w].set_edgecolor("#333333"); b[w].set_linewidth(2.0)
-        ax.set_xticks(x); ax.set_xticklabels(labels, fontsize=9.5)
-        ax.set_ylabel(f"{ylab}  (eval, higher is better)", fontsize=10)
-        ax.set_title(ENV_TITLE[env], fontsize=13, fontweight="bold")
-        ax.grid(axis="y", alpha=0.25)
-        ax.set_axisbelow(True)
+            any_data = True
+            x = np.arange(len(bars))
+            b = ax.bar(x, bars, 0.55, yerr=errs, capsize=6, color=colors,
+                       edgecolor="white", linewidth=1.2)
+            top = max(max(v + e for v, e in zip(bars, errs)),
+                      max((max(sv) for sv in seedvals if sv), default=0.0))
+            ax.set_ylim(0, top * 1.62)
+            for i, sv in enumerate(seedvals):
+                for j, val in enumerate(sv):
+                    xs = i + 0.16 + 0.075 * j
+                    ax.plot(xs, val, marker="o", ms=7, mfc="white",
+                            mec="#222222", mew=1.5, ls="none", zorder=6)
+                    ax.annotate(f"s{j}", (xs, val), textcoords="offset points",
+                                xytext=(0, 9), ha="center", va="bottom",
+                                fontsize=7.5, color="#333333", zorder=6)
+            for i, (v, e) in enumerate(zip(bars, errs)):
+                ax.text(i, v + e + top * 0.03, f"{v:.3f}", ha="center",
+                        va="bottom", fontsize=11.5, fontweight="bold")
+                ax.text(i, v + e + top * 0.115, "n=3 seeds", ha="center",
+                        va="bottom", fontsize=8, color="#555555")
+            if len(bars) == 2 and all(len(s) > 1 for s in seedvals):
+                st = stats_pair(seedvals[0], seedvals[1])
+                w = int(np.argmax(bars))
+                wl = "state only" if w == 0 else "state + RGB"
+                msg = (f"{wl} higher by {abs(bars[1] - bars[0]):.3f}"
+                       f"   |   {st['wins']}/3 seeds to state+RGB\n"
+                       f"Welch p={st['welch_p']:.3f}, d={st['d']:+.2f}; "
+                       f"paired-by-seed p={st['paired_p']:.3f}")
+                msg += ("\nseed ranges OVERLAP" if st["overlap"]
+                        else "\nSEED RANGES DO NOT OVERLAP")
+                ax.text(0.5, 0.995, msg, transform=ax.transAxes, ha="center",
+                        va="top", fontsize=8.6, fontweight="bold",
+                        color=colors[w] if not st["overlap"] else "#555555")
+                if not st["overlap"]:
+                    b[w].set_edgecolor("#333333"); b[w].set_linewidth(2.2)
+            ax.set_xticks(x); ax.set_xticklabels(labels, fontsize=9.5)
+            ax.set_ylabel(ylab, fontsize=9.5)
+            ax.set_title(f"{ENV_TITLE[env]}" if ri == 0 else "", fontsize=12.5,
+                         fontweight="bold")
+            ax.grid(axis="y", alpha=0.25)
+            ax.set_axisbelow(True)
+        axes[ri][0].annotate(rowtitle, xy=(-0.22, 0.5),
+                             xycoords="axes fraction", rotation=90,
+                             ha="center", va="center", fontsize=10.5,
+                             fontweight="bold")
     if not any_data:
         raise SystemExit("bars: no runs found")
-    fig.suptitle("SECONDARY summary: final evaluation score, state-only vs "
-                 f"state+RGB\nnesy meta, {MATCHED_BUDGET}; each pair differs in ONE "
-                 "config key (RGB_ACTOR)", fontsize=13, y=1.04)
-    fig.text(0.5, -0.05,
-             "Metric per panel: CartpoleBalance = upright fraction (bounded 0-1); "
-             "WalkerWalk / CheetahRun = task reward per step. Different metrics, so "
-             "the panels share no axis.\nRinged dots are the INDIVIDUAL SEEDS. Error "
-             "bars are +/-1 s.d. across seeds where several were run, otherwise "
-             "+/-1 s.d. across the 5 evaluation episodes of the single seed; every "
-             "bar is annotated with its n.\nWhere the two arms' seed ranges overlap "
-             "the difference is labelled as such and no winner is highlighted -- at "
-             "n=3 an overlapping difference is not a result.",
+    fig.suptitle("The metrics side by side -- where they disagreed, the reason "
+                 "was resolution, and more evaluation resolves it\n"
+                 f"nesy meta, {MATCHED_BUDGET}; each pair differs in ONE config "
+                 "key (RGB_ACTOR); n = 3 seeds per bar", fontsize=13, y=1.0)
+    tail = ("\nTHIRD ROW is the SAME frozen policies re-scored at 30 episodes "
+            "instead of 5 -- no retraining, only more evaluation. On WalkerWalk "
+            "that alone takes the eval metric from overlapping seed ranges to "
+            "NON-OVERLAPPING ones (+14.4%, 76 of 90 paired episodes, "
+            "p < 0.001), onto the primary metric's side. The 5-episode row was "
+            "not measuring something different; it could not see."
+            if len(rows) == 3 else "")
+    fig.text(0.5, -0.035,
+             "TOP ROW (primary): trainer's episode return, mean over 128 envs, "
+             "averaged over the last 20 of 250 updates. EVAL ROWS: "
+             "deterministic evaluation of the FINAL weights -- upright "
+             "fraction for cartpole, reward/step for walker and cheetah.\n"
+             f"{SD_NOTE} Ringed dots are the individual seeds. Budget is 2.05M "
+             "env steps in every bar; the eval rows differ only in how many "
+             "episodes score the same weights.\nWALKER IS WHERE THE 5-EPISODE "
+             "ROW DISAGREES, and the primary metric is the one to believe: its "
+             "achieved power at this effect size and n=3 is 0.78 against the "
+             "5-episode metric's 0.16." + tail + "\nThe evaluation scores the "
+             "FINAL weights with no checkpoint selection, so a run that "
+             "collapses in its last updates (cartpole seed 0 collapses in the "
+             "final three) is scored after the collapse.",
              ha="center", va="top", fontsize=9,
              bbox=dict(boxstyle="round", fc="#F5F5F5", ec="#CCCCCC"))
     fig.tight_layout()
@@ -572,7 +757,7 @@ def fig_full(new_root, old_root, out, plt, np):
         ax.set_xticks(x)
         ax.set_xticklabels([e[0] + ("\n(INCONCLUSIVE)" if e[5] else "")
                             for e in entries], rotation=32, ha="right", fontsize=8.5)
-        ax.set_ylabel(f"{ylab}  (eval intact)", fontsize=10)
+        ax.set_ylabel(f"{ylab}  (5-episode eval, intact)", fontsize=10)
         ax.set_title(f"{ENV_TITLE[env]}   -- metric: {ylab}", fontsize=12,
                      fontweight="bold")
         ax.grid(axis="y", alpha=0.25)
@@ -586,17 +771,22 @@ def fig_full(new_root, old_root, out, plt, np):
     ], loc="upper center", ncol=4, fontsize=10, bbox_to_anchor=(0.5, 1.005),
         framealpha=0.95)
     fig.suptitle("Every approach we have, on one axis per environment\n"
-                 f"All bars: {MATCHED_BUDGET}, nesy meta, identical evaluation "
-                 "protocol (5 deterministic episodes x 250 steps)",
+                 f"SECONDARY metric (5-episode deterministic eval). All bars: "
+                 f"{MATCHED_BUDGET}, nesy meta, identical evaluation protocol",
                  fontsize=13, y=1.10)
     fig.text(0.5, -0.02,
+             "METRIC: the 5-episode deterministic eval, i.e. the SECONDARY "
+             "metric -- the pixels-only variants have no matched training-return "
+             "comparison, so this is the only axis they all share. BUDGET 2.05M "
+             "env steps throughout.\n"
+             f"{SD_NOTE} n = seeds; where n = 1 the bar is +/-1 sample s.d. "
+             "across that seed's 5 evaluation episodes instead, which is a "
+             "different quantity and is why n is printed on every bar.\n"
              "Units are consistent WITHIN each panel and stated in each panel "
-             "title; they differ BETWEEN panels, so bar heights must not be "
-             "compared across panels.\nOnly the state-only / state+RGB pair is a "
-             "controlled one-variable contrast -- the pixels-only variants differ "
-             "from each other in more than one config key.\nn = seeds; error bars "
-             "are +/-1 s.d. across seeds when n>1, else across the 5 eval episodes "
-             "of the single seed.",
+             "title; they differ BETWEEN panels. Only the state-only / state+RGB "
+             "pair is a controlled one-variable contrast -- the pixels-only "
+             "variants differ from each other, and from the state+RGB arms, in "
+             "more than one config key.",
              ha="center", va="top", fontsize=9,
              bbox=dict(boxstyle="round", fc="#F5F5F5", ec="#CCCCCC"))
     fig.tight_layout()
@@ -638,7 +828,7 @@ def fig_budget(new_root, old_root, out, plt, np):
                     va="bottom", fontsize=7.5, color="#666666")
         ax.set_xticks(x)
         ax.set_xticklabels([e[0] for e in entries], fontsize=9)
-        ax.set_ylabel(f"{ylab}  (eval intact)", fontsize=10)
+        ax.set_ylabel(f"{ylab}  (5-episode eval, intact)", fontsize=10)
         ax.set_title(ENV_TITLE[env], fontsize=12, fontweight="bold")
         ax.grid(axis="y", alpha=0.25); ax.set_axisbelow(True)
     fig.suptitle("The budget caveat, closed\n"
@@ -646,12 +836,14 @@ def fig_budget(new_root, old_root, out, plt, np):
                  "while the RGB arms got 2.05M -- a 25x gap. These are all 2.05M.",
                  fontsize=12.5, y=1.05)
     fig.text(0.5, -0.09,
-             "EVERY bar here is at the 2.05M matched budget, so these comparisons "
-             "are fair. No 52.4M bar is drawn: the 52.4M state baselines quoted in "
-             "earlier prose have NO run artifact in `results/`\n(it contains only "
+             "METRIC: 5-episode deterministic eval (the secondary metric; the "
+             "pixels-only arms share no other axis with the pair). BUDGET: every "
+             f"bar is 2.05M env steps. n = seeds. {SD_NOTE}\n"
+             "No 52.4M bar is drawn: the 52.4M state baselines quoted in earlier "
+             "prose have NO run artifact in `results/` (it contains only "
              "`results/rgb`), so that number cannot be verified and is OMITTED "
-             "rather than estimated. The matched-budget state arms above replace it "
-             "as the baseline to cite.",
+             "rather than estimated.\nThe matched-budget state arms above replace "
+             "it as the baseline to cite.",
              ha="center", va="top", fontsize=9,
              bbox=dict(boxstyle="round", fc="#FFF4E5", ec="#DDAA66"))
     fig.tight_layout()
@@ -660,157 +852,109 @@ def fig_budget(new_root, old_root, out, plt, np):
     print("wrote", out)
 
 
-# ------------------------------------------------------------------- README
-README_HEAD = """\
-# state-only vs state+RGB at matched budget -- figures
-
-Generated by `tools/plot_state_plus_rgb_figures.py` from the committed run JSON:
-
-    python tools/plot_state_plus_rgb_figures.py --figure all
-
-## The question
-
-The NEXUS paper suggests using RGB inputs for the skill agents. Earlier work here
-tested RGB *replacing* the state (`RGB_PROPRIO: none`). This campaign tests RGB
-*added to* the state (`RGB_PROPRIO: full`) against a state-only control at the
-same environment-step budget -- the first honest baseline-vs-extension comparison
-in this project.
-
-## How the comparison is kept honest
-
-Both arms of every pair are generated from ONE base config by
-`tools/gen_state_plus_rgb_configs.py`, which asserts the resolved configs differ
-in exactly one key, `RGB_ACTOR`. That key gates only whether the skill actors
-have a camera pathway; the ENVIRONMENT keeps `USE_RGB: true` in both arms and
-still renders. This matters, because `USE_RGB` also switches the task: MuJoCo
-Playground's CartpoleBalance keys `ctrl_dt`, `episode_length`, the reward
-function and the termination rule on `vision`, and the vec wrapper changes the
-actor's state vector. A `USE_RGB: false` baseline would differ in the
-environment, the reward, the horizon and the state representation too.
-
-Both arms are also scored by the same code: `rgb_pixel_ablation.py` runs the same
-`rollout()`, the same metric keys and the same scoring loop for both. The
-state-only arm scores the `intact` condition only, because pixel corruptions are
-undefined without a pixel input.
-
-## The figures
-
-| file | shows | does NOT claim |
-|---|---|---|
-| `fig1_headline_learning_curves.png` | **PRIMARY.** Episode return over training, state-only vs state+RGB, one panel per env, mean over seeds with a +/-1 s.d. seed band. | It is the TRAINER's metric (exploration noise, 128 envs), not the deterministic eval. Curves show learning dynamics; the eval figures give the score. |
-| `fig2_camera_use_per_seed.png` | Camera dependence, one row per seed, against the 30% verdict threshold and against pixels-only arms known to see. | Measures the ACTOR's pixel dependence only, not the hierarchy's. A low value does not show the camera *could not* help, only that this actor did not use it. |
-| `fig3_camera_use_vs_performance.png` | Each state+RGB seed's camera dependence against its score, with the state-only control drawn as a reference line per env. | Association across a handful of seeds, NOT a causal effect of seeing on performance. The within-env ordering is not monotone. |
-| `fig4_pixel_sensitivity_curves.png` | The trainer's online pixel-sensitivity probe over training, per seed, for the state+RGB arms. | Open-loop sensitivity during training is not the same quantity as the closed-loop pixel drop; they are shown together only to ask whether the end verdict was visible earlier. |
-| `fig5_summary_bars.png` | Secondary summary of final eval scores with per-seed dots. | Where seed ranges overlap it says so and picks no winner. |
-| `fig6_all_variants.png` | Every committed variant plus the two new arms, per env. | Only the state-only / state+RGB pair is a controlled contrast; the other variants differ in several keys. Units differ between panels. |
-| `fig7_budget_gap.png` | That every bar here is at the matched 2.05M budget. | The 52.4M state baseline is OMITTED, not estimated: `results/` holds only `results/rgb`, so it has no verifiable artifact. |
-
-## Findings that must not be summarised away
-
-* **Camera use is environment- and seed-dependent, not uniform.** Three seeds of
-  the identical WalkerWalk config give median pixel drops of 4.8%, 65.6% and
-  42.9% -- one ignores the camera and two depend on it. Any statement that "the
-  actor ignores the camera" as a blanket claim is false. Read the per-seed table
-  below, never a mean over those numbers.
-* **`walker/state_matched_seed0` has a contaminated evaluation.** Its five
-  episodes scored [0.642, 0.788, 0.833, 0.763, 0.055]; one collapsed episode
-  drags the mean to 0.6161 where the other four average 0.757. Carry this caveat
-  wherever that number appears.
-* **Differences at n=3 are mostly not separable.** Where the two arms' seed
-  ranges overlap, the figures say so and highlight no winner. The table below
-  reports Welch's t-test, and at n=3 per arm it has very little power -- treat
-  it as a description of overlap, not as evidence of an effect.
-
-## Reading rules
-
-* Metrics differ by environment: CartpoleBalance uses the bounded upright
-  fraction (0-1), computed geometrically from `qpos` and so independent of the
-  env's reward function; WalkerWalk and CheetahRun use task reward per step.
-* `n` is the number of SEEDS. Error bars are +/-1 s.d. across seeds when n > 1,
-  and +/-1 s.d. across the 5 evaluation episodes of the single seed when n = 1.
-* The evaluation scores the FINAL weights, so a training curve that collapses in
-  its last updates produces an eval number that reflects the collapse.
-* `const_action` is not a pixel-specific control for a `RGB_PROPRIO: full` actor:
-  it removes the actor's state-driven variation too. Only the
-  frozen/replay/blank conditions isolate the pixels.
-* CartpoleBalance's base config uses `NUM_MINIBATCHES: 8` where walker and
-  cheetah use 64, so cartpole takes 8x fewer gradient steps per env step. It is
-  identical in both arms, so it cannot confound state vs state+RGB, but cartpole
-  numbers are not comparable across environments.
-"""
-
-
-def write_readme(new_root, old_root, outdir):
-    import numpy as np
-    from scipy import stats
-
-    lines = [README_HEAD, "\n## Per-seed results (the numbers to cite)\n",
-             "| env | arm | seed | intact | train return | median pixel drop | "
-             "camera verdict |", "|---|---|---|---|---|---|---|"]
-    for env in ENVS:
-        for arm, (lab, _c) in NEW_ARMS.items():
-            for tag in seed_tags(arm):
-                d = load(new_root, env, tag)
-                if d is None:
-                    continue
-                _k, _yl, v, sd = metric_info(d)
-                tr = d.get("final_train_return")
-                trs = "n/a" if tr is None else f"{tr:.1f}"
-                if d.get("state_only"):
-                    drop, verdict = "n/a (no pixels)", "n/a"
-                else:
-                    drop = f"{100 * d['pixel_drop_median']:+.1f}%"
-                    verdict = ("INCONCLUSIVE" if d.get("inconclusive")
-                               else ("**SEES**" if d.get("actor_uses_pixels")
-                                     else "ignores"))
-                lines.append(f"| {ENV_TITLE[env]} | {lab} | "
-                             f"{tag.rsplit('seed', 1)[1]} | {v:.4f} +/- {sd:.4f} | "
-                             f"{trs} | {drop} | {verdict} |")
-
-    lines += ["\n## Per-environment summary\n",
-              "| env | metric | state only | state + RGB | difference | "
-              "seed ranges overlap? | Welch t-test | camera use |",
-              "|---|---|---|---|---|---|---|---|"]
-    for env in ENVS:
-        a = collect(new_root, env, seed_tags("state_matched"))
-        b = collect(new_root, env, seed_tags("state_plus_rgb"))
-        if not (a and b):
+# ------------------------------------------- fig 8: the encoder goes blind
+def fig_blinding(new_root, old_root, out, plt, np):
+    """Give the actor the state as well and the CNN stops learning to see."""
+    fig, axes = plt.subplots(1, 3, figsize=(16.5, 6.0))
+    for ax, env in zip(axes, ENVS):
+        lab_r, tags_r, one_key = KNOWN_SEEING[env]
+        po_s, sp_s = [], []
+        for t in tags_r:
+            c = load_curve(old_root, env, t, "pixel_sensitivity")
+            if c:
+                po_s.append(float(np.asarray(c, float)[-LAST_N:].mean()))
+        for t in seed_tags("state_plus_rgb"):
+            c = load_curve(new_root, env, t, "pixel_sensitivity")
+            if c:
+                sp_s.append(float(np.asarray(c, float)[-LAST_N:].mean()))
+        if not (po_s and sp_s):
+            ax.set_title(f"{ENV_TITLE[env]}\n(missing arms)")
+            ax.set_xticks([]); ax.set_yticks([])
             continue
-        av = [metric_info(r)[2] for r in a]
-        bv = [metric_info(r)[2] for r in b]
-        am, bm = float(np.mean(av)), float(np.mean(bv))
-        asd, bsd = float(np.std(av)), float(np.std(bv))
-        overlap = (min(av) <= max(bv) and min(bv) <= max(av))
-        if len(av) > 1 and len(bv) > 1:
-            # Suppress scipy's catastrophic-cancellation warning: it fires when an
-            # arm's seeds are identical (cartpole state-only is exactly 1.0000 on
-            # all three), which is a real property of the data, not an error.
-            import warnings
-            with warnings.catch_warnings():
-                warnings.simplefilter("ignore")
-                t, p = stats.ttest_ind(bv, av, equal_var=False)
-            tt = f"t={t:.2f}, p={p:.2f}"
-            if asd == 0.0 or bsd == 0.0:
-                tt += " (one arm has ZERO seed variance; the test is degenerate)"
-        else:
-            tt = "not computed (n=1)"
-        drops = [(r, r.get("pixel_drop_median")) for r in b]
-        uses = sum(1 for r, dv in drops
-                   if dv is not None and dv > 0.30 and not r.get("inconclusive"))
-        cam = f"{uses}/{len(drops)} seeds use it"
-        lines.append(
-            f"| {ENV_TITLE[env]} | {env_metric_label(new_root, env)} "
-            f"| {am:.4f} +/- {asd:.4f} (n={len(av)}) "
-            f"| {bm:.4f} +/- {bsd:.4f} (n={len(bv)}) | {bm - am:+.4f} "
-            f"| {'YES' if overlap else 'no'} | {tt} | {cam} |")
-    lines += ["", "Welch's t-test compares the state+RGB seed means against the "
-                  "state-only seed means (two-sided, unequal variance). At n=3 per "
-                  "arm it has very little power: a large p-value is NOT evidence "
-                  "the arms are equivalent, and a small one would need "
-                  "replication.", ""]
-    p = Path(outdir) / "README.md"
-    p.write_text("\n".join(lines))
-    print("wrote", p)
+        groups = [("pixels-only\n(RGB_PROPRIO: none)", po_s, C_PIXEL),
+                  ("state + RGB\n(RGB_PROPRIO: full)", sp_s, C_SPRGB)]
+        x = np.arange(2)
+        means = [float(np.mean(g[1])) for g in groups]
+        ax.bar(x, means, 0.5, color=[g[2] for g in groups],
+               edgecolor="white", linewidth=1.2, zorder=3)
+        for i, (_l, vals, _c) in enumerate(groups):
+            for j, v in enumerate(vals):
+                ax.plot(i + 0.17 + 0.07 * j, v, marker="o", ms=7, mfc="white",
+                        mec="#222222", mew=1.5, ls="none", zorder=6)
+            ax.text(i, means[i] * 1.35, f"{means[i]:.4f}", ha="center",
+                    va="bottom", fontsize=11, fontweight="bold", zorder=6)
+        ax.set_yscale("log")
+        ax.set_ylim(min(min(po_s), min(sp_s)) * 0.25,
+                    max(max(po_s), max(sp_s)) * 12)
+        ratio = means[0] / means[1] if means[1] > 0 else float("inf")
+        ax.annotate("", xy=(1, means[1] * 1.9), xytext=(1, means[0] * 0.55),
+                    arrowprops=dict(arrowstyle="-|>", lw=2.4, color="#C44E52"))
+        ax.text(1.06, math.sqrt(means[0] * means[1]),
+                f"x{ratio:.0f} less\nsensitive" if ratio >= 10 else
+                f"x{ratio:.1f} less\nsensitive",
+                fontsize=10.5, fontweight="bold", color="#C44E52", va="center")
+        ax.set_xticks(x)
+        ax.set_xticklabels([g[0] for g in groups], fontsize=9.5)
+        ax.set_ylabel("pixel sensitivity, last 20 updates  (log scale)",
+                      fontsize=9.5)
+        tt = ENV_TITLE[env] + ("   [one-key contrast]" if one_key
+                               else "   [NOT one-key]")
+        ax.set_title(tt, fontsize=12.5, fontweight="bold",
+                     color="#222222" if one_key else "#888888")
+        ax.grid(axis="y", alpha=0.25, which="both")
+        ax.set_axisbelow(True)
+        if not one_key:
+            ax.text(0.5, 0.015, "pixels-only arm here ALSO has\n"
+                    "RGB_AUX_STATE_COEF 1.0 + META_DECISION_INTERVAL 4\n"
+                    "-> confounded, do not quote as one-key",
+                    transform=ax.transAxes, ha="center", va="bottom",
+                    fontsize=8, color="#996600",
+                    bbox=dict(boxstyle="round,pad=0.3", fc="#FFF4E5",
+                              ec="#DDAA66"))
+        # Walker HAS a one-key pixels-only run and it points the other way.
+        # Drawn because omitting a counterexample would be the same kind of
+        # selective reading this pass is correcting.
+        c = load_curve(old_root, env, "nesy_blind", "pixel_sensitivity")
+        if env == "walker" and c:
+            v = float(np.asarray(c, float)[-LAST_N:].mean())
+            ax.plot(0, v, marker="D", ms=11, mfc="#C44E52", mec="#222222",
+                    mew=1.4, ls="none", zorder=7)
+            ax.annotate("one-key pixels-only\n(nesy_blind, n=1): "
+                        f"{v:.4f}\nLOWER than state+RGB --\nthe blinding does "
+                        "NOT hold here",
+                        xy=(0, v), xytext=(0.30, 0.62), textcoords="axes fraction",
+                        fontsize=8, color="#C44E52", fontweight="bold",
+                        ha="left", va="center",
+                        arrowprops=dict(arrowstyle="->", lw=1.4, color="#C44E52"),
+                        bbox=dict(boxstyle="round,pad=0.3", fc="white",
+                                  ec="#C44E52"))
+    fig.suptitle("Hand the actor the state vector as well, and its camera "
+                 "encoder stops learning to see\n"
+                 f"in-training pixel-sensitivity probe, {MATCHED_BUDGET}, nesy "
+                 "meta, n = 3 seeds per bar (dots)", fontsize=13, y=1.03)
+    fig.text(0.5, -0.05,
+             "METRIC: `train/rgb/pixel_sensitivity`, the trainer's own probe of "
+             "how far the actor's action moves when its image changes, averaged "
+             f"over the last {LAST_N} of 250 updates. BUDGET 2.05M env steps on "
+             "BOTH sides. n = 3 seeds; dots are the seeds.\n"
+             "CHEETAH IS THE CLEAN CASE: both cheetah arms derive from "
+             "`configs/cheetah_run_nesy.yaml` and the ablation script overrides "
+             "NUM_ENVS and TOTAL_TIMESTEPS identically, so they differ in the "
+             "actor's proprio width and nothing else.\nAt the same budget the "
+             "pixels-only cheetah actor reaches 97-99% camera dependence; adding "
+             "the state vector drops sensitivity by a factor of ~370 and leaves "
+             "no measurable camera dependence at all. The camera is not merely "
+             "unused -- a cheaper channel stops the encoder learning.\n"
+             "Cartpole and walker are greyed because their pixels-only arms also "
+             "carry an auxiliary pixel->state loss and a longer meta decision "
+             "interval, so their ratios confound 'removed the state' with 'added "
+             "a loss that forces sight'.",
+             ha="center", va="top", fontsize=9,
+             bbox=dict(boxstyle="round", fc="#F5F5F5", ec="#CCCCCC"))
+    fig.tight_layout()
+    fig.savefig(out, dpi=140, bbox_inches="tight")
+    plt.close(fig)
+    print("wrote", out)
 
 
 # ----------------------------------------------------------- legacy deprecation
@@ -847,10 +991,10 @@ were comparable. They are not:
 ## What to use instead
 
 `results/rgb/state_plus_rgb/figures/` -- `fig1_headline_learning_curves.png`
-for baseline-vs-extension and `fig6_all_variants.png` for where every variant
-lands. Those state baselines are measured in the SAME environment, at the SAME
-budget, through the SAME evaluation code as the RGB arms, from configs that a
-generator asserts differ in exactly one key.
+for baseline-vs-extension on the primary metric and `fig6_all_variants.png`
+for where every variant lands. Those state baselines are measured in the SAME
+environment, at the SAME budget, through the SAME evaluation code as the RGB
+arms, from configs that a generator asserts differ in exactly one key.
 
 The original image is preserved unaltered as
 `method_comparison_nesy.SUPERSEDED.png`; the file under the original name now
@@ -899,13 +1043,14 @@ def deprecate_legacy(root, plt):
 
 
 FIGS = {
-    "curves": ("fig1_headline_learning_curves.png", "new"),
-    "camera": ("fig2_camera_use_per_seed.png", "both"),
-    "payoff": ("fig3_camera_use_vs_performance.png", "new"),
-    "sensitivity": ("fig4_pixel_sensitivity_curves.png", "new"),
-    "bars": ("fig5_summary_bars.png", "new"),
-    "full": ("fig6_all_variants.png", "both"),
-    "budget": ("fig7_budget_gap.png", "both"),
+    "curves": "fig1_headline_learning_curves.png",
+    "camera": "fig2_camera_use_per_seed.png",
+    "payoff": "fig3_camera_use_vs_performance.png",
+    "sensitivity": "fig4_pixel_sensitivity_curves.png",
+    "bars": "fig5_summary_bars.png",
+    "full": "fig6_all_variants.png",
+    "budget": "fig7_budget_gap.png",
+    "blinding": "fig8_encoder_blinding.png",
 }
 
 
@@ -914,10 +1059,14 @@ def main(argv=None):
                                  formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("--new-root", default=NEW_ROOT)
     ap.add_argument("--old-root", default=OLD_ROOT)
+    ap.add_argument("--eval30-root", default=EVAL30_ROOT,
+                    help="the 30-episode re-evaluation tree; the "
+                         "extra row in fig5 is drawn only if all "
+                         "18 arms are present there")
     ap.add_argument("--outdir", default="results/rgb/state_plus_rgb/figures")
     ap.add_argument("--repo-root", default=".")
     ap.add_argument("--figure", default="all",
-                    choices=["all"] + list(FIGS) + ["readme", "deprecate"])
+                    choices=["all"] + list(FIGS) + ["deprecate"])
     args = ap.parse_args(argv)
 
     import numpy as np
@@ -932,21 +1081,22 @@ def main(argv=None):
     w = args.figure
 
     if w in ("all", "curves"):
-        fig_curves(new_root, outdir / FIGS["curves"][0], plt, np)
+        fig_curves(new_root, outdir / FIGS["curves"], plt, np)
     if w in ("all", "camera"):
-        fig_camera(new_root, old_root, outdir / FIGS["camera"][0], plt, np)
+        fig_camera(new_root, old_root, outdir / FIGS["camera"], plt, np)
     if w in ("all", "payoff"):
-        fig_payoff(new_root, outdir / FIGS["payoff"][0], plt, np)
+        fig_payoff(new_root, outdir / FIGS["payoff"], plt, np)
     if w in ("all", "sensitivity"):
-        fig_sensitivity(new_root, outdir / FIGS["sensitivity"][0], plt, np)
+        fig_sensitivity(new_root, old_root, outdir / FIGS["sensitivity"], plt, np)
     if w in ("all", "bars"):
-        fig_bars(new_root, outdir / FIGS["bars"][0], plt, np)
+        fig_bars(new_root, outdir / FIGS["bars"], plt, np,
+                 eval30_root=args.eval30_root)
     if w in ("all", "full"):
-        fig_full(new_root, old_root, outdir / FIGS["full"][0], plt, np)
+        fig_full(new_root, old_root, outdir / FIGS["full"], plt, np)
     if w in ("all", "budget"):
-        fig_budget(new_root, old_root, outdir / FIGS["budget"][0], plt, np)
-    if w in ("all", "readme"):
-        write_readme(new_root, old_root, outdir)
+        fig_budget(new_root, old_root, outdir / FIGS["budget"], plt, np)
+    if w in ("all", "blinding"):
+        fig_blinding(new_root, old_root, outdir / FIGS["blinding"], plt, np)
     if w in ("all", "deprecate"):
         deprecate_legacy(args.repo_root, plt)
 

@@ -20,10 +20,13 @@ THE SCENE, not an actor input, and every artifact says so -- a camera panel
 captioned as "what the agent sees" would be a lie for a state-only actor.
 
 `--result-json` points at the arm's pixel_ablation.json so the caption can
-state the measured intact score and, for pixel arms, whether THAT SEED's
-actor actually used its camera. That matters: on WalkerWalk seed 0 ignores
-the camera (4.8% drop) while seed 1 depends on it (65.6%), so a viewer must
-not assume a state+RGB video shows a camera-driven policy.
+state the measured intact score and, for pixel arms, how strongly THAT SEED's
+actor depended on its camera. The caption reports the LARGEST single pixel
+corruption and names it, not the stored `actor_uses_pixels` boolean: that
+boolean thresholds the MEDIAN of three corruptions at 30%, a bar calibrated on
+`RGB_PROPRIO: none` actors, and on WalkerWalk seed 0 it labelled a run
+"IGNORED its camera" whose performance drops 94.9% when the image is held at
+the t=0 frame.
 
     python -m nexus_continuous.scripts.rgb_inloop_visualize --no-rgb \
         --config configs/walker_walk_nesy_state_matched.yaml --meta nesy \
@@ -303,9 +306,17 @@ def main(argv: list[str] | None = None) -> None:
     # ---- captions -----------------------------------------------------
     # Every artifact states the arm it came from and, for pixel arms, whether
     # THAT SEED actually used its camera. Without the latter a viewer would
-    # reasonably assume any state+RGB video shows a camera-driven policy, and
-    # on WalkerWalk that is true of seed 1 (65.6% pixel drop) but false of
-    # seed 0 (4.8%).
+    # reasonably assume any state+RGB video shows a camera-driven policy.
+    #
+    # CORRECTED: the caption used to quote `actor_uses_pixels`, the stored
+    # boolean that thresholds the MEDIAN of three corruptions at 30%. That bar
+    # was calibrated on `RGB_PROPRIO: none` actors and under-reads for an actor
+    # that also holds the state, and the median hides disagreement between the
+    # conditions -- WalkerWalk seed 0 scores frozen_first 94.9% but
+    # random_replay 4.8%, so the median labelled a camera-using run "IGNORED
+    # its camera". The caption now quotes the LARGEST single pixel corruption,
+    # which changes nothing but the actor's image and so cannot be explained
+    # away, and names the condition it came from.
     _res = _json.loads(Path(args.result_json).read_text()) if args.result_json else {}
     _intact = (_res.get("results") or {}).get("intact") or {}
     _ik = ("upright_fraction_mean" if "upright_fraction_mean" in _intact
@@ -325,15 +336,20 @@ def main(argv: list[str] | None = None) -> None:
         cap.append("NO CAMERA INPUT: the actor is a plain state MLP.")
         cap.append("These frames are a scene view, NOT an actor input.")
     else:
-        _pd = _res.get("pixel_drop_median")
-        if _pd is None:
+        _drops = _res.get("performance_drop_fraction") or {}
+        _pix = {k: v for k, v in _drops.items()
+                if k in ("frozen_first", "random_replay", "zeros")}
+        if not _pix:
             cap.append("camera dependence: not measured for this run")
         elif _res.get("inconclusive"):
             cap.append("camera dependence: INCONCLUSIVE for this seed")
         else:
-            _used = "USED its camera" if _res.get("actor_uses_pixels") else "IGNORED its camera"
+            _wk = max(_pix, key=_pix.get)
+            _wv = _pix[_wk]
+            _used = ("USED its camera" if _wv > 0.30
+                     else "shows no camera use")
             cap.append(f"this seed {_used}")
-            cap.append(f"   (median pixel drop {100 * _pd:+.1f}%)")
+            cap.append(f"   (worst pixel corruption: {_wk} {100 * _wv:+.1f}%)")
     if args.note:
         cap.append(f"NOTE: {args.note}")
 
