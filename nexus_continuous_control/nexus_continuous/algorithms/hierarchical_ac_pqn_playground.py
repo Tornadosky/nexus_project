@@ -272,7 +272,26 @@ def make_train(config: dict[str, Any]) -> Callable[[jax.Array], NexusTrainOutput
     # RGB extension: when USE_RGB is set, the skill actors take pixels (+ a
     # proprioception vector) instead of the state vector. Critics, meta-Q, and
     # the symbolic layer stay state-based (privileged-critic design).
-    use_rgb = bool(config.get("USE_RGB", False))
+    # RGB_ACTOR decouples "the ENVIRONMENT renders pixels" from "the skill
+    # ACTOR consumes them". USE_RGB alone does BOTH, which makes a clean
+    # state-vs-state+pixels comparison impossible: switching USE_RGB off also
+    # switches the TASK. MuJoCo Playground keys CartpoleBalance's reward
+    # function (_dense_vision_reward vs _dense_reward), ctrl_dt, episode_length
+    # and termination rule on `vision`, and our vec wrapper swaps the actor's
+    # state vector (qpos+qvel in vision mode vs the DM-suite featurised obs
+    # otherwise). A `USE_RGB: false` baseline would therefore differ from a
+    # pixel run in the environment, the reward, the horizon and the state
+    # representation -- not in the one thing under test.
+    #
+    # With `USE_RGB: true` + `RGB_ACTOR: false` the env, reward, ctrl_dt,
+    # horizon, done rule, physics backend and privileged state are IDENTICAL
+    # to the pixel run, and the only difference is that the skill actors are
+    # plain state MLPs with no camera pathway. That is the matched-budget
+    # state-only control for a `RGB_PROPRIO: full` (state+RGB) arm, whose
+    # actor reads exactly the same state vector PLUS the image.
+    #
+    # Defaults to true, so every pre-existing config behaves as before.
+    use_rgb = bool(config.get("USE_RGB", False)) and bool(config.get("RGB_ACTOR", True))
     # What the PIXEL actor sees besides the image. Critics/meta always keep the
     # full privileged state; this only restricts the actor's side input.
     #   "none"    -> pixels only (default; the honest "skills from pixels" claim,

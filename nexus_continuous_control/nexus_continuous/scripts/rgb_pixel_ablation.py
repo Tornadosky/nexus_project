@@ -64,6 +64,47 @@ the resulting number is not comparable with any earlier run).
         --config configs/cartpole_balance_nesy_rgb.yaml --meta nesy --seed 0 \\
         --updates 250 --num-envs 128 --episodes 5 \\
         --save-policy runs/abl_cartpole.pkl --out results/rgb/ablation/cartpole/nesy_blind
+
+STATE-ONLY MODE (`--no-rgb`) -- THE MATCHED-BUDGET CONTROL
+----------------------------------------------------------
+`--no-rgb` trains and scores a STATE actor so that 'is the camera worth it?'
+can be answered with numbers that are comparable by construction.
+
+The naive control -- rerun with `USE_RGB: false` -- is INVALID, because
+USE_RGB does not only change the actor, it changes the ENVIRONMENT:
+
+  * MuJoCo Playground's CartpoleBalance keys `ctrl_dt`, `episode_length`,
+    the REWARD FUNCTION (`_dense_vision_reward` vs `_dense_reward`) and the
+    termination rule on `vision`;
+  * for Walker/Cheetah the adapter swaps in the ported `VISION_ENVS`
+    subclasses at `impl='warp'` with `episode_length=RGB_EPISODE_LENGTH`;
+  * the vec wrapper feeds the actor qpos+qvel in vision mode and the
+    DM-suite featurised observation otherwise.
+
+So a `USE_RGB: false` baseline would differ in the task, the reward, the
+horizon, the physics backend AND the state representation -- everything
+except the one variable of interest.
+
+`--no-rgb` instead keeps `USE_RGB: true` (the env is untouched and still
+renders) and sets `RGB_ACTOR: false`, which makes the trainer build plain
+state `SkillActor`s. The ONLY difference from a `RGB_PROPRIO: full` arm is
+then the presence of the pixel pathway: both actors read the same state
+vector, in the same environment, under the same reward, horizon and
+termination rule, for the same number of environment steps.
+
+Only `intact` is scored -- the five corruptions are undefined without a
+pixel input -- but it goes through the SAME `rollout()`, the SAME metric
+keys (`upright_fraction_mean` / `reward_per_step_mean`) and the SAME
+scoring loop, so it is directly comparable to any RGB arm's `intact`. The
+emitted JSON records `state_only`, `conditions_run` and
+`skipped_conditions`, and every pixel-verdict field is null rather than
+absent, so a consumer that ignores the mode gets a None it must handle
+rather than a plausible-looking number.
+
+    python -m nexus_continuous.scripts.rgb_pixel_ablation --no-rgb \\
+        --config configs/cartpole_balance_state_matched.yaml --meta nesy \\
+        --seed 0 --updates 250 --num-envs 128 --episodes 5 \\
+        --out results/rgb/state_plus_rgb/cartpole/state_matched_seed0
 """
 
 from __future__ import annotations
@@ -112,6 +153,11 @@ def main(argv: list[str] | None = None) -> None:
                          "without retraining")
     ap.add_argument("--load-policy", default=None,
                     help="skip training and load a policy saved by --save-policy")
+    ap.add_argument("--no-rgb", action="store_true",
+                    help="STATE-ONLY control arm (see the STATE-ONLY MODE section "
+                         "of the module docstring). The ENVIRONMENT is unchanged "
+                         "and still renders; only the ACTOR loses its camera. "
+                         "Scores the intact condition only.")
     args = ap.parse_args(argv)
 
     import numpy as np
@@ -124,7 +170,7 @@ def main(argv: list[str] | None = None) -> None:
 
     from nexus_continuous.utils import load_config
     from nexus_continuous.algorithms.hierarchical_ac_pqn_playground import run_training
-    from nexus_continuous.networks import MetaQ
+    from nexus_continuous.networks import MetaQ, SkillActor
     from nexus_continuous.vision import build_rgb_actor_fns
     from nexus_continuous.policies.registry import load_policy_module
     from nexus_continuous.envs.playground_adapter import (
@@ -140,7 +186,20 @@ def main(argv: list[str] | None = None) -> None:
     cfg = load_config(args.config)
     cfg["SEED"] = args.seed
     cfg["META_POLICY_TYPE"] = args.meta
+    # The ENVIRONMENT always renders, in BOTH arms. --no-rgb removes the camera
+    # from the ACTOR only (RGB_ACTOR), never from the env: MuJoCo Playground
+    # keys CartpoleBalance's reward function, ctrl_dt, episode_length and
+    # termination rule on `vision`, and the vec wrapper swaps the actor's state
+    # vector (qpos+qvel in vision mode vs the DM-suite featurised obs
+    # otherwise). Turning the env's vision off would therefore silently change
+    # the TASK and make the two arms incomparable.
     cfg["USE_RGB"] = True
+    state_only = bool(args.no_rgb) or not bool(cfg.get("RGB_ACTOR", True))
+    cfg["RGB_ACTOR"] = not state_only
+    # Pixel corruptions are undefined without a pixel input, so the state-only
+    # arm scores the intact condition ONLY -- via the same rollout(), the same
+    # metric keys and the same scoring loop as every RGB arm.
+    conditions = ("intact",) if state_only else CONDITIONS
     cfg["NUM_SEEDS"] = 1
     cfg["NUM_ENVS"] = args.num_envs
     cfg["TOTAL_TIMESTEPS"] = args.num_envs * cfg.get("NUM_STEPS", 64) * args.updates
@@ -151,12 +210,14 @@ def main(argv: list[str] | None = None) -> None:
     # ({"encoder", "heads"} instead of one stacked VisionSkillActor tree), so a
     # saved policy is only readable by a matching flag. Stamped into the blob
     # below and checked on load -- the two layouts must never be mixed silently.
-    shared_encoder = bool(cfg.get("RGB_SHARED_ENCODER", False))
+    # Mirror the trainer: both of these derive from its `use_rgb`, which
+    # RGB_ACTOR now gates.
+    shared_encoder = (not state_only) and bool(cfg.get("RGB_SHARED_ENCODER", False))
 
     # LEVER B. See the "ATTRIBUTION" section of the module docstring: when the
     # meta-Q reads the CNN latent, it is given the INTACT frames so that every
     # condition still varies only the ACTOR's view.
-    meta_sees_pixels = bool(cfg.get("RGB_META_SEES_PIXELS", False))
+    meta_sees_pixels = (not state_only) and bool(cfg.get("RGB_META_SEES_PIXELS", False))
     if meta_sees_pixels and not shared_encoder:
         raise ValueError(
             "RGB_META_SEES_PIXELS requires RGB_SHARED_ENCODER (there is no single "
@@ -169,7 +230,15 @@ def main(argv: list[str] | None = None) -> None:
               "keep measuring ACTOR blindness only (see the docstring).")
 
     proprio_mode = str(cfg.get("RGB_PROPRIO", "none")).lower()
-    if proprio_mode != "none":
+    if state_only:
+        print("[mode] STATE-ONLY arm: the skill actors are plain state MLPs "
+              "(SkillActor) with no camera pathway. The environment is "
+              "UNCHANGED and still renders, so the task, reward, ctrl_dt, "
+              "horizon, termination rule, physics backend and privileged state "
+              "vector are identical to the state+RGB arm. Scoring the intact "
+              "condition only; the five pixel corruptions are skipped as "
+              "undefined without a pixel input.")
+    elif proprio_mode != "none":
         print(f"[WARN] RGB_PROPRIO={proprio_mode!r}: the actor also reads privileged "
               "state, so a small ablation effect would be expected even if the pixels "
               "matter. Run with RGB_PROPRIO=none for the clean test.")
@@ -186,6 +255,14 @@ def main(argv: list[str] | None = None) -> None:
         # Fail loudly: old (unshared) and new (shared-trunk) actor trees are
         # mutually unreadable, and a silent mismatch would produce a plausible
         # but meaningless ablation.
+        blob_state_only = bool(blob.get("state_only", False))
+        if blob_state_only != state_only:
+            raise ValueError(
+                f"{args.load_policy} was saved with state_only="
+                f"{blob_state_only} but this run has state_only={state_only}. "
+                "A stacked state SkillActor tree and a pixel actor tree are "
+                "not interchangeable."
+            )
         blob_shared = bool(blob.get("rgb_shared_encoder", False))
         if blob_shared != shared_encoder:
             raise ValueError(
@@ -238,6 +315,10 @@ def main(argv: list[str] | None = None) -> None:
                 "rgb_shared_encoder": shared_encoder,
                 # Whether the meta-Q was trained on [state, latent] (lever B).
                 "rgb_meta_sees_pixels": meta_sees_pixels,
+                # State actor (stacked SkillActor tree) vs pixel actor: a third
+                # mutually-unreadable parameter layout, stamped for the same
+                # reason as the two above.
+                "state_only": state_only,
             }))
             print(f"    saved policy -> {args.save_policy}")
         # Training curves, so a finished run is reconstructable without a retrain.
@@ -293,12 +374,29 @@ def main(argv: list[str] | None = None) -> None:
     # aux_state_dim=0 on purpose: the auxiliary pixel->state head is a TRAINING
     # loss only and is never evaluated here. Flax ignores the extra `aux_state`
     # entries a trained blob may carry, so this stays correct either way.
-    rgb_fns = build_rgb_actor_fns(
-        action_dim=action_dim, action_scale=(ahi - alo) / 2.0, action_bias=(ahi + alo) / 2.0,
-        hidden_sizes=tuple(cfg.get("ACTOR_HIDDEN_SIZES", (256, 256))),
-        embedding_dim=int(cfg.get("RGB_EMBED_DIM", 128)),
-        shared_encoder=shared_encoder,
-    )
+    # The two actors this script can evaluate. Exactly one is built; both are
+    # driven through the SAME `act_from_pixels` signature below, so Stages 3-6
+    # (rollout, scoring, metric definitions) stay literally one code path.
+    rgb_fns = state_actor = None
+    if state_only:
+        # Must match the trainer's state branch exactly -- see `_actor_apply`:
+        # jax.vmap of SkillActor over a stacked [N, ...] parameter tree.
+        state_actor = SkillActor(
+            action_dim=action_dim, action_scale=(ahi - alo) / 2.0,
+            action_bias=(ahi + alo) / 2.0,
+            hidden_sizes=tuple(cfg.get("ACTOR_HIDDEN_SIZES", (256, 256))),
+            activation=cfg.get("ACTIVATION", "relu"),
+            norm_type=cfg.get("NORM_TYPE", "layer_norm"),
+            init_scale=float(cfg.get("ACTOR_INIT_SCALE", 0.01)),
+        )
+    else:
+        rgb_fns = build_rgb_actor_fns(
+            action_dim=action_dim, action_scale=(ahi - alo) / 2.0,
+            action_bias=(ahi + alo) / 2.0,
+            hidden_sizes=tuple(cfg.get("ACTOR_HIDDEN_SIZES", (256, 256))),
+            embedding_dim=int(cfg.get("RGB_EMBED_DIM", 128)),
+            shared_encoder=shared_encoder,
+        )
     meta_q = MetaQ(
         num_skills=num_skills, hidden_sizes=tuple(cfg.get("META_HIDDEN_SIZES", (256, 256))),
         activation=cfg.get("ACTIVATION", "relu"), norm_type=cfg.get("NORM_TYPE", "layer_norm"),
@@ -348,9 +446,23 @@ def main(argv: list[str] | None = None) -> None:
 
     @jax.jit
     def act_from_pixels(obs, px, skill):
-        """The skill actor. Pixels are an explicit argument so we can corrupt them."""
-        proprio = _actor_proprio(_norm_meta(obs))
-        all_a = rgb_fns.apply(actor_params, px, proprio)
+        """The skill actor. Pixels are an explicit argument so we can corrupt them.
+
+        In STATE-ONLY mode `px` is accepted and IGNORED. Keeping one signature is
+        deliberate: the rollout loop, the per-condition scoring and the metric
+        definitions in Stages 3-6 are then the same code for both arms, which
+        makes the two arms' numbers comparable BY CONSTRUCTION rather than by
+        inspection. `state_only` is a Python bool closed over, so the branch is
+        resolved once at trace time, not per step.
+        """
+        oa = _norm_meta(obs)
+        if state_only:
+            # Mirrors the trainer's `_actor_apply` state branch. ACTOR_OBS_INDICES
+            # is rejected by the trainer whenever the RGB env is live, so there is
+            # no observation restriction to mirror here.
+            all_a = jax.vmap(lambda p: state_actor.apply({"params": p}, oa))(actor_params)
+        else:
+            all_a = rgb_fns.apply(actor_params, px, _actor_proprio(oa))
         return all_a[skill, jnp.arange(all_a.shape[1])]
 
     # ---- Stage 3: one rollout under a given pixel condition ----
@@ -421,30 +533,35 @@ def main(argv: list[str] | None = None) -> None:
     intact_runs = [rollout("intact", ep, None, mean_action) for ep in range(args.episodes)]
     replay_bank = [f for r in intact_runs for f in r["frames"]]        # real, in-distribution
 
-    # per-skill mean action of the trained pixel actor, for the const_action control
+    # per-skill mean action of the trained pixel actor, for the const_action
+    # control. Skipped in state-only mode: const_action isolates the PIXEL
+    # actor's frame-to-frame variation and has no counterpart without pixels.
     acc = np.zeros((num_skills, action_dim), np.float64)
     cnt = np.zeros((num_skills,), np.int64)
-    rng = jax.random.PRNGKey(4242 + args.seed)
-    rng, rr = jax.random.split(rng)
-    obs, state = env.reset(jax.random.split(rr, 1), env_params)
-    for _t in range(args.eval_steps):
-        px = get_actor_pixels(obs)
-        skill = select_skill(obs)
-        a = np.asarray(act_from_pixels(obs, px, skill))[0]
-        k = int(np.asarray(skill)[0])
-        acc[k] += a
-        cnt[k] += 1
-        rng, rs = jax.random.split(rng)
-        obs, state, _r, _d, _i = step_fn(
-            jax.random.split(rs, 1), state, jnp.clip(jnp.asarray(a)[None], alo, ahi), env_params)
-    mean_action = (acc / np.maximum(cnt, 1)[:, None]).astype(np.float32)
-    print("    per-skill mean action (used by const_action):")
-    for k in range(num_skills):
-        print(f"      {skill_names[k]:>22s}  n={int(cnt[k]):4d}  {np.round(mean_action[k], 3)}")
+    if not state_only:
+        rng = jax.random.PRNGKey(4242 + args.seed)
+        rng, rr = jax.random.split(rng)
+        obs, state = env.reset(jax.random.split(rr, 1), env_params)
+        for _t in range(args.eval_steps):
+            px = get_actor_pixels(obs)
+            skill = select_skill(obs)
+            a = np.asarray(act_from_pixels(obs, px, skill))[0]
+            k = int(np.asarray(skill)[0])
+            acc[k] += a
+            cnt[k] += 1
+            rng, rs = jax.random.split(rng)
+            obs, state, _r, _d, _i = step_fn(
+                jax.random.split(rs, 1), state,
+                jnp.clip(jnp.asarray(a)[None], alo, ahi), env_params)
+        mean_action = (acc / np.maximum(cnt, 1)[:, None]).astype(np.float32)
+        print("    per-skill mean action (used by const_action):")
+        for k in range(num_skills):
+            print(f"      {skill_names[k]:>22s}  n={int(cnt[k]):4d}  "
+                  f"{np.round(mean_action[k], 3)}")
 
     # ---- Stage 5: run every condition ----
     results = {}
-    for cond in CONDITIONS:
+    for cond in conditions:
         runs = intact_runs if cond == "intact" else [
             rollout(cond, ep, replay_bank, mean_action) for ep in range(args.episodes)
         ]
@@ -474,22 +591,45 @@ def main(argv: list[str] | None = None) -> None:
         v = results[cond][metric_key]
         return float((base - v) / max(abs(base), 1e-9))
 
-    drops = {c: drop(c) for c in CONDITIONS if c != "intact"}
-    pixel_drops = [drops[c] for c in ("frozen_first", "random_replay", "zeros")]
+    drops = {c: drop(c) for c in conditions if c != "intact"}
+    # STATE-ONLY: no pixel pathway, so no corruption conditions and no pixel
+    # verdict. Every pixel-specific field below is emitted as null rather than
+    # omitted, so a consumer that forgets to check `state_only` gets a None it
+    # has to handle instead of a plausible-looking number.
+    pixel_drops = ([] if state_only
+                   else [drops[c] for c in ("frozen_first", "random_replay", "zeros")])
     # 2-of-3 MEDIAN, not min. Requiring every corruption to clear the bar makes
     # the verdict hostage to the most forgiving one: on the fixed cartpole run
     # blanking the image cost 56.3% and freezing it 37.0%, yet the min-rule
     # reported "does not use pixels" because random_replay came in at 27.9%
     # (real frames from another timestep are sometimes coincidentally apt).
     # Both numbers are reported so nothing is hidden.
-    pixel_drop_median = float(sorted(pixel_drops)[len(pixel_drops) // 2])
-    uses_pixels = bool(pixel_drop_median > 0.30)
-    needs_variation = bool(drops["const_action"] > 0.30)
+    pixel_drop_median = (None if state_only else
+                         float(sorted(pixel_drops)[len(pixel_drops) // 2]))
+    uses_pixels = None if state_only else bool(pixel_drop_median > 0.30)
+    needs_variation = None if state_only else bool(drops["const_action"] > 0.30)
     verdict = {
         "env": env_name, "meta": args.meta, "seed": args.seed,
         "updates": args.updates, "num_envs": args.num_envs,
         "episodes": args.episodes, "eval_steps": args.eval_steps,
-        "rgb_proprio": proprio_mode,
+        # What the SKILL ACTOR actually read. In state-only mode there is no
+        # pixel branch at all, so RGB_PROPRIO does not apply.
+        "state_only": state_only,
+        "actor_input": ("state" if state_only
+                        else f"pixels+proprio:{proprio_mode}"),
+        "rgb_proprio": None if state_only else proprio_mode,
+        "metric_key": metric_key,
+        "conditions_run": list(conditions),
+        "skipped_conditions": [c for c in CONDITIONS if c not in conditions],
+        "skipped_conditions_reason": ((
+            "state-only arm: the actor has no pixel input, so the five pixel "
+            "conditions are undefined. The ENVIRONMENT still renders and is "
+            "identical to the state+RGB arm (same reward, ctrl_dt, horizon, "
+            "termination rule, physics backend and privileged state vector); "
+            "only the actor's camera pathway is removed. `intact` is therefore "
+            "produced by the same rollout() and the same metric keys as every "
+            "RGB arm and is directly comparable to them."
+        ) if state_only else None),
         "rgb_shared_encoder": shared_encoder,
         # LEVER B attribution, recorded so a number can never be read out of
         # context: when the meta-Q reads the CNN latent it was fed the INTACT
@@ -506,11 +646,13 @@ def main(argv: list[str] | None = None) -> None:
         "final_train_return": train_return,
         "performance_drop_fraction": drops,
         "actor_uses_pixels": uses_pixels,
-        "actor_uses_pixels_strict": bool(min(pixel_drops) > 0.30),
+        "actor_uses_pixels_strict": (None if state_only
+                                     else bool(min(pixel_drops) > 0.30)),
         "pixel_drop_median": pixel_drop_median,
-        "pixel_drop_min": float(min(pixel_drops)),
+        "pixel_drop_min": None if state_only else float(min(pixel_drops)),
         "actor_variation_needed": needs_variation,
-        "motion_sensitive": bool(drops["shuffle_frames"] > 0.15),
+        "motion_sensitive": (None if state_only
+                             else bool(drops["shuffle_frames"] > 0.15)),
         "results": results,
     }
     (out / "pixel_ablation.json").write_text(json.dumps(verdict, indent=2))
@@ -519,13 +661,19 @@ def main(argv: list[str] | None = None) -> None:
     print(f"  baseline (intact): {base:.4f} [{metric_key}]")
     for c, d in drops.items():
         print(f"  {c:>15s}: {100 * d:5.1f}% performance drop")
-    print(f"\n  actor USES the pixels          : {'YES' if uses_pixels else 'NO -- claim unsupported'}"
-          "   (all pixel corruptions cost >30%)")
-    print(f"  pixel-conditioned variation is : {'NECESSARY' if needs_variation else 'NOT necessary'}"
-          f"   (dropping the actor for a constant action costs "
-          f"{100 * drops['const_action']:.1f}%)")
-    print(f"  uses MOTION, not just a pose   : {'YES' if verdict['motion_sensitive'] else 'weak/no'}"
-          "   (frame-shuffle costs >15%)")
+    if state_only:
+        print("\n  STATE-ONLY arm: no pixel pathway, so there is no pixel "
+              "verdict to give.\n  The number above is the matched-budget "
+              "state baseline, measured by the same rollout\n  code and the "
+              "same metric as the RGB arms, in the same environment.")
+    else:
+        print(f"\n  actor USES the pixels          : {'YES' if uses_pixels else 'NO -- claim unsupported'}"
+              "   (all pixel corruptions cost >30%)")
+        print(f"  pixel-conditioned variation is : {'NECESSARY' if needs_variation else 'NOT necessary'}"
+              f"   (dropping the actor for a constant action costs "
+              f"{100 * drops['const_action']:.1f}%)")
+        print(f"  uses MOTION, not just a pose   : {'YES' if verdict['motion_sensitive'] else 'weak/no'}"
+              "   (frame-shuffle costs >15%)")
     if meta_sees_pixels:
         print("  ATTRIBUTION: the meta-Q saw the INTACT frames throughout, so the "
               "numbers above\n               are the ACTOR's pixel dependence, not "
@@ -533,19 +681,25 @@ def main(argv: list[str] | None = None) -> None:
 
     # ---- bar chart ----
     fig = plt.figure(figsize=(7.5, 4.2))
-    xs = list(CONDITIONS)
+    xs = list(conditions)
     vals = [results[c]["reward_per_step_mean"] for c in xs]
     errs = [results[c]["reward_per_step_std"] for c in xs]
-    colors = ["#4C72B0"] + ["#DD8452"] * 4 + ["#937860"]
+    colors = (["#4C72B0"] + ["#DD8452"] * 4 + ["#937860"])[:len(xs)]
     plt.bar(range(len(xs)), vals, yerr=errs, capsize=5, color=colors)
     for i, v in enumerate(vals):
         plt.text(i, v, f"{v:.3f}", ha="center", va="bottom", fontsize=8)
     plt.xticks(range(len(xs)), xs, rotation=20, ha="right", fontsize=9)
     plt.ylabel("mean task reward / step")
-    plt.title(f"Does the in-loop pixel actor use its pixels? {env_name} ({args.meta}, "
-              f"{args.episodes} episodes)\n"
-              f"{'YES' if uses_pixels else 'NO'} — corrupting the image costs "
-              f"{100 * min(pixel_drops):.0f}–{100 * max(pixel_drops):.0f}% of performance")
+    if state_only:
+        plt.title(f"STATE-ONLY matched-budget baseline — {env_name} "
+                  f"({args.meta}, {args.episodes} episodes)\n"
+                  f"no pixel pathway, so no corruption conditions; same env, "
+                  f"same reward, same rollout code as the RGB arms")
+    else:
+        plt.title(f"Does the in-loop pixel actor use its pixels? {env_name} ({args.meta}, "
+                  f"{args.episodes} episodes)\n"
+                  f"{'YES' if uses_pixels else 'NO'} — corrupting the image costs "
+                  f"{100 * min(pixel_drops):.0f}–{100 * max(pixel_drops):.0f}% of performance")
     fig.savefig(out / "pixel_ablation.png", dpi=130, bbox_inches="tight")
     plt.close(fig)
 
