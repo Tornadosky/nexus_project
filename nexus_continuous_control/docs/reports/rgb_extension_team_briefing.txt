@@ -234,11 +234,14 @@ RESULTS TREE (results/rgb/)
   distill/results_table.md / combined.json  cartpole distillation, upright metric, per-seed
   distill/multienv/*.json           reward-metric distillation (cartpole + cheetah)
   distill/viz_cartpole/ , viz_cheetah/   distillation videos/filmstrips/timelines/scatter
-  inloop/cartpole_inloop.json + cartpole_inloop_curve.png   in-loop curve + eval metrics
-  inloop/cheetah_inloop.json + cheetah_inloop_curve.png     in-loop curve
-  inloop/cheetah_render_probe.png   proof the tracking camera frames the robot
-  inloop/viz_{cartpole,cheetah,walker,hopper}/   in-loop video + filmstrip +
-                                    skill/reward timeline (+ curve for walker/hopper)
+  inloop/cartpole_inloop.json       in-loop curve + eval metrics
+  inloop/cheetah_inloop.json        in-loop curve
+  inloop/viz_{cartpole,cheetah,walker,hopper}/rollout_inloop.mp4   in-loop video
+                                    (+ inloop_curve.json for walker/hopper)
+  NB: the rendered PNGs that used to sit in inloop/ (cartpole_inloop_curve.png,
+      cheetah_inloop_curve.png, cheetah_render_probe.png, and the per-env
+      filmstrips/timelines) were DELETED in 8333c39. The JSONs behind them are
+      untouched; nothing in this briefing's tables reads the images.
   ablation/<env>/<meta>_<status>[_seedN]/   pixel-dependence ablation campaign
                                     (see ablation/README.md for the naming legend; §7-8)
 
@@ -991,9 +994,10 @@ F8. The infrastructure claim: in-loop pixel rendering is NOT a research blocker.
   6. results/rgb/distill/comparison.png + results/rgb/distill/viz_cartpole/action_tracking.png
      -> the distillation arm: ~50% retention across all three meta variants
         (meta-agnostic) and r ~ 0.99 held-out teacher-vs-student fidelity.
-  7. results/rgb/ablation/hopper/nesy_seed0/viz/rollout_inloop.gif
+  7. results/rgb/ablation/hopper/nesy_seed0/viz/rollout_inloop.mp4
      -> the honest failure (hopper never learns), for the difficulty ordering --
         now confirmed inconclusive rather than negative (F7f).
+        (The .gif twin of this rollout was deleted in 8333c39; use the .mp4.)
 
   IF ASKED "does this depend on which meta?": the whole campaign was first run
   (accidentally) under meta=neural and reproduced every conclusion above. That
@@ -1052,9 +1056,12 @@ FIGURE INDEX (what exists and what each one proves)
       viz_cartpole/, viz_cheetah/    distillation videos, filmstrips, timelines,
                                     teacher-vs-student action scatter
     results/rgb/inloop/
-      *_curve.png                    in-loop learning curves (cartpole, cheetah)
-      viz_{cartpole,cheetah,walker,hopper}/   in-loop rollout artifacts
-      cheetah_render_probe.png       tracking camera verified in-frame
+      cartpole_inloop.json,          in-loop learning curves + eval metrics
+      cheetah_inloop.json
+      viz_{cartpole,cheetah,walker,hopper}/rollout_inloop.mp4   rollout videos
+                                     (+ inloop_curve.json for walker/hopper)
+      (the *_curve.png images and cheetah_render_probe.png were deleted in
+       8333c39 -- the curve DATA survives in the JSONs above)
 
   NOTE: every surviving ablation run saves its OWN training curves, so no
   figure is a stand-in (the deleted neural campaign's runs did too, before

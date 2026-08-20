@@ -42,7 +42,7 @@ import math
 import warnings
 from pathlib import Path
 
-# House palette (seaborn "deep"), matching tools/plot_rgb_ablation_comparison.py.
+# House palette (seaborn "deep").
 C_STATE = "#4C72B0"   # state-only  (baseline)
 C_SPRGB = "#DD8452"   # state + RGB (extension)
 C_PIXEL = "#937860"   # pixels-only variants
@@ -57,7 +57,11 @@ ENVCOL = {"cartpole": "#4C72B0", "walker": "#DD8452", "cheetah": "#55A868"}
 
 NEW_ROOT = "results/rgb/state_plus_rgb"
 EVAL30_ROOT = "results/rgb/state_plus_rgb_eval30"
-OLD_ROOT = "results/rgb/ablation"
+# The pixels-only reference arms (`RGB_PROPRIO: none`, the superseded campaign)
+# used to be read out of `results/rgb/ablation/`. That tree was removed; the
+# handful of scalars these figures actually quote from it were distilled into
+# the JSON below, with provenance, so figs 2/4/6/7/8 stay reproducible.
+REF_JSON = "results/rgb/state_plus_rgb/reference_baselines.json"
 
 NEW_ARMS = {
     "state_matched": ("state only (baseline)", C_STATE),
@@ -143,6 +147,45 @@ def load_curve(root: Path, env: str, tag: str, key="episode_return"):
     if not p.exists():
         return None
     return json.loads(p.read_text())["curves"].get(key)
+
+
+# --------------------------------------------------- pixels-only reference arms
+_REF_CACHE = {}
+
+
+def _ref(ref_json=None):
+    """The distilled pixels-only reference values (see REF_JSON above).
+
+    `REF_JSON` is read at CALL time, not bound as a default, so `--ref-json`
+    reaches every reader below.
+    """
+    ref_json = ref_json or REF_JSON
+    if ref_json not in _REF_CACHE:
+        p = Path(ref_json)
+        _REF_CACHE[ref_json] = (json.loads(p.read_text())["runs"]
+                                if p.exists() else {})
+    return _REF_CACHE[ref_json]
+
+
+def load_old(env: str, tag: str, ref_json=None):
+    """A reduced stand-in for that run's `pixel_ablation.json`.
+
+    It carries the same `results` / `metric_key` / `inconclusive` fields the
+    readers below use, so `metric_info`, `pixel_drops` and `aggregate` behave
+    exactly as they did against the removed tree.
+    """
+    return _ref(ref_json).get(f"{env}/{tag}")
+
+
+def old_sens(env: str, tag: str, ref_json=None):
+    """That run's last-20-update mean pixel sensitivity, precomputed."""
+    r = _ref(ref_json).get(f"{env}/{tag}")
+    return None if r is None else r.get("pixel_sensitivity_last20")
+
+
+def collect_old(env, tags, ref_json=None):
+    return [d for d in (load_old(env, t, ref_json) for t in tags)
+            if d is not None]
 
 
 def metric_info(d):
@@ -349,7 +392,7 @@ def fig_curves(new_root, out, plt, np):
 
 
 # ------------------------------------------------- fig 2: camera use (per seed)
-def fig_camera(new_root, old_root, out, plt, np):
+def fig_camera(new_root, out, plt, np):
     """EVERY condition, every seed. No thresholded median anywhere."""
     fig, axes = plt.subplots(1, 3, figsize=(17.5, 6.4), sharey=True)
     conds = CORRUPTIONS + ["const_action"]
@@ -379,7 +422,7 @@ def fig_camera(new_root, old_root, out, plt, np):
                             fontsize=6.8, rotation=90, zorder=4)
         # The pixels-only control: what an actor that MUST see looks like here.
         lab, tags, one_key = KNOWN_SEEING[env]
-        ref = [r for r in collect(old_root, env, tags)]
+        ref = collect_old(env, tags)
         if ref:
             fr = [100 * pixel_drops(r).get("frozen_first", np.nan) for r in ref]
             m = float(np.nanmean(fr))
@@ -523,7 +566,7 @@ def fig_payoff(new_root, out, plt, np):
 
 
 # ---------------------------------- fig 4: pixel sensitivity during training
-def fig_sensitivity(new_root, old_root, out, plt, np):
+def fig_sensitivity(new_root, out, plt, np):
     fig, axes = plt.subplots(1, 3, figsize=(16.5, 5.4))
     found = False
     for ax, env in zip(axes, ENVS):
@@ -543,8 +586,7 @@ def fig_sensitivity(new_root, old_root, out, plt, np):
             ax.plot(np.arange(y.size), smooth(y), color=col, lw=2.2, label=lab)
         # Pixels-only reference: an actor that has no choice but to see.
         lab_r, tags_r, one_key = KNOWN_SEEING[env]
-        refs = [load_curve(old_root, env, t, "pixel_sensitivity") for t in tags_r]
-        refs = [np.asarray(r, float)[-LAST_N:].mean() for r in refs if r]
+        refs = [v for v in (old_sens(env, t) for t in tags_r) if v is not None]
         if refs:
             m = float(np.mean(refs))
             ax.axhline(m, ls=":", lw=2.2, color=C_PIXEL)
@@ -721,7 +763,7 @@ def fig_bars(new_root, out, plt, np, eval30_root=None):
 
 
 # ------------------------------------------------------ fig 6: all variants
-def fig_full(new_root, old_root, out, plt, np):
+def fig_full(new_root, out, plt, np):
     fig, axes = plt.subplots(1, 3, figsize=(16.5, 6.4))
     for ax, env in zip(axes, ENVS):
         entries = []
@@ -731,7 +773,7 @@ def fig_full(new_root, old_root, out, plt, np):
                 m, e, n, _ = aggregate(runs)
                 entries.append((lab, m, e, n, col, False))
         for lab, tags in OLD_VARIANTS.get(env, []):
-            runs = collect(old_root, env, tags)
+            runs = collect_old(env, tags)
             if not runs:
                 continue
             m, e, n, _ = aggregate(runs)
@@ -796,7 +838,7 @@ def fig_full(new_root, old_root, out, plt, np):
 
 
 # ------------------------------------------------------- fig 7: budget gap
-def fig_budget(new_root, old_root, out, plt, np):
+def fig_budget(new_root, out, plt, np):
     fig, axes = plt.subplots(1, 3, figsize=(15, 5.6))
     for ax, env in zip(axes, ENVS):
         entries = []
@@ -806,7 +848,7 @@ def fig_budget(new_root, old_root, out, plt, np):
             if runs:
                 m, e, n, _ = aggregate(runs)
                 entries.append((lab, m, e, n, col))
-        runs = collect(old_root, env, LADDER_PIXEL[env])
+        runs = collect_old(env, LADDER_PIXEL[env])
         if runs:
             m, e, n, _ = aggregate(runs)
             entries.append(("pixels-only\n@ 2.05M", m, e, n, C_PIXEL))
@@ -853,16 +895,16 @@ def fig_budget(new_root, old_root, out, plt, np):
 
 
 # ------------------------------------------- fig 8: the encoder goes blind
-def fig_blinding(new_root, old_root, out, plt, np):
+def fig_blinding(new_root, out, plt, np):
     """Give the actor the state as well and the CNN stops learning to see."""
     fig, axes = plt.subplots(1, 3, figsize=(16.5, 6.0))
     for ax, env in zip(axes, ENVS):
         lab_r, tags_r, one_key = KNOWN_SEEING[env]
         po_s, sp_s = [], []
         for t in tags_r:
-            c = load_curve(old_root, env, t, "pixel_sensitivity")
-            if c:
-                po_s.append(float(np.asarray(c, float)[-LAST_N:].mean()))
+            v = old_sens(env, t)
+            if v is not None:
+                po_s.append(float(v))
         for t in seed_tags("state_plus_rgb"):
             c = load_curve(new_root, env, t, "pixel_sensitivity")
             if c:
@@ -914,9 +956,9 @@ def fig_blinding(new_root, old_root, out, plt, np):
         # Walker HAS a one-key pixels-only run and it points the other way.
         # Drawn because omitting a counterexample would be the same kind of
         # selective reading this pass is correcting.
-        c = load_curve(old_root, env, "nesy_blind", "pixel_sensitivity")
-        if env == "walker" and c:
-            v = float(np.asarray(c, float)[-LAST_N:].mean())
+        v = old_sens(env, "nesy_blind")
+        if env == "walker" and v is not None:
+            v = float(v)
             ax.plot(0, v, marker="D", ms=11, mfc="#C44E52", mec="#222222",
                     mew=1.4, ls="none", zorder=7)
             ax.annotate("one-key pixels-only\n(nesy_blind, n=1): "
@@ -957,91 +999,6 @@ def fig_blinding(new_root, old_root, out, plt, np):
     print("wrote", out)
 
 
-# ----------------------------------------------------------- legacy deprecation
-LEGACY_FIG = Path("results/rgb/ablation/summary/method_comparison_nesy.png")
-LEGACY_README = """\
-# DEPRECATED: `method_comparison_nesy.png`
-
-`method_comparison_nesy.png` (and its `--meta neural` sibling, produced by
-`tools/plot_rgb_summary_figures.py`) draws a dashed "privileged upper bound"
-that must not be presented. It is **superseded** by
-`results/rgb/state_plus_rgb/figures/`.
-
-## Why it is wrong
-
-The "privileged state (cheats)" bar and the dashed upper-bound line are read
-from `results/rgb/distill/combined.json`, i.e. from the DISTILLATION
-experiment, and are then placed beside the in-loop pixel bars as if the two
-were comparable. They are not:
-
-* **Different environment.** Distillation trains its teacher on
-  `configs/cartpole_balance_nesy.yaml`, which has `vision=False`. MuJoCo
-  Playground's CartpoleBalance keys `ctrl_dt` (0.02 under vision),
-  `episode_length` (250 under vision, 1000 otherwise), the REWARD FUNCTION
-  (`_dense_vision_reward` vs `_dense_reward`) and the termination rule on
-  `vision`. The in-loop bars beside it run the vision env. Different task.
-* **Different observation.** The non-vision env feeds the actor the DM-suite
-  featurised observation; the vision env feeds it `qpos+qvel`.
-* **Different budget.** That teacher trained for 9,830,400 environment steps;
-  the in-loop bars beside it had 2,048,000 -- roughly 5x fewer.
-* **It is not even an upper bound.** The matched-budget state control measured
-  in this campaign reaches an upright fraction of **1.000** at 2.05M steps,
-  above the 0.743 the figure draws as the ceiling.
-
-## What to use instead
-
-`results/rgb/state_plus_rgb/figures/` -- `fig1_headline_learning_curves.png`
-for baseline-vs-extension on the primary metric and `fig6_all_variants.png`
-for where every variant lands. Those state baselines are measured in the SAME
-environment, at the SAME budget, through the SAME evaluation code as the RGB
-arms, from configs that a generator asserts differ in exactly one key.
-
-The original image is preserved unaltered as
-`method_comparison_nesy.SUPERSEDED.png`; the file under the original name now
-carries a deprecation banner so it cannot be pasted into a talk by accident.
-"""
-
-
-def deprecate_legacy(root, plt):
-    import shutil
-    import matplotlib.image as mpimg
-
-    fig_path = Path(root) / LEGACY_FIG
-    out_dir = fig_path.parent
-    out_dir.mkdir(parents=True, exist_ok=True)
-    (out_dir / "README.md").write_text(LEGACY_README)
-    print("wrote", out_dir / "README.md")
-    if not fig_path.exists():
-        print(f"[skip] {fig_path} missing; wrote the deprecation README only")
-        return
-    keep = fig_path.with_name("method_comparison_nesy.SUPERSEDED.png")
-    if not keep.exists():
-        shutil.copy2(fig_path, keep)
-        print("preserved original ->", keep)
-    img = mpimg.imread(keep)
-    h, w = img.shape[0], img.shape[1]
-    fig = plt.figure(figsize=(w / 140, h / 140), dpi=140)
-    ax = fig.add_axes([0, 0, 1, 1])
-    ax.imshow(img)
-    ax.set_axis_off()
-    ax.add_patch(plt.Rectangle((0, 0), w, h, color="white", alpha=0.55, zorder=2))
-    ax.text(w / 2, h * 0.34, "DEPRECATED", color="#C44E52", fontsize=52,
-            fontweight="bold", ha="center", va="center", zorder=3, alpha=0.95)
-    ax.text(w / 2, h * 0.63,
-            "The dashed \"privileged upper bound\" is the DISTILLATION teacher:\n"
-            "different environment, reward, observation and budget.\n"
-            "The matched-budget state control beats it (1.000 vs 0.743).\n"
-            "Use  results/rgb/state_plus_rgb/figures/  instead.\n"
-            "Original preserved as  method_comparison_nesy.SUPERSEDED.png",
-            color="#222222", fontsize=12.5, ha="center", va="center", zorder=3,
-            linespacing=1.6,
-            bbox=dict(boxstyle="round,pad=0.5", fc="white", ec="#C44E52", lw=1.5,
-                      alpha=0.92))
-    fig.savefig(fig_path, dpi=140)
-    plt.close(fig)
-    print("stamped DEPRECATED ->", fig_path)
-
-
 FIGS = {
     "curves": "fig1_headline_learning_curves.png",
     "camera": "fig2_camera_use_per_seed.png",
@@ -1058,15 +1015,16 @@ def main(argv=None):
     ap = argparse.ArgumentParser(description=__doc__,
                                  formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("--new-root", default=NEW_ROOT)
-    ap.add_argument("--old-root", default=OLD_ROOT)
+    ap.add_argument("--ref-json", default=REF_JSON,
+                    help="distilled pixels-only reference values; figs "
+                         "2/4/6/7/8 draw their reference lines and bars "
+                         "from this instead of the removed ablation tree")
     ap.add_argument("--eval30-root", default=EVAL30_ROOT,
                     help="the 30-episode re-evaluation tree; the "
                          "extra row in fig5 is drawn only if all "
                          "18 arms are present there")
     ap.add_argument("--outdir", default="results/rgb/state_plus_rgb/figures")
-    ap.add_argument("--repo-root", default=".")
-    ap.add_argument("--figure", default="all",
-                    choices=["all"] + list(FIGS) + ["deprecate"])
+    ap.add_argument("--figure", default="all", choices=["all"] + list(FIGS))
     args = ap.parse_args(argv)
 
     import numpy as np
@@ -1075,7 +1033,8 @@ def main(argv=None):
     matplotlib.use("Agg")
     import matplotlib.pyplot as plt
 
-    new_root, old_root = Path(args.new_root), Path(args.old_root)
+    new_root = Path(args.new_root)
+    globals()["REF_JSON"] = args.ref_json
     outdir = Path(args.outdir)
     outdir.mkdir(parents=True, exist_ok=True)
     w = args.figure
@@ -1083,22 +1042,20 @@ def main(argv=None):
     if w in ("all", "curves"):
         fig_curves(new_root, outdir / FIGS["curves"], plt, np)
     if w in ("all", "camera"):
-        fig_camera(new_root, old_root, outdir / FIGS["camera"], plt, np)
+        fig_camera(new_root, outdir / FIGS["camera"], plt, np)
     if w in ("all", "payoff"):
         fig_payoff(new_root, outdir / FIGS["payoff"], plt, np)
     if w in ("all", "sensitivity"):
-        fig_sensitivity(new_root, old_root, outdir / FIGS["sensitivity"], plt, np)
+        fig_sensitivity(new_root, outdir / FIGS["sensitivity"], plt, np)
     if w in ("all", "bars"):
         fig_bars(new_root, outdir / FIGS["bars"], plt, np,
                  eval30_root=args.eval30_root)
     if w in ("all", "full"):
-        fig_full(new_root, old_root, outdir / FIGS["full"], plt, np)
+        fig_full(new_root, outdir / FIGS["full"], plt, np)
     if w in ("all", "budget"):
-        fig_budget(new_root, old_root, outdir / FIGS["budget"], plt, np)
+        fig_budget(new_root, outdir / FIGS["budget"], plt, np)
     if w in ("all", "blinding"):
-        fig_blinding(new_root, old_root, outdir / FIGS["blinding"], plt, np)
-    if w in ("all", "deprecate"):
-        deprecate_legacy(args.repo_root, plt)
+        fig_blinding(new_root, outdir / FIGS["blinding"], plt, np)
 
 
 if __name__ == "__main__":

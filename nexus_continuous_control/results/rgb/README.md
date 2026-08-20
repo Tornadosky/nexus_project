@@ -71,8 +71,11 @@ fraction, `ablation/cartpole/nesy_fixed_seed0/`). Details for each method below.
 
 ## In-loop pixel RL (skills trained directly from MJWarp pixels)
 
-![cartpole in-loop](inloop/cartpole_inloop_curve.png)
-![cheetah in-loop](inloop/cheetah_inloop_curve.png)
+> **Artifact note.** The rendered PNGs of this first pass (the two learning
+> curves, the render probe, and the per-env filmstrips/timelines) were deleted
+> in commit `8333c39`. The numbers behind them are untouched and still on disk:
+> `inloop/cartpole_inloop.json`, `inloop/cheetah_inloop.json`, and
+> `inloop/viz_{hopper,walker}/inloop_curve.json`.
 
 In-loop pixel RL was run on **all four environments** (one seed; 128 envs / 250
 updates for the headline cartpole/cheetah runs, 96 envs / 200 updates for the
@@ -95,18 +98,22 @@ visualized walker/hopper rollouts):
   fallen hopper is visible in `inloop/viz_hopper/`); it just doesn't learn. A useful
   negative result — **difficulty ordering: balance < walk/run < hop.**
 - **Qualitative artifacts** for every env (`inloop/viz_{cartpole,cheetah,walker,hopper}/`):
-  a **video** of what the in-loop pixel policy sees (skill-annotated), the 64×64
-  observation filmstrip, a skill + reward timeline, and the learning curve. Each rollout
-  is self-checked (rollout reward matches the trained policy — 0.074 cartpole, 0.259
-  cheetah, 0.404 walker, 0.000 hopper), so the videos show the real trained policy.
+  a **video** (`rollout_inloop.mp4`) of what the in-loop pixel policy sees,
+  skill-annotated. Each rollout is self-checked (rollout reward matches the
+  trained policy — 0.074 cartpole, 0.259 cheetah, 0.404 walker, 0.000 hopper),
+  so the videos show the real trained policy. The accompanying observation
+  filmstrip / skill-reward timeline / learning-curve PNGs were deleted in
+  `8333c39`; walker's and hopper's curve data survives as
+  `inloop/viz_{walker,hopper}/inloop_curve.json`.
   (These `inloop/` artifacts are the original, never-ablated first pass; the
   ablation campaign's own per-run qualitative artifacts live under each
   `ablation/<env>/<variant>/viz/`, see `ablation/README.md`.)
 - **Enabled by:** `mujoco-warp==3.11.0` (version-aligned with mujoco 3.11 — the desync
   that blocked this on Colab is gone) + two runtime shims (`ensure_mjwarp_graphmode`,
   `ensure_mjx_render_compat`) + `dm_control_vision.py` (Cheetah/Walker/Hopper vision
-  subclasses porting cartpole's render pipeline; tracking cameras verified in-frame,
-  `inloop/cheetah_render_probe.png`).
+  subclasses porting cartpole's render pipeline; tracking cameras were verified
+  in-frame at the time — the `cheetah_render_probe.png` evidence image was
+  deleted in `8333c39`).
 - **Caveats:** single seed each; the locomotion numbers are *training* return (those
   configs have no greedy-eval stage); in-loop needs the MJWarp renderer.
 
@@ -203,11 +210,13 @@ run-to-run (GPU nondeterminism in teacher training); the retention *ordering*
   - `viz_cheetah/` — CheetahRun distillation qualitative artifacts (same set).
   - `multienv/*.json` — return-based distillation summaries used in the cross-env table above.
 - `inloop/` — **in-loop pixel RL** (Method B) original, never-ablated results:
-  `cartpole_inloop.json` + `cartpole_inloop_curve.png`,
-  `cheetah_inloop.json` + `cheetah_inloop_curve.png` (learning curves + eval/return),
-  `cheetah_render_probe.png` (verifies the cheetah tracking camera renders in-frame),
-  and `viz_{cartpole,cheetah,walker,hopper}/` (in-loop rollout **video** + filmstrip +
-  skill/reward timeline + learning curve for each env).
+  `cartpole_inloop.json` and `cheetah_inloop.json` (learning curves +
+  eval/return), and `viz_{cartpole,cheetah,walker,hopper}/`, each holding the
+  in-loop rollout **video** `rollout_inloop.mp4` (walker and hopper also keep
+  `inloop_curve.json`). The rendered PNGs that used to sit alongside these —
+  `cartpole_inloop_curve.png`, `cheetah_inloop_curve.png`,
+  `cheetah_render_probe.png`, and the per-env filmstrip / skill-timeline /
+  curve images — were deleted in `8333c39`; no figure or claim reads them.
 - `ablation/` — the **pixel-dependence ablation campaign** (see the correction
   banner at the top of this file): per-run six-condition camera ablations,
   responsiveness probes, and cross-run summary figures, organized as

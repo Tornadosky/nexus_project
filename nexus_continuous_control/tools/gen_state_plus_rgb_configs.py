@@ -57,14 +57,21 @@ SHARED = {
 # THE one variable.
 ARMS = {"state_plus_rgb": True, "state_matched": False}
 
-# Phase 2: CheetahRun at the full 52.4M-step budget. BOTH arms keep 128 envs and
-# take 6400 updates, so they match on gradient steps and batch size as well as on
-# environment steps. (The tempting alternative -- state at its canonical 2048
-# envs x 400 updates and RGB at 128 envs x 6400 -- matches env steps only, and
-# hands the RGB arm 16x more gradient steps at 1/16 the batch size, which would
-# make any difference uninterpretable.)
+# Phase 2: CheetahRun and WalkerWalk at the full 52.4M-step budget. BOTH arms
+# keep 128 envs and take 6400 updates, so they match on gradient steps and batch
+# size as well as on environment steps. (The tempting alternative -- state at its
+# canonical 2048 envs x 400 updates and RGB at 128 envs x 6400 -- matches env
+# steps only, and hands the RGB arm 16x more gradient steps at 1/16 the batch
+# size, which would make any difference uninterpretable.)
+#
+# WalkerWalk is the env where the matched budget favoured the extension: training
+# return 189.51 +/- 1.80 -> 203.20 +/- 6.25 (+7.2%, 3/3 seeds, non-overlapping),
+# 30-episode eval 0.713 -> 0.816, and the only env where the actor demonstrably
+# used the camera (frozen_first costs 62-72%). Running it at 25.6x the budget
+# asks whether that advantage survives training to convergence or is a
+# small-budget optimisation artefact.
 FULL = {
-    "envs": ["cheetah"],
+    "envs": ["cheetah", "walker"],
     "updates": 6400,
     "overrides": {
         "TOTAL_TIMESTEPS": 52428800,   # 128 x 64 x 6400

@@ -74,7 +74,11 @@ CONDITIONS = ("intact", "frozen_first", "random_replay", "shuffle_frames",
 
 NEW_ROOT = "results/rgb/state_plus_rgb"
 EVAL30_ROOT = "results/rgb/state_plus_rgb_eval30"
-OLD_ROOT = "results/rgb/ablation"
+# The pixels-only reference arms used to live in `results/rgb/ablation/`. That
+# tree (the superseded pixels-only campaign) was removed; the scalars this
+# report quotes from it were distilled into the JSON below, with provenance.
+REF_JSON = "results/rgb/state_plus_rgb/reference_baselines.json"
+REF_SOURCE = "results/rgb/ablation"   # where they came from, for prose only
 
 # Matched-budget pixels-only (`RGB_PROPRIO: none`) reference arms, used for the
 # "does adding the state blind the encoder?" contrast.
@@ -212,6 +216,23 @@ def paired(a, b):
 # ------------------------------------------------------------------------- io
 def _read(p: Path):
     return json.loads(p.read_text()) if p.exists() else None
+
+
+_REF_CACHE = {}
+
+
+def _ref(repo: Path):
+    """`{"<env>/<tag>": record}` of the distilled pixels-only reference arms.
+
+    Each record carries the same `results` / `metric_key` / `pixel_drop_median`
+    fields the removed `pixel_ablation.json` did, plus the last-20-update means
+    of the two curves this report reduced them to anyway, so the numbers below
+    are identical to those computed against the full artifacts.
+    """
+    key = str(repo)
+    if key not in _REF_CACHE:
+        _REF_CACHE[key] = (_read(repo / REF_JSON) or {}).get("runs", {})
+    return _REF_CACHE[key]
 
 
 def metric_key_of(d):
@@ -471,27 +492,26 @@ def blind_encoder(repo: Path, runs, env):
     if spec is None:
         return None
     tags, clean, prov = spec
+    ref = _ref(repo)
     po = []
     for t in tags:
-        d = _read(repo / OLD_ROOT / env / t / "pixel_ablation.json")
-        c = (_read(repo / OLD_ROOT / env / t / "training_curves.json") or {}).get("curves")
+        d = ref.get(f"{env}/{t}")
         if d is None:
             continue
-        sens = (float(np.asarray(c["pixel_sensitivity"], float)[-LAST_N:].mean())
-                if c and c.get("pixel_sensitivity") else None)
         mk = metric_key_of(d)
         base = d["results"]["intact"][mk]
         drops = {k: float((base - d["results"][k][mk]) / max(abs(base), 1e-9))
                  for k in CONDITIONS if k in d["results"] and k != "intact"}
         pix = [drops[k] for k in ("frozen_first", "random_replay", "zeros")
                if k in drops]
-        po.append({"tag": t, "pixel_sensitivity_last20": sens,
+        po.append({"tag": t,
+                   "pixel_sensitivity_last20": d.get("pixel_sensitivity_last20"),
                    "pixel_drop_median": d.get("pixel_drop_median"),
                    "pixel_drop_max": max(pix) if pix else None,
                    "intact": float(base),
-                   "train_return_last20": (
-                       float(np.asarray(c["episode_return"], float)[-LAST_N:].mean())
-                       if c and c.get("episode_return") else d.get("final_train_return")),
+                   "train_return_last20": (d.get("train_return_last20")
+                                           if d.get("train_return_last20") is not None
+                                           else d.get("final_train_return")),
                    "updates": d.get("updates"), "num_envs": d.get("num_envs")})
     sp = [runs[(env, "state_plus_rgb", s)] for s in SEEDS]
     sens_po = [r["pixel_sensitivity_last20"] for r in po
@@ -515,15 +535,12 @@ def blind_encoder(repo: Path, runs, env):
         tags2, clean2, prov2 = extra
         rows = []
         for t in tags2:
-            d = _read(repo / OLD_ROOT / env / t / "pixel_ablation.json")
-            c = (_read(repo / OLD_ROOT / env / t / "training_curves.json") or {}).get("curves")
+            d = ref.get(f"{env}/{t}")
             if d is None:
                 continue
             rows.append({
                 "tag": t,
-                "pixel_sensitivity_last20": (
-                    float(np.asarray(c["pixel_sensitivity"], float)[-LAST_N:].mean())
-                    if c and c.get("pixel_sensitivity") else None),
+                "pixel_sensitivity_last20": d.get("pixel_sensitivity_last20"),
                 "pixel_drop_median": d.get("pixel_drop_median"),
                 "intact": d["results"]["intact"][metric_key_of(d)],
                 "train_return_last20": d.get("final_train_return")})
@@ -789,7 +806,8 @@ def markdown(an):
     if extra and extra["runs"]:
         r = extra["runs"][0]
         add(f"\nWALKER HAS A ONE-KEY POINT AND IT CUTS THE OTHER WAY. "
-            f"`{OLD_ROOT}/walker/{r['tag']}` is plain "
+            f"`{REF_SOURCE}/walker/{r['tag']}` (removed; its numbers are "
+            f"preserved in `{REF_JSON}`) is plain "
             "`configs/walker_walk_nesy.yaml` with `USE_RGB` forced on, so it "
             "differs from the walker state+RGB arm in `RGB_PROPRIO` alone. "
             f"Its sensitivity is {r['pixel_sensitivity_last20']:.4f} -- LOWER "
@@ -1100,7 +1118,9 @@ README_TAIL = """\
   only if that sweep has been run; `tools/run_state_plus_rgb_eval30.sh`).
 * Recomputed statistics with every source path recorded:
   `../corrected_analysis.json`.
-* Pixels-only reference arms: `results/rgb/ablation/<env>/`.
+* Pixels-only reference arms: `reference_baselines.json` in this directory --
+  values distilled from the superseded `results/rgb/ablation/` tree, which was
+  removed; the full artifacts remain in git history.
 """
 
 
@@ -1213,7 +1233,8 @@ def conclusions(an):
     L.append(
         f"\n**The finding that was missing from the write-up.** At the SAME "
         f"2.048M-step budget, the cheetah pixels-only arms "
-        f"(`results/rgb/ablation/cheetah/nesy_seed{{0,1,2}}`, `RGB_PROPRIO: "
+        f"(`cheetah/nesy_seed{{0,1,2}}` in `reference_baselines.json`, "
+        f"formerly `results/rgb/ablation/`, `RGB_PROPRIO: "
         f"none`) reach **97.3% / 99.3% / 98.1%** camera dependence and an "
         f"in-training sensitivity of "
         f"{be['mean_pixel_sensitivity_pixels_only']:.4f}. Hand the same actor "

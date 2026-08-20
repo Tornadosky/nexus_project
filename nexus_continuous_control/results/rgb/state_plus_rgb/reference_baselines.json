@@ -1,0 +1,1212 @@
+{
+  "_schema": "nexus-rgb-reference-baselines/1",
+  "_what": "Reduced, read-only reference values distilled from the SUPERSEDED pixels-only RGB campaigns (campaign 1 'pixels-only' and campaign 2 'shared encoder / pixel-aware meta'). These are the ONLY numbers the surviving state-vs-state+RGB campaign (campaign 3) quotes from that work: they appear as reference lines and comparison bars in figures 2, 4, 6, 7 and 8 and in the 'blind encoder' table of the analysis report.",
+  "_source_tree": "results/rgb/ablation/<env>/<tag>/{pixel_ablation.json,training_curves.json} -- DELETED in the RGB refactor. The full artifacts (including PNGs, MP4s and the raw training curves) remain in git history at commit 8333c396fd21da13ef2caac538993749eddfb699 and earlier.",
+  "_extraction": "Per run: every condition's value under the run's own metric key (reward_per_step_mean, or upright_fraction_mean for cartpole) was copied verbatim from pixel_ablation.json -> results; the intact condition additionally keeps its _std / _std_sample. pixel_sensitivity_last20 and train_return_last20 are the mean of the LAST 20 entries of training_curves.json -> curves.{pixel_sensitivity,episode_return}, the same reduction the plotting and analysis tools applied to the live curves, so the figures are numerically unchanged. No other field is derived.",
+  "_budget": "Every run here: 250 updates x 128 envs x 64 steps = 2,048,000 env steps, matching the campaign-3 arms. Confirmed per run by the `updates` / `num_envs` fields below.",
+  "_caveat": "All of these arms are RGB_PROPRIO: none (pixels-only) -- the actor got a camera INSTEAD of the state vector. Only cheetah's nesy_seed{0,1,2} differ from their campaign-3 counterpart in RGB_PROPRIO alone; cartpole/walker nesy_fixed_* also carry RGB_AUX_STATE_COEF 1.0 and META_DECISION_INTERVAL 4, and the nesy_shared* / *_metaz_* arms additionally enable the campaign-2 shared-encoder and pixel-aware-meta features. The tools that read this file already encode which contrasts are one-key; do not re-derive that from here.",
+  "_not_captured": "results/rgb/ablation/hopper/nesy_seed0 was present in the deleted tree but referenced by no surviving tool, so it is not reproduced here. Likewise the deleted summary/ figures.",
+  "_regenerated_by": "Nothing -- the inputs no longer exist in the working tree. To rebuild, check out 8333c396fd21da13ef2caac538993749eddfb699, restore results/rgb/ablation/ and re-run the extraction described in _extraction.",
+  "runs": {
+    "cartpole/nesy_blind": {
+      "metric_key": "upright_fraction_mean",
+      "results": {
+        "intact": {
+          "upright_fraction_mean": 0.6704000000000001,
+          "upright_fraction_std": 0.027434285119171564
+        },
+        "frozen_first": {
+          "upright_fraction_mean": 0.6696
+        },
+        "random_replay": {
+          "upright_fraction_mean": 0.6712
+        },
+        "shuffle_frames": {
+          "upright_fraction_mean": 0.6704000000000001
+        },
+        "zeros": {
+          "upright_fraction_mean": 0.6536
+        },
+        "const_action": {
+          "upright_fraction_mean": 0.6712
+        }
+      },
+      "pixel_drop_median": 0.001193317422434567,
+      "pixel_drop_min": -0.001193317422434236,
+      "inconclusive": false,
+      "actor_uses_pixels": false,
+      "rgb_proprio": "none",
+      "state_only": false,
+      "episodes": 5,
+      "updates": 250,
+      "num_envs": 128,
+      "seed": 0,
+      "meta": "nesy",
+      "final_train_return": 6.239515781402588,
+      "config": "configs/cartpole_balance_nesy_rgb.yaml",
+      "env_id": "CartpoleBalance",
+      "curve_updates": 250,
+      "curve_num_envs": 128,
+      "pixel_sensitivity_last20": 0.0023842829978093505,
+      "_pixel_sensitivity_curve_len": 250,
+      "train_return_last20": 6.239515495300293,
+      "_episode_return_curve_len": 250,
+      "_source": {
+        "pixel_ablation": "results/rgb/ablation/cartpole/nesy_blind/pixel_ablation.json",
+        "training_curves": "results/rgb/ablation/cartpole/nesy_blind/training_curves.json"
+      }
+    },
+    "cartpole/nesy_blind_seed1": {
+      "metric_key": "upright_fraction_mean",
+      "results": {
+        "intact": {
+          "upright_fraction_mean": 0.632,
+          "upright_fraction_std": 0.02542439773131315
+        },
+        "frozen_first": {
+          "upright_fraction_mean": 0.632
+        },
+        "random_replay": {
+          "upright_fraction_mean": 0.632
+        },
+        "shuffle_frames": {
+          "upright_fraction_mean": 0.632
+        },
+        "zeros": {
+          "upright_fraction_mean": 0.632
+        },
+        "const_action": {
+          "upright_fraction_mean": 0.632
+        }
+      },
+      "pixel_drop_median": 0.0,
+      "pixel_drop_min": 0.0,
+      "inconclusive": false,
+      "actor_uses_pixels": false,
+      "rgb_proprio": "none",
+      "state_only": false,
+      "episodes": 5,
+      "updates": 250,
+      "num_envs": 128,
+      "seed": 1,
+      "meta": "nesy",
+      "final_train_return": 3.698500394821167,
+      "config": "configs/cartpole_balance_nesy_rgb.yaml",
+      "env_id": "CartpoleBalance",
+      "curve_updates": 250,
+      "curve_num_envs": 128,
+      "pixel_sensitivity_last20": 2.6995173811883433e-06,
+      "_pixel_sensitivity_curve_len": 250,
+      "train_return_last20": 3.6985004425048826,
+      "_episode_return_curve_len": 250,
+      "_source": {
+        "pixel_ablation": "results/rgb/ablation/cartpole/nesy_blind_seed1/pixel_ablation.json",
+        "training_curves": "results/rgb/ablation/cartpole/nesy_blind_seed1/training_curves.json"
+      }
+    },
+    "cartpole/nesy_blind_seed2": {
+      "metric_key": "upright_fraction_mean",
+      "results": {
+        "intact": {
+          "upright_fraction_mean": 0.6648,
+          "upright_fraction_std": 0.08296119574837382
+        },
+        "frozen_first": {
+          "upright_fraction_mean": 0.6256
+        },
+        "random_replay": {
+          "upright_fraction_mean": 0.7192000000000001
+        },
+        "shuffle_frames": {
+          "upright_fraction_mean": 0.6576
+        },
+        "zeros": {
+          "upright_fraction_mean": 0.6679999999999999
+        },
+        "const_action": {
+          "upright_fraction_mean": 0.6672
+        }
+      },
+      "pixel_drop_median": -0.004813477737665435,
+      "pixel_drop_min": -0.08182912154031305,
+      "inconclusive": false,
+      "actor_uses_pixels": false,
+      "rgb_proprio": "none",
+      "state_only": false,
+      "episodes": 5,
+      "updates": 250,
+      "num_envs": 128,
+      "seed": 2,
+      "meta": "nesy",
+      "final_train_return": 5.5828142166137695,
+      "config": "configs/cartpole_balance_nesy_rgb.yaml",
+      "env_id": "CartpoleBalance",
+      "curve_updates": 250,
+      "curve_num_envs": 128,
+      "pixel_sensitivity_last20": 0.031945933029055594,
+      "_pixel_sensitivity_curve_len": 250,
+      "train_return_last20": 5.58281376361847,
+      "_episode_return_curve_len": 250,
+      "_source": {
+        "pixel_ablation": "results/rgb/ablation/cartpole/nesy_blind_seed2/pixel_ablation.json",
+        "training_curves": "results/rgb/ablation/cartpole/nesy_blind_seed2/training_curves.json"
+      }
+    },
+    "cartpole/nesy_fixed_seed0": {
+      "metric_key": "upright_fraction_mean",
+      "results": {
+        "intact": {
+          "upright_fraction_mean": 1.0,
+          "upright_fraction_std": 0.0
+        },
+        "frozen_first": {
+          "upright_fraction_mean": 0.5656
+        },
+        "random_replay": {
+          "upright_fraction_mean": 0.6152
+        },
+        "shuffle_frames": {
+          "upright_fraction_mean": 0.8304
+        },
+        "zeros": {
+          "upright_fraction_mean": 0.3984
+        },
+        "const_action": {
+          "upright_fraction_mean": 0.6456000000000001
+        }
+      },
+      "pixel_drop_median": 0.4344,
+      "pixel_drop_min": 0.38480000000000003,
+      "inconclusive": false,
+      "actor_uses_pixels": true,
+      "rgb_proprio": "none",
+      "state_only": false,
+      "episodes": 5,
+      "updates": 250,
+      "num_envs": 128,
+      "seed": 0,
+      "meta": "nesy",
+      "final_train_return": 23.633785247802734,
+      "config": "configs/cartpole_balance_nesy_rgb_aux.yaml",
+      "env_id": "CartpoleBalance",
+      "curve_updates": 250,
+      "curve_num_envs": 128,
+      "pixel_sensitivity_last20": 0.19215431585907936,
+      "_pixel_sensitivity_curve_len": 250,
+      "train_return_last20": 23.63378734588623,
+      "_episode_return_curve_len": 250,
+      "_source": {
+        "pixel_ablation": "results/rgb/ablation/cartpole/nesy_fixed_seed0/pixel_ablation.json",
+        "training_curves": "results/rgb/ablation/cartpole/nesy_fixed_seed0/training_curves.json"
+      }
+    },
+    "cartpole/nesy_fixed_seed1": {
+      "metric_key": "upright_fraction_mean",
+      "results": {
+        "intact": {
+          "upright_fraction_mean": 0.9352,
+          "upright_fraction_std": 0.05457618528259372
+        },
+        "frozen_first": {
+          "upright_fraction_mean": 0.42000000000000004
+        },
+        "random_replay": {
+          "upright_fraction_mean": 0.5552
+        },
+        "shuffle_frames": {
+          "upright_fraction_mean": 0.6335999999999999
+        },
+        "zeros": {
+          "upright_fraction_mean": 0.7048
+        },
+        "const_action": {
+          "upright_fraction_mean": 0.7752000000000001
+        }
+      },
+      "pixel_drop_median": 0.40633019674935844,
+      "pixel_drop_min": 0.24636441402908474,
+      "inconclusive": false,
+      "actor_uses_pixels": true,
+      "rgb_proprio": "none",
+      "state_only": false,
+      "episodes": 5,
+      "updates": 250,
+      "num_envs": 128,
+      "seed": 1,
+      "meta": "nesy",
+      "final_train_return": 24.429243087768555,
+      "config": "configs/cartpole_balance_nesy_rgb_aux.yaml",
+      "env_id": "CartpoleBalance",
+      "curve_updates": 250,
+      "curve_num_envs": 128,
+      "pixel_sensitivity_last20": 0.11619781441986561,
+      "_pixel_sensitivity_curve_len": 250,
+      "train_return_last20": 24.42924451828003,
+      "_episode_return_curve_len": 250,
+      "_source": {
+        "pixel_ablation": "results/rgb/ablation/cartpole/nesy_fixed_seed1/pixel_ablation.json",
+        "training_curves": "results/rgb/ablation/cartpole/nesy_fixed_seed1/training_curves.json"
+      }
+    },
+    "cartpole/nesy_fixed_seed2": {
+      "metric_key": "upright_fraction_mean",
+      "results": {
+        "intact": {
+          "upright_fraction_mean": 1.0,
+          "upright_fraction_std": 0.0
+        },
+        "frozen_first": {
+          "upright_fraction_mean": 0.528
+        },
+        "random_replay": {
+          "upright_fraction_mean": 0.7183999999999999
+        },
+        "shuffle_frames": {
+          "upright_fraction_mean": 0.8320000000000001
+        },
+        "zeros": {
+          "upright_fraction_mean": 0.47519999999999996
+        },
+        "const_action": {
+          "upright_fraction_mean": 0.6928000000000001
+        }
+      },
+      "pixel_drop_median": 0.472,
+      "pixel_drop_min": 0.2816000000000001,
+      "inconclusive": false,
+      "actor_uses_pixels": true,
+      "rgb_proprio": "none",
+      "state_only": false,
+      "episodes": 5,
+      "updates": 250,
+      "num_envs": 128,
+      "seed": 2,
+      "meta": "nesy",
+      "final_train_return": 24.091028213500977,
+      "config": "configs/cartpole_balance_nesy_rgb_aux.yaml",
+      "env_id": "CartpoleBalance",
+      "curve_updates": 250,
+      "curve_num_envs": 128,
+      "pixel_sensitivity_last20": 0.19229500517249107,
+      "_pixel_sensitivity_curve_len": 250,
+      "train_return_last20": 24.09102840423584,
+      "_episode_return_curve_len": 250,
+      "_source": {
+        "pixel_ablation": "results/rgb/ablation/cartpole/nesy_fixed_seed2/pixel_ablation.json",
+        "training_curves": "results/rgb/ablation/cartpole/nesy_fixed_seed2/training_curves.json"
+      }
+    },
+    "cartpole/nesy_noaux_mdi4_seed0": {
+      "metric_key": "upright_fraction_mean",
+      "results": {
+        "intact": {
+          "upright_fraction_mean": 0.7575999999999999,
+          "upright_fraction_std": 0.09618648553721044
+        },
+        "frozen_first": {
+          "upright_fraction_mean": 0.7575999999999999
+        },
+        "random_replay": {
+          "upright_fraction_mean": 0.7575999999999999
+        },
+        "shuffle_frames": {
+          "upright_fraction_mean": 0.7575999999999999
+        },
+        "zeros": {
+          "upright_fraction_mean": 0.756
+        },
+        "const_action": {
+          "upright_fraction_mean": 0.7575999999999999
+        }
+      },
+      "pixel_drop_median": 0.0,
+      "pixel_drop_min": 0.0,
+      "inconclusive": false,
+      "actor_uses_pixels": false,
+      "rgb_proprio": "none",
+      "state_only": false,
+      "episodes": 5,
+      "updates": 250,
+      "num_envs": 128,
+      "seed": 0,
+      "meta": "nesy",
+      "final_train_return": 3.690878391265869,
+      "config": "configs/cartpole_balance_nesy_rgb_noaux.yaml",
+      "env_id": "CartpoleBalance",
+      "curve_updates": 250,
+      "curve_num_envs": 128,
+      "pixel_sensitivity_last20": 0.00015970122040016578,
+      "_pixel_sensitivity_curve_len": 250,
+      "train_return_last20": 3.6908780097961427,
+      "_episode_return_curve_len": 250,
+      "_source": {
+        "pixel_ablation": "results/rgb/ablation/cartpole/nesy_noaux_mdi4_seed0/pixel_ablation.json",
+        "training_curves": "results/rgb/ablation/cartpole/nesy_noaux_mdi4_seed0/training_curves.json"
+      }
+    },
+    "cartpole/nesy_noaux_mdi4_seed1": {
+      "metric_key": "upright_fraction_mean",
+      "results": {
+        "intact": {
+          "upright_fraction_mean": 0.692,
+          "upright_fraction_std": 0.04094874845462311
+        },
+        "frozen_first": {
+          "upright_fraction_mean": 0.692
+        },
+        "random_replay": {
+          "upright_fraction_mean": 0.68
+        },
+        "shuffle_frames": {
+          "upright_fraction_mean": 0.692
+        },
+        "zeros": {
+          "upright_fraction_mean": 0.7264
+        },
+        "const_action": {
+          "upright_fraction_mean": 0.6824
+        }
+      },
+      "pixel_drop_median": 0.0,
+      "pixel_drop_min": -0.04971098265895968,
+      "inconclusive": false,
+      "actor_uses_pixels": false,
+      "rgb_proprio": "none",
+      "state_only": false,
+      "episodes": 5,
+      "updates": 250,
+      "num_envs": 128,
+      "seed": 1,
+      "meta": "nesy",
+      "final_train_return": 5.38034725189209,
+      "config": "configs/cartpole_balance_nesy_rgb_noaux.yaml",
+      "env_id": "CartpoleBalance",
+      "curve_updates": 250,
+      "curve_num_envs": 128,
+      "pixel_sensitivity_last20": 3.219819927835488e-05,
+      "_pixel_sensitivity_curve_len": 250,
+      "train_return_last20": 5.380347192287445,
+      "_episode_return_curve_len": 250,
+      "_source": {
+        "pixel_ablation": "results/rgb/ablation/cartpole/nesy_noaux_mdi4_seed1/pixel_ablation.json",
+        "training_curves": "results/rgb/ablation/cartpole/nesy_noaux_mdi4_seed1/training_curves.json"
+      }
+    },
+    "cartpole/nesy_noaux_mdi4_seed2": {
+      "metric_key": "upright_fraction_mean",
+      "results": {
+        "intact": {
+          "upright_fraction_mean": 0.6736000000000001,
+          "upright_fraction_std": 0.028688673723265747
+        },
+        "frozen_first": {
+          "upright_fraction_mean": 0.6736000000000001
+        },
+        "random_replay": {
+          "upright_fraction_mean": 0.672
+        },
+        "shuffle_frames": {
+          "upright_fraction_mean": 0.6736000000000001
+        },
+        "zeros": {
+          "upright_fraction_mean": 0.6839999999999999
+        },
+        "const_action": {
+          "upright_fraction_mean": 0.6759999999999999
+        }
+      },
+      "pixel_drop_median": 0.0,
+      "pixel_drop_min": -0.015439429928740873,
+      "inconclusive": false,
+      "actor_uses_pixels": false,
+      "rgb_proprio": "none",
+      "state_only": false,
+      "episodes": 5,
+      "updates": 250,
+      "num_envs": 128,
+      "seed": 2,
+      "meta": "nesy",
+      "final_train_return": 2.1845223903656006,
+      "config": "configs/cartpole_balance_nesy_rgb_noaux.yaml",
+      "env_id": "CartpoleBalance",
+      "curve_updates": 250,
+      "curve_num_envs": 128,
+      "pixel_sensitivity_last20": 1.0671739960343985e-05,
+      "_pixel_sensitivity_curve_len": 250,
+      "train_return_last20": 2.184522243961692,
+      "_episode_return_curve_len": 250,
+      "_source": {
+        "pixel_ablation": "results/rgb/ablation/cartpole/nesy_noaux_mdi4_seed2/pixel_ablation.json",
+        "training_curves": "results/rgb/ablation/cartpole/nesy_noaux_mdi4_seed2/training_curves.json"
+      }
+    },
+    "cartpole/nesy_shared_seed0": {
+      "metric_key": "upright_fraction_mean",
+      "results": {
+        "intact": {
+          "upright_fraction_mean": 0.536,
+          "upright_fraction_std": 0.017343586710943014
+        },
+        "frozen_first": {
+          "upright_fraction_mean": 0.5424
+        },
+        "random_replay": {
+          "upright_fraction_mean": 0.4968
+        },
+        "shuffle_frames": {
+          "upright_fraction_mean": 0.524
+        },
+        "zeros": {
+          "upright_fraction_mean": 0.8464
+        },
+        "const_action": {
+          "upright_fraction_mean": 0.5696000000000001
+        }
+      },
+      "pixel_drop_median": -0.011940298507462614,
+      "pixel_drop_min": -0.5791044776119403,
+      "inconclusive": false,
+      "actor_uses_pixels": false,
+      "rgb_proprio": "none",
+      "state_only": false,
+      "episodes": 5,
+      "updates": 250,
+      "num_envs": 128,
+      "seed": 0,
+      "meta": "nesy",
+      "final_train_return": 7.326859951019287,
+      "config": "configs/cartpole_balance_nesy_rgb_shared_only.yaml",
+      "env_id": "CartpoleBalance",
+      "curve_updates": 250,
+      "curve_num_envs": 128,
+      "pixel_sensitivity_last20": 0.301644104719162,
+      "_pixel_sensitivity_curve_len": 250,
+      "train_return_last20": 7.326860165596008,
+      "_episode_return_curve_len": 250,
+      "_source": {
+        "pixel_ablation": "results/rgb/ablation/cartpole/nesy_shared_seed0/pixel_ablation.json",
+        "training_curves": "results/rgb/ablation/cartpole/nesy_shared_seed0/training_curves.json"
+      }
+    },
+    "cartpole/nesy_shared_noaux_mdi4_seed0": {
+      "metric_key": "upright_fraction_mean",
+      "results": {
+        "intact": {
+          "upright_fraction_mean": 0.648,
+          "upright_fraction_std": 0.08000000000000003
+        },
+        "frozen_first": {
+          "upright_fraction_mean": 0.648
+        },
+        "random_replay": {
+          "upright_fraction_mean": 0.6472
+        },
+        "shuffle_frames": {
+          "upright_fraction_mean": 0.648
+        },
+        "zeros": {
+          "upright_fraction_mean": 0.6504000000000001
+        },
+        "const_action": {
+          "upright_fraction_mean": 0.6472
+        }
+      },
+      "pixel_drop_median": 0.0,
+      "pixel_drop_min": -0.0037037037037038097,
+      "inconclusive": false,
+      "actor_uses_pixels": false,
+      "rgb_proprio": "none",
+      "state_only": false,
+      "episodes": 5,
+      "updates": 250,
+      "num_envs": 128,
+      "seed": 0,
+      "meta": "nesy",
+      "final_train_return": 5.45952844619751,
+      "config": "configs/cartpole_balance_nesy_rgb_shared_noaux.yaml",
+      "env_id": "CartpoleBalance",
+      "curve_updates": 250,
+      "curve_num_envs": 128,
+      "pixel_sensitivity_last20": 6.295815819612471e-05,
+      "_pixel_sensitivity_curve_len": 250,
+      "train_return_last20": 5.459527689218521,
+      "_episode_return_curve_len": 250,
+      "_source": {
+        "pixel_ablation": "results/rgb/ablation/cartpole/nesy_shared_noaux_mdi4_seed0/pixel_ablation.json",
+        "training_curves": "results/rgb/ablation/cartpole/nesy_shared_noaux_mdi4_seed0/training_curves.json"
+      }
+    },
+    "cartpole/nesy_shared_metaz_noaux_seed0": {
+      "metric_key": "upright_fraction_mean",
+      "results": {
+        "intact": {
+          "upright_fraction_mean": 1.0,
+          "upright_fraction_std": 0.0
+        },
+        "frozen_first": {
+          "upright_fraction_mean": 0.6464000000000001
+        },
+        "random_replay": {
+          "upright_fraction_mean": 0.6536000000000001
+        },
+        "shuffle_frames": {
+          "upright_fraction_mean": 0.9448000000000001
+        },
+        "zeros": {
+          "upright_fraction_mean": 0.5768000000000001
+        },
+        "const_action": {
+          "upright_fraction_mean": 0.6472
+        }
+      },
+      "pixel_drop_median": 0.3535999999999999,
+      "pixel_drop_min": 0.34639999999999993,
+      "inconclusive": false,
+      "actor_uses_pixels": true,
+      "rgb_proprio": "none",
+      "state_only": false,
+      "episodes": 5,
+      "updates": 250,
+      "num_envs": 128,
+      "seed": 0,
+      "meta": "nesy",
+      "final_train_return": 23.982830047607422,
+      "config": "configs/cartpole_balance_nesy_rgb_shared_metaz_noaux.yaml",
+      "env_id": "CartpoleBalance",
+      "curve_updates": 250,
+      "curve_num_envs": 128,
+      "pixel_sensitivity_last20": 0.15808457583189012,
+      "_pixel_sensitivity_curve_len": 250,
+      "train_return_last20": 23.982832622528075,
+      "_episode_return_curve_len": 250,
+      "_source": {
+        "pixel_ablation": "results/rgb/ablation/cartpole/nesy_shared_metaz_noaux_seed0/pixel_ablation.json",
+        "training_curves": "results/rgb/ablation/cartpole/nesy_shared_metaz_noaux_seed0/training_curves.json"
+      }
+    },
+    "cartpole/nesy_shared_metaz_noaux_seed1": {
+      "metric_key": "upright_fraction_mean",
+      "results": {
+        "intact": {
+          "upright_fraction_mean": 1.0,
+          "upright_fraction_std": 0.0
+        },
+        "frozen_first": {
+          "upright_fraction_mean": 0.548
+        },
+        "random_replay": {
+          "upright_fraction_mean": 0.7144
+        },
+        "shuffle_frames": {
+          "upright_fraction_mean": 0.7912000000000001
+        },
+        "zeros": {
+          "upright_fraction_mean": 0.46399999999999997
+        },
+        "const_action": {
+          "upright_fraction_mean": 0.7176
+        }
+      },
+      "pixel_drop_median": 0.45199999999999996,
+      "pixel_drop_min": 0.28559999999999997,
+      "inconclusive": false,
+      "actor_uses_pixels": true,
+      "rgb_proprio": "none",
+      "state_only": false,
+      "episodes": 5,
+      "updates": 250,
+      "num_envs": 128,
+      "seed": 1,
+      "meta": "nesy",
+      "final_train_return": 23.71371841430664,
+      "config": "configs/cartpole_balance_nesy_rgb_shared_metaz_noaux.yaml",
+      "env_id": "CartpoleBalance",
+      "curve_updates": 250,
+      "curve_num_envs": 128,
+      "pixel_sensitivity_last20": 0.17210242114961147,
+      "_pixel_sensitivity_curve_len": 250,
+      "train_return_last20": 23.713718223571778,
+      "_episode_return_curve_len": 250,
+      "_source": {
+        "pixel_ablation": "results/rgb/ablation/cartpole/nesy_shared_metaz_noaux_seed1/pixel_ablation.json",
+        "training_curves": "results/rgb/ablation/cartpole/nesy_shared_metaz_noaux_seed1/training_curves.json"
+      }
+    },
+    "cartpole/nesy_shared_metaz_noaux_seed2": {
+      "metric_key": "upright_fraction_mean",
+      "results": {
+        "intact": {
+          "upright_fraction_mean": 1.0,
+          "upright_fraction_std": 0.0
+        },
+        "frozen_first": {
+          "upright_fraction_mean": 0.6456000000000001
+        },
+        "random_replay": {
+          "upright_fraction_mean": 0.5208
+        },
+        "shuffle_frames": {
+          "upright_fraction_mean": 0.7751999999999999
+        },
+        "zeros": {
+          "upright_fraction_mean": 0.43200000000000005
+        },
+        "const_action": {
+          "upright_fraction_mean": 0.7656000000000002
+        }
+      },
+      "pixel_drop_median": 0.47919999999999996,
+      "pixel_drop_min": 0.35439999999999994,
+      "inconclusive": false,
+      "actor_uses_pixels": true,
+      "rgb_proprio": "none",
+      "state_only": false,
+      "episodes": 5,
+      "updates": 250,
+      "num_envs": 128,
+      "seed": 2,
+      "meta": "nesy",
+      "final_train_return": 23.943775177001953,
+      "config": "configs/cartpole_balance_nesy_rgb_shared_metaz_noaux.yaml",
+      "env_id": "CartpoleBalance",
+      "curve_updates": 250,
+      "curve_num_envs": 128,
+      "pixel_sensitivity_last20": 0.1788313690572977,
+      "_pixel_sensitivity_curve_len": 250,
+      "train_return_last20": 23.94377393722534,
+      "_episode_return_curve_len": 250,
+      "_source": {
+        "pixel_ablation": "results/rgb/ablation/cartpole/nesy_shared_metaz_noaux_seed2/pixel_ablation.json",
+        "training_curves": "results/rgb/ablation/cartpole/nesy_shared_metaz_noaux_seed2/training_curves.json"
+      }
+    },
+    "walker/nesy_blind": {
+      "metric_key": "reward_per_step_mean",
+      "results": {
+        "intact": {
+          "reward_per_step_mean": 0.3255303032384254,
+          "reward_per_step_std": 0.12191410102305886
+        },
+        "frozen_first": {
+          "reward_per_step_mean": 0.20083676939457656
+        },
+        "random_replay": {
+          "reward_per_step_mean": 0.11752808774784207
+        },
+        "shuffle_frames": {
+          "reward_per_step_mean": 0.2675852604274638
+        },
+        "zeros": {
+          "reward_per_step_mean": 0.08539520459175112
+        },
+        "const_action": {
+          "reward_per_step_mean": 0.12208254071241245
+        }
+      },
+      "pixel_drop_median": 0.6389642175285846,
+      "pixel_drop_min": 0.3830473925265281,
+      "inconclusive": false,
+      "actor_uses_pixels": true,
+      "rgb_proprio": "none",
+      "state_only": false,
+      "episodes": 5,
+      "updates": 250,
+      "num_envs": 128,
+      "seed": 0,
+      "meta": "nesy",
+      "final_train_return": 99.30830383300781,
+      "config": "configs/walker_walk_nesy.yaml",
+      "env_id": "WalkerWalk",
+      "curve_updates": 250,
+      "curve_num_envs": 128,
+      "pixel_sensitivity_last20": 0.0752070877701044,
+      "_pixel_sensitivity_curve_len": 250,
+      "train_return_last20": 99.30830764770508,
+      "_episode_return_curve_len": 250,
+      "_source": {
+        "pixel_ablation": "results/rgb/ablation/walker/nesy_blind/pixel_ablation.json",
+        "training_curves": "results/rgb/ablation/walker/nesy_blind/training_curves.json"
+      }
+    },
+    "walker/nesy_fixed_seed0": {
+      "metric_key": "reward_per_step_mean",
+      "results": {
+        "intact": {
+          "reward_per_step_mean": 0.7303330976867116,
+          "reward_per_step_std": 0.057241677524540076
+        },
+        "frozen_first": {
+          "reward_per_step_mean": 0.04725588960992173
+        },
+        "random_replay": {
+          "reward_per_step_mean": 0.041899020157754416
+        },
+        "shuffle_frames": {
+          "reward_per_step_mean": 0.3826990441945382
+        },
+        "zeros": {
+          "reward_per_step_mean": 0.03893918550861999
+        },
+        "const_action": {
+          "reward_per_step_mean": 0.027382773634977643
+        }
+      },
+      "pixel_drop_median": 0.942630259684975,
+      "pixel_drop_min": 0.9352954292231831,
+      "inconclusive": false,
+      "actor_uses_pixels": true,
+      "rgb_proprio": "none",
+      "state_only": false,
+      "episodes": 5,
+      "updates": 250,
+      "num_envs": 128,
+      "seed": 0,
+      "meta": "nesy",
+      "final_train_return": 192.17445373535156,
+      "config": "configs/walker_walk_nesy_rgb_aux.yaml",
+      "env_id": "WalkerWalk",
+      "curve_updates": 250,
+      "curve_num_envs": 128,
+      "pixel_sensitivity_last20": 0.3983591333031654,
+      "_pixel_sensitivity_curve_len": 250,
+      "train_return_last20": 192.17446517944336,
+      "_episode_return_curve_len": 250,
+      "_source": {
+        "pixel_ablation": "results/rgb/ablation/walker/nesy_fixed_seed0/pixel_ablation.json",
+        "training_curves": "results/rgb/ablation/walker/nesy_fixed_seed0/training_curves.json"
+      }
+    },
+    "walker/nesy_fixed_seed1": {
+      "metric_key": "reward_per_step_mean",
+      "results": {
+        "intact": {
+          "reward_per_step_mean": 0.4713107585728169,
+          "reward_per_step_std": 0.21955954784322834
+        },
+        "frozen_first": {
+          "reward_per_step_mean": 0.03655164417102933
+        },
+        "random_replay": {
+          "reward_per_step_mean": 0.044431588626094164
+        },
+        "shuffle_frames": {
+          "reward_per_step_mean": 0.28216883196327835
+        },
+        "zeros": {
+          "reward_per_step_mean": 0.028015870676096528
+        },
+        "const_action": {
+          "reward_per_step_mean": 0.0332045239704661
+        }
+      },
+      "pixel_drop_median": 0.9224468283267881,
+      "pixel_drop_min": 0.9057276164018871,
+      "inconclusive": false,
+      "actor_uses_pixels": true,
+      "rgb_proprio": "none",
+      "state_only": false,
+      "episodes": 5,
+      "updates": 250,
+      "num_envs": 128,
+      "seed": 1,
+      "meta": "nesy",
+      "final_train_return": 159.41683959960938,
+      "config": "configs/walker_walk_nesy_rgb_aux.yaml",
+      "env_id": "WalkerWalk",
+      "curve_updates": 250,
+      "curve_num_envs": 128,
+      "pixel_sensitivity_last20": 0.35763252079486846,
+      "_pixel_sensitivity_curve_len": 250,
+      "train_return_last20": 159.41684646606444,
+      "_episode_return_curve_len": 250,
+      "_source": {
+        "pixel_ablation": "results/rgb/ablation/walker/nesy_fixed_seed1/pixel_ablation.json",
+        "training_curves": "results/rgb/ablation/walker/nesy_fixed_seed1/training_curves.json"
+      }
+    },
+    "walker/nesy_fixed_seed2": {
+      "metric_key": "reward_per_step_mean",
+      "results": {
+        "intact": {
+          "reward_per_step_mean": 0.7424491695220583,
+          "reward_per_step_std": 0.08698438449356476
+        },
+        "frozen_first": {
+          "reward_per_step_mean": 0.03558494404554367
+        },
+        "random_replay": {
+          "reward_per_step_mean": 0.038183451546356086
+        },
+        "shuffle_frames": {
+          "reward_per_step_mean": 0.36219386093821376
+        },
+        "zeros": {
+          "reward_per_step_mean": 0.03117930826675147
+        },
+        "const_action": {
+          "reward_per_step_mean": 0.030442245152965185
+        }
+      },
+      "pixel_drop_median": 0.9520708682744558,
+      "pixel_drop_min": 0.9485709552736975,
+      "inconclusive": false,
+      "actor_uses_pixels": true,
+      "rgb_proprio": "none",
+      "state_only": false,
+      "episodes": 5,
+      "updates": 250,
+      "num_envs": 128,
+      "seed": 2,
+      "meta": "nesy",
+      "final_train_return": 189.63954162597656,
+      "config": "configs/walker_walk_nesy_rgb_aux.yaml",
+      "env_id": "WalkerWalk",
+      "curve_updates": 250,
+      "curve_num_envs": 128,
+      "pixel_sensitivity_last20": 0.4113157257437706,
+      "_pixel_sensitivity_curve_len": 250,
+      "train_return_last20": 189.6395462036133,
+      "_episode_return_curve_len": 250,
+      "_source": {
+        "pixel_ablation": "results/rgb/ablation/walker/nesy_fixed_seed2/pixel_ablation.json",
+        "training_curves": "results/rgb/ablation/walker/nesy_fixed_seed2/training_curves.json"
+      }
+    },
+    "walker/nesy_noaux_mdi4_seed0": {
+      "metric_key": "reward_per_step_mean",
+      "results": {
+        "intact": {
+          "reward_per_step_mean": 0.43311847539208836,
+          "reward_per_step_std": 0.2631096155632894
+        },
+        "frozen_first": {
+          "reward_per_step_mean": 0.049123124846071
+        },
+        "random_replay": {
+          "reward_per_step_mean": 0.03604722021538764
+        },
+        "shuffle_frames": {
+          "reward_per_step_mean": 0.1771471762003377
+        },
+        "zeros": {
+          "reward_per_step_mean": 0.03080880413968116
+        },
+        "const_action": {
+          "reward_per_step_mean": 0.029496644730865957
+        }
+      },
+      "pixel_drop_median": 0.9167728410044036,
+      "pixel_drop_min": 0.8865827074183307,
+      "inconclusive": true,
+      "actor_uses_pixels": null,
+      "rgb_proprio": "none",
+      "state_only": false,
+      "episodes": 5,
+      "updates": 250,
+      "num_envs": 128,
+      "seed": 0,
+      "meta": "nesy",
+      "final_train_return": 169.0689697265625,
+      "config": "configs/walker_walk_nesy_rgb_noaux.yaml",
+      "env_id": "WalkerWalk",
+      "curve_updates": 250,
+      "curve_num_envs": 128,
+      "pixel_sensitivity_last20": 0.34651591777801516,
+      "_pixel_sensitivity_curve_len": 250,
+      "train_return_last20": 169.0689826965332,
+      "_episode_return_curve_len": 250,
+      "_source": {
+        "pixel_ablation": "results/rgb/ablation/walker/nesy_noaux_mdi4_seed0/pixel_ablation.json",
+        "training_curves": "results/rgb/ablation/walker/nesy_noaux_mdi4_seed0/training_curves.json"
+      }
+    },
+    "walker/nesy_shared_seed0": {
+      "metric_key": "reward_per_step_mean",
+      "results": {
+        "intact": {
+          "reward_per_step_mean": 0.6158195652427152,
+          "reward_per_step_std": 0.13279506146237174
+        },
+        "frozen_first": {
+          "reward_per_step_mean": 0.03022515678750351
+        },
+        "random_replay": {
+          "reward_per_step_mean": 0.03445201952643693
+        },
+        "shuffle_frames": {
+          "reward_per_step_mean": 0.3573149479480461
+        },
+        "zeros": {
+          "reward_per_step_mean": 0.037625729435775426
+        },
+        "const_action": {
+          "reward_per_step_mean": 0.02738771235253662
+        }
+      },
+      "pixel_drop_median": 0.9440550098260385,
+      "pixel_drop_min": 0.9389013737799222,
+      "inconclusive": false,
+      "actor_uses_pixels": true,
+      "rgb_proprio": "none",
+      "state_only": false,
+      "episodes": 5,
+      "updates": 250,
+      "num_envs": 128,
+      "seed": 0,
+      "meta": "nesy",
+      "final_train_return": 184.61141967773438,
+      "config": "configs/walker_walk_nesy_shared_only.yaml",
+      "env_id": "WalkerWalk",
+      "curve_updates": 250,
+      "curve_num_envs": 128,
+      "pixel_sensitivity_last20": 0.3342811018228531,
+      "_pixel_sensitivity_curve_len": 250,
+      "train_return_last20": 184.6114189147949,
+      "_episode_return_curve_len": 250,
+      "_source": {
+        "pixel_ablation": "results/rgb/ablation/walker/nesy_shared_seed0/pixel_ablation.json",
+        "training_curves": "results/rgb/ablation/walker/nesy_shared_seed0/training_curves.json"
+      }
+    },
+    "walker/nesy_shared_noaux_mdi4_seed0": {
+      "metric_key": "reward_per_step_mean",
+      "results": {
+        "intact": {
+          "reward_per_step_mean": 0.5460371771380306,
+          "reward_per_step_std": 0.1317442529397659
+        },
+        "frozen_first": {
+          "reward_per_step_mean": 0.049969998929463334
+        },
+        "random_replay": {
+          "reward_per_step_mean": 0.05831556691201404
+        },
+        "shuffle_frames": {
+          "reward_per_step_mean": 0.19645236388593912
+        },
+        "zeros": {
+          "reward_per_step_mean": 0.04541939175976441
+        },
+        "const_action": {
+          "reward_per_step_mean": 0.02657869743388146
+        }
+      },
+      "pixel_drop_median": 0.9084860866225751,
+      "pixel_drop_min": 0.8932022042571055,
+      "inconclusive": false,
+      "actor_uses_pixels": true,
+      "rgb_proprio": "none",
+      "state_only": false,
+      "episodes": 5,
+      "updates": 250,
+      "num_envs": 128,
+      "seed": 0,
+      "meta": "nesy",
+      "final_train_return": 168.13491821289062,
+      "config": "configs/walker_walk_nesy_rgb_shared_noaux.yaml",
+      "env_id": "WalkerWalk",
+      "curve_updates": 250,
+      "curve_num_envs": 128,
+      "pixel_sensitivity_last20": 0.38513862043619157,
+      "_pixel_sensitivity_curve_len": 250,
+      "train_return_last20": 168.13491744995116,
+      "_episode_return_curve_len": 250,
+      "_source": {
+        "pixel_ablation": "results/rgb/ablation/walker/nesy_shared_noaux_mdi4_seed0/pixel_ablation.json",
+        "training_curves": "results/rgb/ablation/walker/nesy_shared_noaux_mdi4_seed0/training_curves.json"
+      }
+    },
+    "walker/nesy_shared_metaz_noaux_seed0": {
+      "metric_key": "reward_per_step_mean",
+      "results": {
+        "intact": {
+          "reward_per_step_mean": 0.6412054824514314,
+          "reward_per_step_std": 0.08927420746098416
+        },
+        "frozen_first": {
+          "reward_per_step_mean": 0.05838299743160606
+        },
+        "random_replay": {
+          "reward_per_step_mean": 0.03598910024063662
+        },
+        "shuffle_frames": {
+          "reward_per_step_mean": 0.16490875671878458
+        },
+        "zeros": {
+          "reward_per_step_mean": 0.05988945770263672
+        },
+        "const_action": {
+          "reward_per_step_mean": 0.026077941903471947
+        }
+      },
+      "pixel_drop_median": 0.9089480688649161,
+      "pixel_drop_min": 0.9065986499777423,
+      "inconclusive": false,
+      "actor_uses_pixels": true,
+      "rgb_proprio": "none",
+      "state_only": false,
+      "episodes": 5,
+      "updates": 250,
+      "num_envs": 128,
+      "seed": 0,
+      "meta": "nesy",
+      "final_train_return": 185.89080810546875,
+      "config": "configs/walker_walk_nesy_rgb_shared_metaz_noaux.yaml",
+      "env_id": "WalkerWalk",
+      "curve_updates": 250,
+      "curve_num_envs": 128,
+      "pixel_sensitivity_last20": 0.401369521021843,
+      "_pixel_sensitivity_curve_len": 250,
+      "train_return_last20": 185.89082107543945,
+      "_episode_return_curve_len": 250,
+      "_source": {
+        "pixel_ablation": "results/rgb/ablation/walker/nesy_shared_metaz_noaux_seed0/pixel_ablation.json",
+        "training_curves": "results/rgb/ablation/walker/nesy_shared_metaz_noaux_seed0/training_curves.json"
+      }
+    },
+    "cheetah/nesy_seed0": {
+      "metric_key": "reward_per_step_mean",
+      "results": {
+        "intact": {
+          "reward_per_step_mean": 0.30693155908584596,
+          "reward_per_step_std": 0.0933665380735075
+        },
+        "frozen_first": {
+          "reward_per_step_mean": 0.00834874291419983
+        },
+        "random_replay": {
+          "reward_per_step_mean": 0.010253824186325073
+        },
+        "shuffle_frames": {
+          "reward_per_step_mean": 0.2837543074607849
+        },
+        "zeros": {
+          "reward_per_step_mean": 0.0037197362899780277
+        },
+        "const_action": {
+          "reward_per_step_mean": 0.0005431063652038574
+        }
+      },
+      "pixel_drop_median": 0.9727993337046688,
+      "pixel_drop_min": 0.9665924735245058,
+      "inconclusive": false,
+      "actor_uses_pixels": true,
+      "rgb_proprio": "none",
+      "state_only": false,
+      "episodes": 5,
+      "updates": 250,
+      "num_envs": 128,
+      "seed": 0,
+      "meta": "nesy",
+      "final_train_return": 110.4718246459961,
+      "config": "configs/cheetah_run_nesy.yaml",
+      "env_id": "CheetahRun",
+      "curve_updates": 250,
+      "curve_num_envs": 128,
+      "pixel_sensitivity_last20": 0.4118895962834358,
+      "_pixel_sensitivity_curve_len": 250,
+      "train_return_last20": 110.47183036804199,
+      "_episode_return_curve_len": 250,
+      "_source": {
+        "pixel_ablation": "results/rgb/ablation/cheetah/nesy_seed0/pixel_ablation.json",
+        "training_curves": "results/rgb/ablation/cheetah/nesy_seed0/training_curves.json"
+      }
+    },
+    "cheetah/nesy_seed1": {
+      "metric_key": "reward_per_step_mean",
+      "results": {
+        "intact": {
+          "reward_per_step_mean": 0.4082088881969452,
+          "reward_per_step_std": 0.10474976002056466
+        },
+        "frozen_first": {
+          "reward_per_step_mean": 0.0030170709133148193
+        },
+        "random_replay": {
+          "reward_per_step_mean": 0.010021675252914428
+        },
+        "shuffle_frames": {
+          "reward_per_step_mean": 0.1580670751094818
+        },
+        "zeros": {
+          "reward_per_step_mean": 0.0010435665130615235
+        },
+        "const_action": {
+          "reward_per_step_mean": 0.0015669210433959962
+        }
+      },
+      "pixel_drop_median": 0.9926090023991364,
+      "pixel_drop_min": 0.9754496397734501,
+      "inconclusive": false,
+      "actor_uses_pixels": true,
+      "rgb_proprio": "none",
+      "state_only": false,
+      "episodes": 5,
+      "updates": 250,
+      "num_envs": 128,
+      "seed": 1,
+      "meta": "nesy",
+      "final_train_return": 98.45854187011719,
+      "config": "configs/cheetah_run_nesy.yaml",
+      "env_id": "CheetahRun",
+      "curve_updates": 250,
+      "curve_num_envs": 128,
+      "pixel_sensitivity_last20": 0.41862939596176146,
+      "_pixel_sensitivity_curve_len": 250,
+      "train_return_last20": 98.45854377746582,
+      "_episode_return_curve_len": 250,
+      "_source": {
+        "pixel_ablation": "results/rgb/ablation/cheetah/nesy_seed1/pixel_ablation.json",
+        "training_curves": "results/rgb/ablation/cheetah/nesy_seed1/training_curves.json"
+      }
+    },
+    "cheetah/nesy_seed2": {
+      "metric_key": "reward_per_step_mean",
+      "results": {
+        "intact": {
+          "reward_per_step_mean": 0.4851510221004486,
+          "reward_per_step_std": 0.030035722015284035
+        },
+        "frozen_first": {
+          "reward_per_step_mean": 0.002540508270263672
+        },
+        "random_replay": {
+          "reward_per_step_mean": 0.019268224573135376
+        },
+        "shuffle_frames": {
+          "reward_per_step_mean": 0.2491725321769714
+        },
+        "zeros": {
+          "reward_per_step_mean": 0.009192124700546265
+        },
+        "const_action": {
+          "reward_per_step_mean": 0.0022661670207977298
+        }
+      },
+      "pixel_drop_median": 0.9810530653717904,
+      "pixel_drop_min": 0.9602840688870157,
+      "inconclusive": false,
+      "actor_uses_pixels": true,
+      "rgb_proprio": "none",
+      "state_only": false,
+      "episodes": 5,
+      "updates": 250,
+      "num_envs": 128,
+      "seed": 2,
+      "meta": "nesy",
+      "final_train_return": 112.7697525024414,
+      "config": "configs/cheetah_run_nesy.yaml",
+      "env_id": "CheetahRun",
+      "curve_updates": 250,
+      "curve_num_envs": 128,
+      "pixel_sensitivity_last20": 0.4104085057973862,
+      "_pixel_sensitivity_curve_len": 250,
+      "train_return_last20": 112.76974411010742,
+      "_episode_return_curve_len": 250,
+      "_source": {
+        "pixel_ablation": "results/rgb/ablation/cheetah/nesy_seed2/pixel_ablation.json",
+        "training_curves": "results/rgb/ablation/cheetah/nesy_seed2/training_curves.json"
+      }
+    }
+  }
+}
