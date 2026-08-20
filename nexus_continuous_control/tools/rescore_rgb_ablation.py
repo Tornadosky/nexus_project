@@ -49,6 +49,18 @@ def main(argv: list[str] | None = None) -> None:
             print(f"[skip] {path} missing")
             continue
         d = json.loads(path.read_text())
+        # State-only arms (rgb_pixel_ablation --no-rgb) have no pixel pathway,
+        # hence no corruption conditions and nothing to re-score. Skipping is
+        # the honest outcome: fabricating a verdict from the single `intact`
+        # condition, or crashing, would both be worse.
+        if d.get("state_only"):
+            key = d.get("metric_key") or (
+                "upright_fraction_mean"
+                if "upright_fraction_mean" in d["results"]["intact"]
+                else "reward_per_step_mean")
+            print(f"{tag:34} STATE-ONLY (no pixel verdict)  "
+                  f"intact {d['results']['intact'][key]:.4f} [{key}]")
+            continue
         drops = d["performance_drop_fraction"]
         px = [drops[c] for c in PIXEL_CONDS]
         median_drop = float(sorted(px)[len(px) // 2])
@@ -96,7 +108,8 @@ def main(argv: list[str] | None = None) -> None:
                     bbox_inches="tight")
         plt.close(fig)
         label = "INCONCLUSIVE" if inconclusive else f"uses_pixels={uses}"
-        print(f"{tag:16} median {100 * median_drop:6.1f}%  min {100 * min(px):6.1f}%  -> {label}")
+        print(f"{tag:34} median {100 * median_drop:6.1f}%  "
+              f"min {100 * min(px):6.1f}%  -> {label}")
 
 
 if __name__ == "__main__":

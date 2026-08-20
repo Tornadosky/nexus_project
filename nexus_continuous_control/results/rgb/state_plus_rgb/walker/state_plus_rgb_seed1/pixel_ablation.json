@@ -1,0 +1,111 @@
+{
+  "env": "WalkerWalk",
+  "meta": "nesy",
+  "seed": 1,
+  "updates": 250,
+  "num_envs": 128,
+  "episodes": 5,
+  "eval_steps": 250,
+  "state_only": false,
+  "actor_input": "pixels+proprio:full",
+  "rgb_proprio": "full",
+  "metric_key": "reward_per_step_mean",
+  "conditions_run": [
+    "intact",
+    "frozen_first",
+    "random_replay",
+    "shuffle_frames",
+    "zeros",
+    "const_action"
+  ],
+  "skipped_conditions": [],
+  "skipped_conditions_reason": null,
+  "rgb_shared_encoder": false,
+  "rgb_meta_sees_pixels": false,
+  "meta_pixels_held_intact": false,
+  "attribution_note": "meta-Q is state-only (classic setup); no pixel path above the actor",
+  "final_train_return": 208.82907104492188,
+  "performance_drop_fraction": {
+    "frozen_first": 0.7424269786626192,
+    "random_replay": 0.637762437390753,
+    "shuffle_frames": -0.015805044981456698,
+    "zeros": 0.655986731055563,
+    "const_action": 0.9373022756394712
+  },
+  "actor_uses_pixels": true,
+  "actor_uses_pixels_strict": true,
+  "pixel_drop_median": 0.655986731055563,
+  "pixel_drop_min": 0.637762437390753,
+  "actor_variation_needed": true,
+  "motion_sensitive": false,
+  "results": {
+    "intact": {
+      "reward_per_step_mean": 0.7995040448382496,
+      "reward_per_step_std": 0.08023211813796025,
+      "per_episode": [
+        0.6931062415540218,
+        0.7384336522296071,
+        0.8159403678029775,
+        0.9272713567614556,
+        0.8227686058431863
+      ]
+    },
+    "frozen_first": {
+      "reward_per_step_mean": 0.20593067240044474,
+      "reward_per_step_std": 0.3490527958725061,
+      "per_episode": [
+        0.028121865872293712,
+        0.0458959383405745,
+        0.02436521439999342,
+        0.9038721591234207,
+        0.027398184265941383
+      ]
+    },
+    "random_replay": {
+      "reward_per_step_mean": 0.28961039649844167,
+      "reward_per_step_std": 0.3247438045024804,
+      "per_episode": [
+        0.03203136659413576,
+        0.5944404540434479,
+        0.026457835406064986,
+        0.768686725333333,
+        0.026435601115226744
+      ]
+    },
+    "shuffle_frames": {
+      "reward_per_step_mean": 0.8121402422297747,
+      "reward_per_step_std": 0.054254349337699966,
+      "per_episode": [
+        0.7743602519482374,
+        0.7771695662979037,
+        0.7655417118370533,
+        0.9090563353300095,
+        0.8345733457356691
+      ]
+    },
+    "zeros": {
+      "reward_per_step_mean": 0.2750399999991059,
+      "reward_per_step_std": 0.31310513280073254,
+      "per_episode": [
+        0.02794832408055663,
+        0.5297648593857884,
+        0.027953368950635195,
+        0.7652490382194519,
+        0.02428440935909748
+      ]
+    },
+    "const_action": {
+      "reward_per_step_mean": 0.050127084228396415,
+      "reward_per_step_std": 0.04117788113634817,
+      "per_episode": [
+        0.028083512894809246,
+        0.03536282324045897,
+        0.02812590188533068,
+        0.1322614925056696,
+        0.026801690615713598
+      ]
+    }
+  },
+  "inconclusive": false,
+  "verdict_rule": "median of {frozen_first, random_replay, zeros} performance drop > 30%; INCONCLUSIVE if the intact score is not distinguishable from zero (|mean| < 2*std)"
+}

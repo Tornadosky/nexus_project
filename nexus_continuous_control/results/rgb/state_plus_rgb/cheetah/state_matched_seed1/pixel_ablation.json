@@ -1,0 +1,49 @@
+{
+  "env": "CheetahRun",
+  "meta": "nesy",
+  "seed": 1,
+  "updates": 250,
+  "num_envs": 128,
+  "episodes": 5,
+  "eval_steps": 250,
+  "state_only": true,
+  "actor_input": "state",
+  "rgb_proprio": null,
+  "metric_key": "reward_per_step_mean",
+  "conditions_run": [
+    "intact"
+  ],
+  "skipped_conditions": [
+    "frozen_first",
+    "random_replay",
+    "shuffle_frames",
+    "zeros",
+    "const_action"
+  ],
+  "skipped_conditions_reason": "state-only arm: the actor has no pixel input, so the five pixel conditions are undefined. The ENVIRONMENT still renders and is identical to the state+RGB arm (same reward, ctrl_dt, horizon, termination rule, physics backend and privileged state vector); only the actor's camera pathway is removed. `intact` is therefore produced by the same rollout() and the same metric keys as every RGB arm and is directly comparable to them.",
+  "rgb_shared_encoder": false,
+  "rgb_meta_sees_pixels": false,
+  "meta_pixels_held_intact": false,
+  "attribution_note": "meta-Q is state-only (classic setup); no pixel path above the actor",
+  "final_train_return": 122.23863220214844,
+  "performance_drop_fraction": {},
+  "actor_uses_pixels": null,
+  "actor_uses_pixels_strict": null,
+  "pixel_drop_median": null,
+  "pixel_drop_min": null,
+  "actor_variation_needed": null,
+  "motion_sensitive": null,
+  "results": {
+    "intact": {
+      "reward_per_step_mean": 0.5037827568531036,
+      "reward_per_step_std": 0.004893051888417086,
+      "per_episode": [
+        0.5047232584953308,
+        0.51220365858078,
+        0.5020969753265381,
+        0.5027390656471252,
+        0.497150826215744
+      ]
+    }
+  }
+}

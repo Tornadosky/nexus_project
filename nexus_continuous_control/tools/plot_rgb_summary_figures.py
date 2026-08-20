@@ -1,4 +1,24 @@
-"""Headline RGB figures: how well does each method control from pixels?
+"""DEPRECATED -- superseded by tools/plot_state_plus_rgb_figures.py.
+
+Do not present the figures this script produces. Its "privileged state
+(cheats)" bar and dashed "privileged upper bound" are read from the
+DISTILLATION results (results/rgb/distill/combined.json) and then drawn
+beside in-loop pixel bars as though the two were comparable. They are not:
+the distillation teacher trains on configs/cartpole_balance_nesy.yaml with
+vision=False, so it has a different reward function (_dense_reward vs
+_dense_vision_reward), a different ctrl_dt and episode_length, a different
+observation vector, and roughly 5x the environment-step budget.
+
+It is not even an upper bound: the matched-budget state control measured in
+the state-vs-state+RGB campaign reaches upright 1.000 where this figure
+draws the ceiling at 0.743.
+
+Use results/rgb/state_plus_rgb/figures/ instead, and see
+results/rgb/ablation/summary/README.md.
+
+Original description follows.
+
+Headline RGB figures: how well does each method control from pixels?
 
 Complements the ablation charts (which answer "does the actor USE its camera")
 with the question a reader asks first: "how well does it actually perform?"
@@ -37,6 +57,15 @@ def main(argv: list[str] | None = None) -> None:
     ap.add_argument("--meta", default="nesy", choices=["neural", "nesy"])
     ap.add_argument("--out", default=None)
     args = ap.parse_args(argv)
+
+    print("=" * 78)
+    print("DEPRECATED: this figure draws a 'privileged upper bound' taken from "
+          "the distillation\nrun, which uses a different environment, reward, "
+          "observation and budget than the\nin-loop bars beside it -- and the "
+          "matched-budget state control beats it.\nUse "
+          "tools/plot_state_plus_rgb_figures.py; see "
+          "results/rgb/ablation/summary/README.md.")
+    print("=" * 78)
     out_default = ("results/rgb/ablation/summary/method_comparison_neural.png" if args.meta == "neural"
                    else "results/rgb/ablation/summary/method_comparison_nesy.png")
     out = Path(args.out or out_default)
