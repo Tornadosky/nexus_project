@@ -1,0 +1,107 @@
+# CartpoleBalance RGB: the BLIND ANCHOR config plus RGB_SHARED_ENCODER, nothing else.
+#
+# cartpole_balance_nesy_rgb.yaml + RGB_SHARED_ENCODER: true. A strict ONE-FLAG test against the
+# committed blind anchor (results/rgb/ablation/cartpole/nesy_blind), which is the same
+# config run through the same ablation harness.
+#
+# READ THIS ARM CAREFULLY -- "SHARING ALONE, SHORTCUT INTACT".
+# META_DECISION_INTERVAL stays at its default of 1 here, so the meta-Q still
+# re-picks a skill EVERY step and can compensate for a blind actor by itself.
+# That shortcut is exactly what META_DECISION_INTERVAL: 4 removes in the Tier-0
+# and Tier-1a arms. Therefore:
+#   SEES  -> sharing cures blindness even with the meta shortcut available:
+#            a strong result.
+#   BLIND -> this is NOT evidence against sharing. It means removing the meta
+#            shortcut is NECESSARY for sharing to bite, and the Tier-1a arm
+#            (MDI=4) is the one that answers the hypothesis.
+#
+# INTEGRITY: no aux loss is configured here, so train/rgb/aux_state_loss must be
+# EXACTLY 0 for the whole run.
+ALG_NAME: nexus_ac_pqn
+ENV_NAME: CartpoleBalance
+# Vision rendering uses the MJWarp batch renderer, which needs the 'warp' backend
+# (the 'jax' backend has no in-loop renderer). Requires warp-lang==1.10.0.dev20251006.
+PLAYGROUND_IMPL: warp
+POLICY: cartpole_balance
+META_POLICY_TYPE: nesy
+
+# RGB extension
+USE_RGB: true
+RGB_EMBED_DIM: 128
+RGB_EPISODE_LENGTH: 250
+# Actor input besides pixels (asymmetric-AC convention): "none" = pixels-only,
+# the honest "skills from pixels" setup (frame stack supplies velocity). The
+# critic/meta still get full privileged state. Use "indices" + RGB_PROPRIO_INDICES
+# for robot-only self-sensing; avoid "full" (leaks the answer, pixels redundant).
+RGB_PROPRIO: none
+# DrQ random-shift image augmentation during the actor update (regularizer).
+RGB_AUGMENT: true
+RGB_AUG_PAD: 4
+
+# --- lever A alone, on the blind anchor ---
+RGB_SHARED_ENCODER: true       # one CNN trunk, N small action heads
+RGB_MONITOR_SENSITIVITY: true  # log train/rgb/pixel_sensitivity every update
+
+# TIMESTEP BUDGET — DIAGNOSTIC / FEASIBILITY ONLY (200 updates at 256 envs x 64
+# steps = 3,276,800 steps). A from-scratch CNN trained only by the policy
+# gradient is far less sample-efficient than the state task; 200 updates is
+# expected to be UNDERTRAINED and a flat curve here is NOT proof of a bug. Use
+# this budget to confirm the pipeline runs and the return leaves the floor; scale
+# up (and compare RGB-vs-state at matched updates) before any learning claim.
+# FIRST GPU RUN: if the in-loop renderer OOMs, drop NUM_ENVS to 64-128 (nworld
+# scales with it) and/or pin a smaller vision_config render resolution.
+TOTAL_TIMESTEPS: 3276800
+NUM_ENVS: 256
+NUM_STEPS: 64
+NUM_EPOCHS: 4
+NUM_MINIBATCHES: 8
+NUM_SEEDS: 1
+SEED: 0
+
+# DISCOUNT & RETURNS
+GAMMA: 0.99
+LAMBDA: 0.65
+SKILL_LAMBDA: 0.65
+META_LAMBDA: 0.80
+
+# LEARNING RATE & SCHEDULES
+# 1e-4 scale follows DrQ-v2 (arXiv:2107.09645): a deterministic-policy-gradient
+# actor whose gradient also trains the CNN encoder is more stable at 1e-4 than at
+# the 3e-4 used by the state task.
+LR: 0.0001
+LR_START: 0.0001
+LR_END: 0.00002
+LR_DECAY: 1.0
+ANNEAL_LR: true
+MAX_GRAD_NORM: 1.0
+
+# NETWORK ARCHITECTURES (actor MLP runs after the CNN encoder)
+ACTOR_HIDDEN_SIZES: [256, 256]
+CRITIC_HIDDEN_SIZES: [256, 256]
+META_HIDDEN_SIZES: [128, 128]
+NUM_CRITICS: 2
+NORM_TYPE: layer_norm
+ACTIVATION: relu
+
+# EXPLORATION & EPSILON SCHEDULES
+NOISE_START: 0.30
+NOISE_FINISH: 0.02
+NOISE_DECAY: 0.80
+META_EPS_START: 1.0
+META_EPS_FINISH: 0.02
+META_EPS_DECAY: 0.60
+
+# NORMALIZATION & PENALTIES
+NORMALIZE_OBS: true        # normalizes the proprio vector; pixels pass through untouched
+NORMALIZE_REWARD: false
+BEHAVIOR_PENALTY_COEFF: 0.001
+ACTOR_UPDATE_MODE: all_states
+
+# EVALUATION
+EVAL_AFTER_TRAIN: true
+EVAL_NUM_ENVS: 64
+EVAL_NUM_EPISODES: 128
+
+# OUTPUT
+PRINT_EVERY: 0
+SAVE_PATH: null

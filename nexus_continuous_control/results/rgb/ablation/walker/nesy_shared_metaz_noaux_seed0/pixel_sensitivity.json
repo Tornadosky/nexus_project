@@ -1,0 +1,46 @@
+{
+  "env": "WalkerWalk",
+  "meta": "nesy",
+  "policy": "runs/abl_walker_shared_metaz_noaux_s0.pkl",
+  "train_return": 185.89080810546875,
+  "render": {
+    "temporal_std": 0.09040320664644241,
+    "frame_diff": 0.01923983544111252,
+    "alive": true
+  },
+  "actor_sensitivity": {
+    "stand_recover": {
+      "action_std_over_frames": 0.760321319103241,
+      "relative_to_action_range": 0.3801606595516205,
+      "shift_vs_blank_image": 1.016250729560852
+    },
+    "walk_forward": {
+      "action_std_over_frames": 0.7994738221168518,
+      "relative_to_action_range": 0.3997369110584259,
+      "shift_vs_blank_image": 1.0430899858474731
+    },
+    "stabilize_gait": {
+      "action_std_over_frames": 0.6208592653274536,
+      "relative_to_action_range": 0.3104296326637268,
+      "shift_vs_blank_image": 1.1975712776184082
+    },
+    "energy_efficient": {
+      "action_std_over_frames": 0.7870781421661377,
+      "relative_to_action_range": 0.39353907108306885,
+      "shift_vs_blank_image": 0.9177532196044922
+    }
+  },
+  "actor_responsive": true,
+  "action_state_correlation": {
+    "stand_recover": 0.03218066926388813,
+    "walk_forward": -0.11153923740908965,
+    "stabilize_gait": 0.1424812649131791,
+    "energy_efficient": -0.14753868552373964
+  },
+  "skill_histogram": [
+    75,
+    28,
+    40,
+    107
+  ]
+}

@@ -1,0 +1,98 @@
+# CartpoleBalance RGB: LEVER A + LEVER B, and NO auxiliary crutch.
+#
+# The cartpole mirror of walker_walk_nesy_rgb_shared_metaz_noaux.yaml. It is
+# cartpole_balance_nesy_rgb_shared_noaux.yaml plus RGB_META_SEES_PIXELS: true,
+# and nothing else, so the one-flag comparison against that file isolates lever B.
+#
+#   lever A  RGB_SHARED_ENCODER    one CNN trunk shared by all skill actors
+#   lever B  RGB_META_SEES_PIXELS  meta-Q input = concatenate([state, latent])
+#
+# Lever B switches on two effects at once, and only one is new:
+#   * the meta DECISION improves, because [state, latent] is strictly more
+#     information than [state] alone;
+#   * the meta TD error becomes a SECOND training signal on the shared encoder,
+#     driven by the ENVIRONMENT reward rather than the hand-written skill rewards.
+# To separate them, re-run this file with RGB_META_LATENT_STOP_GRAD: true, which
+# keeps the improved decision and removes the gradient.
+#
+# THE STATE IS KEPT, NOT REPLACED: the hand-written symbolic precondition mask
+# still reads the same privileged state, so the NeSy interpretability story is
+# untouched -- this ADDS to the input of the boss rather than replacing it.
+#
+# WHAT TO WATCH
+#   train/rgb/pixel_sensitivity    ~0 = still blind; must climb well above 0.01.
+#   train/meta_encoder_grad_norm   a FLAT ZERO means the second signal is not
+#                                  arriving and this arm answers a different
+#                                  question than intended.
+#
+# NOTE FOR THE ABLATION: rgb_pixel_ablation.py feeds the meta the INTACT frames
+# while corrupting only the actor stack, so its six conditions keep measuring
+# ACTOR blindness and stay comparable with the pre-lever-B runs.
+#
+# INTEGRITY: train/rgb/aux_state_loss must be EXACTLY 0 for the whole run.
+ALG_NAME: nexus_ac_pqn
+ENV_NAME: CartpoleBalance
+PLAYGROUND_IMPL: warp
+POLICY: cartpole_balance
+META_POLICY_TYPE: nesy
+
+# RGB extension
+USE_RGB: true
+RGB_EMBED_DIM: 128
+RGB_EPISODE_LENGTH: 250
+RGB_PROPRIO: none
+RGB_AUGMENT: true
+RGB_AUG_PAD: 4
+
+# --- lever A ALONE ---
+RGB_SHARED_ENCODER: true       # one CNN trunk, N small action heads
+RGB_META_SEES_PIXELS: true     # LEVER B: meta-Q input = [state, latent]
+RGB_AUX_STATE_COEF: 0.0        # aux crutch OFF -- this is the point of this arm
+RGB_MONITOR_SENSITIVITY: true  # log train/rgb/pixel_sensitivity every update
+META_DECISION_INTERVAL: 4      # stop the meta compensating on every single step
+
+TOTAL_TIMESTEPS: 2048000       # 128 envs x 64 steps x 250 updates
+NUM_ENVS: 128
+NUM_STEPS: 64
+NUM_EPOCHS: 4
+NUM_MINIBATCHES: 8
+NUM_SEEDS: 1
+SEED: 0
+
+GAMMA: 0.99
+LAMBDA: 0.65
+SKILL_LAMBDA: 0.65
+META_LAMBDA: 0.80
+
+LR: 0.0003
+LR_START: 0.0003
+LR_END: 0.00005
+LR_DECAY: 1.0
+ANNEAL_LR: true
+MAX_GRAD_NORM: 1.0
+
+ACTOR_HIDDEN_SIZES: [256, 256]
+CRITIC_HIDDEN_SIZES: [256, 256]
+META_HIDDEN_SIZES: [128, 128]
+NUM_CRITICS: 2
+NORM_TYPE: layer_norm
+ACTIVATION: relu
+
+NOISE_START: 0.30
+NOISE_FINISH: 0.02
+NOISE_DECAY: 0.80
+META_EPS_START: 1.0
+META_EPS_FINISH: 0.02
+META_EPS_DECAY: 0.60
+
+NORMALIZE_OBS: true
+NORMALIZE_REWARD: false
+BEHAVIOR_PENALTY_COEFF: 0.001
+ACTOR_UPDATE_MODE: all_states
+
+EVAL_AFTER_TRAIN: true
+EVAL_NUM_ENVS: 64
+EVAL_NUM_EPISODES: 128
+
+PRINT_EVERY: 0
+SAVE_PATH: null

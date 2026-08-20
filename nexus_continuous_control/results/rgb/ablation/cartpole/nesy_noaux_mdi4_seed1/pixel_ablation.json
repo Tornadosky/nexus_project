@@ -1,0 +1,110 @@
+{
+  "env": "CartpoleBalance",
+  "meta": "nesy",
+  "seed": 1,
+  "updates": 250,
+  "num_envs": 128,
+  "episodes": 5,
+  "eval_steps": 250,
+  "rgb_proprio": "none",
+  "rgb_shared_encoder": false,
+  "rgb_meta_sees_pixels": false,
+  "meta_pixels_held_intact": false,
+  "attribution_note": "meta-Q is state-only (classic setup); no pixel path above the actor",
+  "final_train_return": 5.38034725189209,
+  "performance_drop_fraction": {
+    "frozen_first": 0.0,
+    "random_replay": 0.0173410404624276,
+    "shuffle_frames": 0.0,
+    "zeros": -0.04971098265895968,
+    "const_action": 0.013872832369942113
+  },
+  "actor_uses_pixels": false,
+  "actor_uses_pixels_strict": false,
+  "pixel_drop_median": 0.0,
+  "pixel_drop_min": -0.04971098265895968,
+  "actor_variation_needed": false,
+  "motion_sensitive": false,
+  "results": {
+    "intact": {
+      "reward_per_step_mean": 0.055459080405905845,
+      "reward_per_step_std": 0.016058562382121402,
+      "per_episode": [
+        0.07093086533248424,
+        0.03664247230812907,
+        0.06552713281102479,
+        0.03518623172864318,
+        0.06900869984924793
+      ],
+      "upright_fraction_mean": 0.692,
+      "upright_fraction_std": 0.04094874845462311
+    },
+    "frozen_first": {
+      "reward_per_step_mean": 0.05556928884610533,
+      "reward_per_step_std": 0.01572747360607702,
+      "per_episode": [
+        0.07010172311216593,
+        0.034789216704666615,
+        0.06574759742990136,
+        0.03807267803698778,
+        0.069135228946805
+      ],
+      "upright_fraction_mean": 0.692,
+      "upright_fraction_std": 0.040870527278223344
+    },
+    "random_replay": {
+      "reward_per_step_mean": 0.05951617943197488,
+      "reward_per_step_std": 0.012188615610929958,
+      "per_episode": [
+        0.06734182246401905,
+        0.061966632319614294,
+        0.06378418506123125,
+        0.03563712671026587,
+        0.06885113060474396
+      ],
+      "upright_fraction_mean": 0.68,
+      "upright_fraction_std": 0.055252149279462426
+    },
+    "shuffle_frames": {
+      "reward_per_step_mean": 0.05545430866442621,
+      "reward_per_step_std": 0.016065368855697156,
+      "per_episode": [
+        0.07093159276247024,
+        0.03668384698033333,
+        0.0655237538665533,
+        0.035121393958106636,
+        0.06901095575466752
+      ],
+      "upright_fraction_mean": 0.692,
+      "upright_fraction_std": 0.04094874845462311
+    },
+    "zeros": {
+      "reward_per_step_mean": 0.0667915640346706,
+      "reward_per_step_std": 0.003754570581679869,
+      "per_episode": [
+        0.06870721440017223,
+        0.06382342565059662,
+        0.06480323381721974,
+        0.06334067077562212,
+        0.07328327552974225
+      ],
+      "upright_fraction_mean": 0.7264,
+      "upright_fraction_std": 0.05488023323565596
+    },
+    "const_action": {
+      "reward_per_step_mean": 0.05941796597279608,
+      "reward_per_step_std": 0.01222894096607014,
+      "per_episode": [
+        0.06547738959267735,
+        0.06200668589584529,
+        0.06498845757171512,
+        0.035394131988286975,
+        0.06922316481545568
+      ],
+      "upright_fraction_mean": 0.6824,
+      "upright_fraction_std": 0.05705295785496138
+    }
+  },
+  "inconclusive": false,
+  "verdict_rule": "median of {frozen_first, random_replay, zeros} performance drop > 30%; INCONCLUSIVE if the intact score is not distinguishable from zero (|mean| < 2*std)"
+}

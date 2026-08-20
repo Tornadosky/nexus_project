@@ -1,0 +1,87 @@
+# CartpoleBalance RGB -- TIER 0: THE MISSING CONTROL (2026-08-19).
+#
+# cartpole_balance_nesy_rgb_aux.yaml with RGB_AUX_STATE_COEF: 0.0 and NOTHING ELSE changed.
+#
+# WHY THIS EXISTS. The 2026-08-18 "fix" changed THREE things at once:
+#   (a) RGB_AUX_STATE_COEF 0.0 -> 1.0   dense pixel->state supervision
+#   (b) META_DECISION_INTERVAL 1 -> 4   stop the meta deciding every step
+#   (c) LR 1e-4 -> 3e-4                 (cartpole only; walker was already 3e-4)
+# and the resulting arm SEES. No aux-off control at MDI=4 was ever run, so it is
+# not known which of the three did the work. This arm isolates (a): keep the
+# MDI and LR of the committed fix, turn the aux crutch OFF.
+#
+# READ IT AS:
+#   still SEES (median pixel drop > 0.30) -> the aux loss was NEVER load-bearing;
+#       MDI (and/or LR) alone cured the blindness. The shared-encoder hypothesis
+#       then loses its premise, because there is no aux crutch left to remove.
+#   BLIND (drop ~ 0)                      -> the aux loss really is doing the work,
+#       and "can sharing replace it?" is a well-posed question.
+#
+# It is also the correct denominator for the shared-encoder arm: the only
+# difference to cartpole_balance_nesy_rgb_shared_noaux.yaml is RGB_SHARED_ENCODER.
+#
+# INTEGRITY: train/rgb/aux_state_loss must be EXACTLY 0 for the whole run.
+ALG_NAME: nexus_ac_pqn
+ENV_NAME: CartpoleBalance
+PLAYGROUND_IMPL: warp
+POLICY: cartpole_balance
+META_POLICY_TYPE: nesy
+
+# RGB extension
+USE_RGB: true
+RGB_EMBED_DIM: 128
+RGB_EPISODE_LENGTH: 250
+RGB_PROPRIO: none
+RGB_AUGMENT: true
+RGB_AUG_PAD: 4
+
+# --- the fix, WITHOUT the aux crutch ---
+RGB_AUX_STATE_COEF: 0.0        # dense pixel->state supervision on the CNN latent
+RGB_MONITOR_SENSITIVITY: true  # log train/rgb/pixel_sensitivity every update
+META_DECISION_INTERVAL: 4      # stop the meta compensating on every single step
+
+TOTAL_TIMESTEPS: 2048000       # 128 envs x 64 steps x 250 updates
+NUM_ENVS: 128
+NUM_STEPS: 64
+NUM_EPOCHS: 4
+NUM_MINIBATCHES: 8
+NUM_SEEDS: 1
+SEED: 0
+
+GAMMA: 0.99
+LAMBDA: 0.65
+SKILL_LAMBDA: 0.65
+META_LAMBDA: 0.80
+
+LR: 0.0003
+LR_START: 0.0003
+LR_END: 0.00005
+LR_DECAY: 1.0
+ANNEAL_LR: true
+MAX_GRAD_NORM: 1.0
+
+ACTOR_HIDDEN_SIZES: [256, 256]
+CRITIC_HIDDEN_SIZES: [256, 256]
+META_HIDDEN_SIZES: [128, 128]
+NUM_CRITICS: 2
+NORM_TYPE: layer_norm
+ACTIVATION: relu
+
+NOISE_START: 0.30
+NOISE_FINISH: 0.02
+NOISE_DECAY: 0.80
+META_EPS_START: 1.0
+META_EPS_FINISH: 0.02
+META_EPS_DECAY: 0.60
+
+NORMALIZE_OBS: true
+NORMALIZE_REWARD: false
+BEHAVIOR_PENALTY_COEFF: 0.001
+ACTOR_UPDATE_MODE: all_states
+
+EVAL_AFTER_TRAIN: true
+EVAL_NUM_ENVS: 64
+EVAL_NUM_EPISODES: 128
+
+PRINT_EVERY: 0
+SAVE_PATH: null
