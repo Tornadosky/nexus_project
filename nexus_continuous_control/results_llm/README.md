@@ -112,7 +112,11 @@ and a single 4-iteration refinement run per environment.
 | HopperHop | energy_efficient (0.37) | Optimal Locomotion (0.58) | (see plot) |
 | Go1JoystickFlatTerrain | stand (0.36) | BaseHeightSafety (0.86) | (see plot) |
 
+![CartpoleBalance skill usage across conditions](analysis_llm/plots/skill_usage_CartpoleBalance.png)
+![CheetahRun skill usage across conditions](analysis_llm/plots/skill_usage_CheetahRun.png)
 ![WalkerWalk skill usage across conditions](analysis_llm/plots/skill_usage_WalkerWalk.png)
+![HopperHop skill usage across conditions](analysis_llm/plots/skill_usage_HopperHop.png)
+![Go1JoystickFlatTerrain skill usage across conditions](analysis_llm/plots/skill_usage_Go1JoystickFlatTerrain.png)
 
 Per-environment three-panel usage charts for all five environments are in
 `analysis_llm/plots/skill_usage_<Env>.png`.
