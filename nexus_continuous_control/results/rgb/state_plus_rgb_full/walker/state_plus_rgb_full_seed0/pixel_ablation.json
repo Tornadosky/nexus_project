@@ -1,0 +1,119 @@
+{
+  "env": "WalkerWalk",
+  "meta": "nesy",
+  "seed": 0,
+  "updates": 6400,
+  "num_envs": 128,
+  "episodes": 5,
+  "eval_steps": 250,
+  "state_only": false,
+  "actor_input": "pixels+proprio:full",
+  "rgb_proprio": "full",
+  "metric_key": "reward_per_step_mean",
+  "conditions_run": [
+    "intact",
+    "frozen_first",
+    "random_replay",
+    "shuffle_frames",
+    "zeros",
+    "const_action"
+  ],
+  "skipped_conditions": [],
+  "skipped_conditions_reason": null,
+  "rgb_shared_encoder": false,
+  "rgb_meta_sees_pixels": false,
+  "meta_pixels_held_intact": false,
+  "attribution_note": "meta-Q is state-only (classic setup); no pixel path above the actor",
+  "final_train_return": 228.837158203125,
+  "performance_drop_fraction": {
+    "frozen_first": 0.7241118639328603,
+    "random_replay": 0.08307442824790057,
+    "shuffle_frames": 0.017405930727023636,
+    "zeros": 0.20061629435989417,
+    "const_action": 0.9681639112489265
+  },
+  "actor_uses_pixels": false,
+  "actor_uses_pixels_strict": false,
+  "pixel_drop_median": 0.20061629435989417,
+  "pixel_drop_min": 0.08307442824790057,
+  "actor_variation_needed": true,
+  "motion_sensitive": false,
+  "verdict_caveat": "`actor_uses_pixels` thresholds the MEDIAN of three corruptions at 30%. That threshold was calibrated on RGB_PROPRIO: none actors, whose ONLY input is the camera, so a corruption there removes everything. This run has RGB_PROPRIO='full', i.e. the actor also reads the privileged state, so it can ride the state through a corrupted frame and a genuinely pixel-using actor is EXPECTED to score well under 30%. The threshold under-reads in this regime and the median hides disagreement between the three corruptions. Read `performance_drop_fraction` condition by condition, together with the independent in-training `pixel_sensitivity` probe, rather than this boolean.",
+  "sd_convention": "*_std keys are numpy's POPULATION s.d. (ddof=0); *_std_sample are the unbiased sample s.d. (ddof=1). Quote the sample form.",
+  "eval_reset_key_formula": "jax.random.PRNGKey(9000 + 97*episode + seed)",
+  "eval_pairing_note": "The reset key depends only on (episode, seed) and NOT on the arm, so episode e of this run started from the same initial state as episode e of the matched arm at the same seed. Arms are therefore PAIRED episode-by-episode and a paired analysis is valid.",
+  "results": {
+    "intact": {
+      "reward_per_step_mean": 0.8781547911275178,
+      "reward_per_step_std": 0.027801855623985287,
+      "reward_per_step_std_sample": 0.03108341953793297,
+      "per_episode": [
+        0.8848222852870822,
+        0.8463743942249566,
+        0.920119349271059,
+        0.8910274785161019,
+        0.8484304483383894
+      ]
+    },
+    "frozen_first": {
+      "reward_per_step_mean": 0.2422724885025993,
+      "reward_per_step_std": 0.13666075159981714,
+      "reward_per_step_std_sample": 0.15279136521670214,
+      "per_episode": [
+        0.13741316815838217,
+        0.19320182757079601,
+        0.5120442918390036,
+        0.16868459679186343,
+        0.2000185581529513
+      ]
+    },
+    "random_replay": {
+      "reward_per_step_mean": 0.8052025839414447,
+      "reward_per_step_std": 0.07071452017187328,
+      "reward_per_step_std_sample": 0.07906123705029439,
+      "per_episode": [
+        0.8176573754474521,
+        0.8260420273561031,
+        0.8961590223908424,
+        0.8079660905599594,
+        0.6781884039528668
+      ]
+    },
+    "shuffle_frames": {
+      "reward_per_step_mean": 0.8628696896655483,
+      "reward_per_step_std": 0.03263154899964493,
+      "reward_per_step_std_sample": 0.03648318088716067,
+      "per_episode": [
+        0.8746742239296437,
+        0.8192905704891309,
+        0.9107866854071617,
+        0.875526196360588,
+        0.8340707721412182
+      ]
+    },
+    "zeros": {
+      "reward_per_step_mean": 0.7019826310571283,
+      "reward_per_step_std": 0.08554226930567715,
+      "reward_per_step_std_sample": 0.09563916455854393,
+      "per_episode": [
+        0.6569226704202592,
+        0.7073778510671109,
+        0.8161762067675591,
+        0.7614406110644341,
+        0.5679958159662784
+      ]
+    },
+    "const_action": {
+      "reward_per_step_mean": 0.027957013867516072,
+      "reward_per_step_std": 0.006562937158149221,
+      "reward_per_step_std_sample": 0.007337586808840473,
+      "per_episode": [
+        0.01902142746048048,
+        0.03220614420203492,
+        0.029597078673541544,
+        0.0369008174687624,
+        0.022059601532761007
+      ]
+    }
+  }
+}

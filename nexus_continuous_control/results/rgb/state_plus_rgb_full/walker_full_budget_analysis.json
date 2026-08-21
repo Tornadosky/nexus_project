@@ -1,0 +1,482 @@
+{
+  "env": "walker",
+  "seeds": [
+    0,
+    1,
+    2
+  ],
+  "last_n_updates": 20,
+  "primary_metric": "training curve episode_return, last-20-update mean",
+  "budgets": {
+    "2.05M": {
+      "label": "2.05M",
+      "env_steps": 2048000,
+      "updates": 250,
+      "roots": {
+        "train_and_5ep": "results/rgb/state_plus_rgb",
+        "eval30": "results/rgb/state_plus_rgb_eval30"
+      },
+      "arms": {
+        "state_matched": {
+          "config": "configs/walker_walk_nesy_state_matched.yaml",
+          "train": {
+            "n": 3,
+            "per_seed": [
+              188.0881591796875,
+              191.53581924438475,
+              188.91020126342772
+            ],
+            "mean": 189.51139322916666,
+            "sd_sample_ddof1": 1.8007397966332785,
+            "min": 188.0881591796875,
+            "max": 191.53581924438475
+          },
+          "eval5": {
+            "n": 3,
+            "per_seed": [
+              0.6161411106562242,
+              0.7260781056471168,
+              0.7991352910377085
+            ],
+            "mean": 0.7137848357803499,
+            "sd_sample_ddof1": 0.09211439016997112,
+            "min": 0.6161411106562242,
+            "max": 0.7991352910377085
+          },
+          "eval30": {
+            "n": 3,
+            "per_seed": [
+              0.6151196179026893,
+              0.7581433130539954,
+              0.7657719388825819
+            ],
+            "mean": 0.7130116232797555,
+            "sd_sample_ddof1": 0.08486272751076183,
+            "min": 0.6151196179026893,
+            "max": 0.7657719388825819
+          }
+        },
+        "state_plus_rgb": {
+          "config": "configs/walker_walk_nesy_state_plus_rgb.yaml",
+          "train": {
+            "n": 3,
+            "per_seed": [
+              204.2862808227539,
+              208.82906494140624,
+              196.47755279541016
+            ],
+            "mean": 203.19763285319007,
+            "sd_sample_ddof1": 6.247305729224296,
+            "min": 196.47755279541016,
+            "max": 208.82906494140624
+          },
+          "eval5": {
+            "n": 3,
+            "per_seed": [
+              0.7363933706503362,
+              0.7995040448382496,
+              0.8205526509664953
+            ],
+            "mean": 0.785483355485027,
+            "sd_sample_ddof1": 0.043796471470749096,
+            "min": 0.7363933706503362,
+            "max": 0.8205526509664953
+          },
+          "eval30": {
+            "n": 3,
+            "per_seed": [
+              0.8009722915600054,
+              0.8337874251767062,
+              0.8123279331785317
+            ],
+            "mean": 0.815695883305081,
+            "sd_sample_ddof1": 0.016664800167168994,
+            "min": 0.8009722915600054,
+            "max": 0.8337874251767062
+          }
+        }
+      },
+      "compare": {
+        "train": {
+          "state_matched": {
+            "n": 3,
+            "per_seed": [
+              188.0881591796875,
+              191.53581924438475,
+              188.91020126342772
+            ],
+            "mean": 189.51139322916666,
+            "sd_sample_ddof1": 1.8007397966332785,
+            "min": 188.0881591796875,
+            "max": 191.53581924438475
+          },
+          "state_plus_rgb": {
+            "n": 3,
+            "per_seed": [
+              204.2862808227539,
+              208.82906494140624,
+              196.47755279541016
+            ],
+            "mean": 203.19763285319007,
+            "sd_sample_ddof1": 6.247305729224296,
+            "min": 196.47755279541016,
+            "max": 208.82906494140624
+          },
+          "abs_change": 13.686239624023415,
+          "pct_change": 7.221855842447071,
+          "ranges_overlap": false,
+          "range_state_matched": [
+            188.0881591796875,
+            191.53581924438475
+          ],
+          "range_state_plus_rgb": [
+            196.47755279541016,
+            208.82906494140624
+          ],
+          "welch": {
+            "t": 3.6460361887949944,
+            "p": 0.053527208425188925,
+            "cohens_d": 2.97697608208987,
+            "hedges_g": 2.381580865671896,
+            "pooled_sd": 4.59736297727173,
+            "degenerate_zero_variance": false
+          },
+          "achieved_power": 0.7766951521841361,
+          "paired_by_seed": {
+            "n_pairs": 3,
+            "mean_diff": 13.686239624023443,
+            "sd_diff_sample": 5.327327452445425,
+            "wins_b": 3,
+            "wins_a": 0,
+            "ties": 0,
+            "min_diff": 7.567351531982439,
+            "max_diff": 17.29324569702149,
+            "paired_t": 4.4497475713623444,
+            "paired_p": 0.04697431968721029,
+            "cohens_dz": 2.569062958151933,
+            "ci95_low": 0.4524245965609506,
+            "ci95_high": 26.920054651485934,
+            "sign_test_p": 0.25
+          },
+          "diffs": [
+            16.1981216430664,
+            17.29324569702149,
+            7.567351531982439
+          ]
+        },
+        "eval5": {
+          "state_matched": {
+            "n": 3,
+            "per_seed": [
+              0.6161411106562242,
+              0.7260781056471168,
+              0.7991352910377085
+            ],
+            "mean": 0.7137848357803499,
+            "sd_sample_ddof1": 0.09211439016997112,
+            "min": 0.6161411106562242,
+            "max": 0.7991352910377085
+          },
+          "state_plus_rgb": {
+            "n": 3,
+            "per_seed": [
+              0.7363933706503362,
+              0.7995040448382496,
+              0.8205526509664953
+            ],
+            "mean": 0.785483355485027,
+            "sd_sample_ddof1": 0.043796471470749096,
+            "min": 0.7363933706503362,
+            "max": 0.8205526509664953
+          },
+          "abs_change": 0.07169851970467711,
+          "pct_change": 10.044836498423539,
+          "ranges_overlap": true,
+          "range_state_matched": [
+            0.6161411106562242,
+            0.7991352910377085
+          ],
+          "range_state_plus_rgb": [
+            0.7363933706503362,
+            0.8205526509664953
+          ],
+          "welch": {
+            "t": 1.217551987899867,
+            "p": 0.31423436817480205,
+            "cohens_d": 0.9941270352219974,
+            "hedges_g": 0.795301628177598,
+            "pooled_sd": 0.07212209020013845,
+            "degenerate_zero_variance": false
+          },
+          "achieved_power": 0.1575072495717799,
+          "paired_by_seed": {
+            "n_pairs": 3,
+            "mean_diff": 0.07169851970467715,
+            "sd_diff_sample": 0.0494400885040909,
+            "wins_b": 3,
+            "wins_a": 0,
+            "ties": 0,
+            "min_diff": 0.021417359928786794,
+            "max_diff": 0.12025225999411193,
+            "paired_t": 2.511837715373496,
+            "paired_p": 0.1286179542675558,
+            "cohens_dz": 1.4502101811315424,
+            "ci95_low": -0.05111746862060902,
+            "ci95_high": 0.19451450802996334,
+            "sign_test_p": 0.25
+          },
+          "diffs": [
+            0.12025225999411193,
+            0.07342593919113272,
+            0.021417359928786794
+          ]
+        },
+        "eval30": {
+          "state_matched": {
+            "n": 3,
+            "per_seed": [
+              0.6151196179026893,
+              0.7581433130539954,
+              0.7657719388825819
+            ],
+            "mean": 0.7130116232797555,
+            "sd_sample_ddof1": 0.08486272751076183,
+            "min": 0.6151196179026893,
+            "max": 0.7657719388825819
+          },
+          "state_plus_rgb": {
+            "n": 3,
+            "per_seed": [
+              0.8009722915600054,
+              0.8337874251767062,
+              0.8123279331785317
+            ],
+            "mean": 0.815695883305081,
+            "sd_sample_ddof1": 0.016664800167168994,
+            "min": 0.8009722915600054,
+            "max": 0.8337874251767062
+          },
+          "abs_change": 0.10268426002532549,
+          "pct_change": 14.40148472657318,
+          "ranges_overlap": false,
+          "range_state_matched": [
+            0.6151196179026893,
+            0.7657719388825819
+          ],
+          "range_state_plus_rgb": [
+            0.8009722915600054,
+            0.8337874251767062
+          ],
+          "welch": {
+            "t": 2.056511681438121,
+            "p": 0.16683361113895445,
+            "cohens_d": 1.6791347565321548,
+            "hedges_g": 1.343307805225724,
+            "pooled_sd": 0.061153078766230114,
+            "degenerate_zero_variance": false
+          },
+          "achieved_power": 0.3513071307018994,
+          "paired_by_seed": {
+            "n_pairs": 3,
+            "mean_diff": 0.10268426002532556,
+            "sd_diff_sample": 0.07347971433819186,
+            "wins_b": 3,
+            "wins_a": 0,
+            "ties": 0,
+            "min_diff": 0.04655599429594981,
+            "max_diff": 0.18585267365731606,
+            "paired_t": 2.4204551841736817,
+            "paired_p": 0.1365755098812029,
+            "cohens_dz": 1.3974504521441005,
+            "ci95_low": -0.07984946941081829,
+            "ci95_high": 0.2852179894614694,
+            "sign_test_p": 0.25
+          },
+          "diffs": [
+            0.18585267365731606,
+            0.07564411212271083,
+            0.04655599429594981
+          ]
+        }
+      },
+      "camera": {
+        "0": {
+          "frozen_first": 0.7208305478676987,
+          "random_replay": 0.05908770766913006,
+          "shuffle_frames": -0.01333267824580378,
+          "zeros": 0.1381096540021222,
+          "const_action": 0.9561463792136535
+        },
+        "0_absolute": {
+          "intact": 0.8009722915600054,
+          "frozen_first": 0.2236069958079606,
+          "random_replay": 0.7536446749452346,
+          "shuffle_frames": 0.8116513974071791,
+          "zeros": 0.6903502855073661,
+          "const_action": 0.03512553513444339
+        },
+        "0_verdict_caveat": "`actor_uses_pixels` thresholds the MEDIAN of three corruptions at 30%. That threshold was calibrated on RGB_PROPRIO: none actors, whose ONLY input is the camera, so a corruption there removes everything. This run has RGB_PROPRIO='full', i.e. the actor also reads the privileged state, so it can ride the state through a corrupted frame and a genuinely pixel-using actor is EXPECTED to score well under 30%. The threshold under-reads in this regime and the median hides disagreement between the three corruptions. Read `performance_drop_fraction` condition by condition, together with the independent in-training `pixel_sensitivity` probe, rather than this boolean.",
+        "0_source": "results/rgb/state_plus_rgb_eval30/walker/state_plus_rgb_seed0/pixel_ablation.json",
+        "1": {
+          "frozen_first": 0.6215794122181543,
+          "random_replay": 0.4080769645574178,
+          "shuffle_frames": 0.01885103489634339,
+          "zeros": 0.5325934612973383,
+          "const_action": 0.9513563576000451
+        },
+        "1_absolute": {
+          "intact": 0.8337874251767062,
+          "frozen_first": 0.315522327520481,
+          "random_replay": 0.49353798362445084,
+          "shuffle_frames": 0.8180696693285678,
+          "zeros": 0.38971769441564874,
+          "const_action": 0.040558457347874846
+        },
+        "1_verdict_caveat": "`actor_uses_pixels` thresholds the MEDIAN of three corruptions at 30%. That threshold was calibrated on RGB_PROPRIO: none actors, whose ONLY input is the camera, so a corruption there removes everything. This run has RGB_PROPRIO='full', i.e. the actor also reads the privileged state, so it can ride the state through a corrupted frame and a genuinely pixel-using actor is EXPECTED to score well under 30%. The threshold under-reads in this regime and the median hides disagreement between the three corruptions. Read `performance_drop_fraction` condition by condition, together with the independent in-training `pixel_sensitivity` probe, rather than this boolean.",
+        "1_source": "results/rgb/state_plus_rgb_eval30/walker/state_plus_rgb_seed1/pixel_ablation.json",
+        "2": {
+          "frozen_first": 0.7226355345861045,
+          "random_replay": 0.10217300177001824,
+          "shuffle_frames": 0.013809803032025838,
+          "zeros": 0.3793200400568044,
+          "const_action": 0.9504887571781071
+        },
+        "2_absolute": {
+          "intact": 0.8123279331785317,
+          "frozen_first": 0.22531090292683806,
+          "random_replay": 0.7293299498240463,
+          "shuffle_frames": 0.8011098444239235,
+          "zeros": 0.5041956690259899,
+          "const_action": 0.040219365550608684
+        },
+        "2_verdict_caveat": "`actor_uses_pixels` thresholds the MEDIAN of three corruptions at 30%. That threshold was calibrated on RGB_PROPRIO: none actors, whose ONLY input is the camera, so a corruption there removes everything. This run has RGB_PROPRIO='full', i.e. the actor also reads the privileged state, so it can ride the state through a corrupted frame and a genuinely pixel-using actor is EXPECTED to score well under 30%. The threshold under-reads in this regime and the median hides disagreement between the three corruptions. Read `performance_drop_fraction` condition by condition, together with the independent in-training `pixel_sensitivity` probe, rather than this boolean.",
+        "2_source": "results/rgb/state_plus_rgb_eval30/walker/state_plus_rgb_seed2/pixel_ablation.json"
+      },
+      "sources": {
+        "state_matched": [
+          {
+            "seed": 0,
+            "train": "results/rgb/state_plus_rgb/walker/state_matched_seed0/training_curves.json",
+            "eval5": "results/rgb/state_plus_rgb/walker/state_matched_seed0/pixel_ablation.json",
+            "eval30": "results/rgb/state_plus_rgb_eval30/walker/state_matched_seed0/pixel_ablation.json",
+            "n_eval30_episodes": 30
+          },
+          {
+            "seed": 1,
+            "train": "results/rgb/state_plus_rgb/walker/state_matched_seed1/training_curves.json",
+            "eval5": "results/rgb/state_plus_rgb/walker/state_matched_seed1/pixel_ablation.json",
+            "eval30": "results/rgb/state_plus_rgb_eval30/walker/state_matched_seed1/pixel_ablation.json",
+            "n_eval30_episodes": 30
+          },
+          {
+            "seed": 2,
+            "train": "results/rgb/state_plus_rgb/walker/state_matched_seed2/training_curves.json",
+            "eval5": "results/rgb/state_plus_rgb/walker/state_matched_seed2/pixel_ablation.json",
+            "eval30": "results/rgb/state_plus_rgb_eval30/walker/state_matched_seed2/pixel_ablation.json",
+            "n_eval30_episodes": 30
+          }
+        ],
+        "state_plus_rgb": [
+          {
+            "seed": 0,
+            "train": "results/rgb/state_plus_rgb/walker/state_plus_rgb_seed0/training_curves.json",
+            "eval5": "results/rgb/state_plus_rgb/walker/state_plus_rgb_seed0/pixel_ablation.json",
+            "eval30": "results/rgb/state_plus_rgb_eval30/walker/state_plus_rgb_seed0/pixel_ablation.json",
+            "n_eval30_episodes": 30
+          },
+          {
+            "seed": 1,
+            "train": "results/rgb/state_plus_rgb/walker/state_plus_rgb_seed1/training_curves.json",
+            "eval5": "results/rgb/state_plus_rgb/walker/state_plus_rgb_seed1/pixel_ablation.json",
+            "eval30": "results/rgb/state_plus_rgb_eval30/walker/state_plus_rgb_seed1/pixel_ablation.json",
+            "n_eval30_episodes": 30
+          },
+          {
+            "seed": 2,
+            "train": "results/rgb/state_plus_rgb/walker/state_plus_rgb_seed2/training_curves.json",
+            "eval5": "results/rgb/state_plus_rgb/walker/state_plus_rgb_seed2/pixel_ablation.json",
+            "eval30": "results/rgb/state_plus_rgb_eval30/walker/state_plus_rgb_seed2/pixel_ablation.json",
+            "n_eval30_episodes": 30
+          }
+        ]
+      }
+    },
+    "52.4M": {
+      "label": "52.4M",
+      "env_steps": 52428800,
+      "updates": 6400,
+      "roots": {
+        "train_and_5ep": "results/rgb/state_plus_rgb_full",
+        "eval30": "results/rgb/state_plus_rgb_full_eval30"
+      },
+      "arms": {
+        "state_matched": {
+          "config": "configs/walker_walk_nesy_state_matched_full.yaml",
+          "train": null,
+          "eval5": null,
+          "eval30": null
+        },
+        "state_plus_rgb": {
+          "config": "configs/walker_walk_nesy_state_plus_rgb_full.yaml",
+          "train": null,
+          "eval5": null,
+          "eval30": null
+        }
+      },
+      "compare": {
+        "train": null,
+        "eval5": null,
+        "eval30": null
+      },
+      "camera": {},
+      "sources": {
+        "state_matched": [
+          {
+            "seed": 0,
+            "train": null,
+            "eval5": null,
+            "eval30": null,
+            "n_eval30_episodes": null
+          },
+          {
+            "seed": 1,
+            "train": null,
+            "eval5": null,
+            "eval30": null,
+            "n_eval30_episodes": null
+          },
+          {
+            "seed": 2,
+            "train": null,
+            "eval5": null,
+            "eval30": null,
+            "n_eval30_episodes": null
+          }
+        ],
+        "state_plus_rgb": [
+          {
+            "seed": 0,
+            "train": null,
+            "eval5": null,
+            "eval30": null,
+            "n_eval30_episodes": null
+          },
+          {
+            "seed": 1,
+            "train": null,
+            "eval5": null,
+            "eval30": null,
+            "n_eval30_episodes": null
+          },
+          {
+            "seed": 2,
+            "train": null,
+            "eval5": null,
+            "eval30": null,
+            "n_eval30_episodes": null
+          }
+        ]
+      }
+    }
+  }
+}
