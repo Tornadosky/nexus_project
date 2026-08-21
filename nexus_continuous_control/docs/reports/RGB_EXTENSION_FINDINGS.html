@@ -327,14 +327,15 @@ something, or covering for a baseline that had not finished learning?</p>
 </figure>
 
 <table>
-  <thead><tr><th>budget</th><th>state only</th><th>state + RGB</th><th class="num">&Delta;</th></tr></thead>
+  <thead><tr><th>metric</th><th class="num">&Delta; at 2.05M</th><th class="num">&Delta; at 52.4M</th><th>at 52.4M</th></tr></thead>
   <tbody>
-    <tr><td>2.05M</td><td>189.51 &plusmn; 1.80</td><td>203.20 &plusmn; 6.25</td><td class="num"><strong>+7.2%</strong></td></tr>
-    <tr><td><strong>52.4M</strong></td><td>226.06 &plusmn; 0.49</td><td>228.84</td><td class="num"><strong>+1.2%</strong></td></tr>
+    <tr><td>training return</td><td class="num">+7.22%</td><td class="num">+1.23%</td><td>seed ranges do <em>not</em> overlap</td></tr>
+    <tr><td>30-episode eval</td><td class="num">+14.40%</td><td class="num">+1.07%</td><td><strong>seed ranges OVERLAP</strong></td></tr>
+    <tr><td>5-episode eval</td><td class="num">+10.04%</td><td class="num">&minus;0.74%</td><td><strong>negative</strong></td></tr>
   </tbody>
 </table>
 
-<p><strong>The advantage shrinks from +7.2% to +1.2%.</strong> Training the baseline properly is
+<p><strong>The advantage largely disappears, and the metrics stop agreeing.</strong> On training return it shrinks to +1.2%; on the deterministic 30-episode evaluation &mdash; the cleaner measure &mdash; the arms overlap, and on the 5-episode eval the extension is slightly behind. Absolute training return goes 189.51 &rarr; 226.06 for state-only and 203.20 &rarr; 228.84 for state+RGB: both arms gained enormously from the budget, and the <em>gap</em> between them collapsed from +13.69 to +2.78. Training the baseline properly is
 worth far more than the camera ever was: it gains <strong>+19.3%</strong> from the extra budget,
 against the camera's +7.2%. Its seeds also tighten to &plusmn;0.49 &mdash; two tenths of a percent
 &mdash; so the plain agent is not just better but far more reliable.</p>
@@ -345,12 +346,12 @@ higher ceiling, and it is what you would expect if the camera was compensating f
 
 <p>It does not disappear entirely: 228.84 sits above all three baseline seeds (226.04 / 225.58 /
 226.56), and the actor still plainly reads its camera &mdash; freezing the image costs it
-<strong>72.4%</strong>, essentially unchanged from the short-budget runs. It did not learn to ignore
+<strong>60.4%</strong> at the 30-episode eval, against 72.1% for the same seed at 2.05M &mdash; broadly unchanged. It did not learn to ignore
 the camera with more training; it needed it less.</p>
 
 <p class="tnote">Read this as an indication, not a settled result: it is <strong>one extension seed
 against three baseline seeds</strong>, and +2.78 against a baseline whose seeds span 1.0 is within
-reach of seed noise. Seeds 1&ndash;2 were not run (~10 h each). This does not change the 2.05M
+reach of seed noise. Seeds 1&ndash;2 are training now (~17 h) and will settle it. This does not change the 2.05M
 results above, which were a matched comparison and stand at that budget.</p>
 
 
