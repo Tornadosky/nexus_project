@@ -144,7 +144,7 @@ and a single 4-iteration refinement run per environment.
 | CartpoleBalance | 0.140 → 0.310 (peaked 0.367 at iter 1) | 3 → 5 | No — non-monotonic, best at iter 1 |
 | CheetahRun | 0.743 → **0.849** | 3 → 5 | **Yes** — steady improvement every iteration |
 | WalkerWalk | 0.637 → 0.407 | 3 → 5 | **No — net regression**, best at iter 0 |
-| HopperHop | 0.000 → 0.000 | 3 → 5 | No signal at all (flat zero throughout) |
+| HopperHop | 0.000 → 0.000 | 3 → 5 | No signal at all (flat zero) |
 | Go1JoystickFlatTerrain | 0.0062 → 0.0000059 | 3 → 5 | **No — collapses after iter 0** and never recovers |
 
 **Observations:**
@@ -161,8 +161,7 @@ and a single 4-iteration refinement run per environment.
   reward improves (iter 0: −0.32 → iter 2: −0.99 while env reward rose
   0.14 → 0.26). This means the LLM's self-reported reward shaping is not a
   reliable proxy for the metric that actually matters, which limits how well
-  the refinement loop's own feedback signal (`summarize_metrics`, which
-  includes `skill_reward_mean`) can guide improvement.
+  the refinement loop's own feedback signal can guide improvement.
 
 ---
 
