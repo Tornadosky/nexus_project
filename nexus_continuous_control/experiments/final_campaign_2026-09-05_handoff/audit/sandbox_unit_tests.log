@@ -1,0 +1,10 @@
+test_anchor (test_static.Tests.test_anchor) ... ok
+test_code_parses (test_static.Tests.test_code_parses) ... ok
+test_matrix (test_static.Tests.test_matrix) ... ok
+test_nonoverwrite (test_static.Tests.test_nonoverwrite) ... ok
+test_validator (test_static.Tests.test_validator) ... ok
+
+----------------------------------------------------------------------
+Ran 5 tests in 0.019s
+
+OK

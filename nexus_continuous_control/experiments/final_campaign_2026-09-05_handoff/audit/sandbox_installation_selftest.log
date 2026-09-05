@@ -1,0 +1,32 @@
+test_anchor (test_static.Tests.test_anchor) ... ok
+test_code_parses (test_static.Tests.test_code_parses) ... ok
+test_matrix (test_static.Tests.test_matrix) ... ok
+test_nonoverwrite (test_static.Tests.test_nonoverwrite) ... ok
+test_validator (test_static.Tests.test_validator) ... ok
+
+----------------------------------------------------------------------
+Ran 5 tests in 0.015s
+
+OK
+
+{
+  "core": 60,
+  "llm_final": 36,
+  "llm_pilot": 6,
+  "llm_reference": 10,
+  "rgb": 30
+}
+TOTAL 142 7073792000
+
+Static installation checks passed. Guard archived, not deleted. Runtime smokes remain mandatory.
+{
+  "source_files": 235,
+  "matrix_rows": 142,
+  "source_manifest_sha256": "d41466b3a7241d77440b63c44ee323ef381a08738f3e25d0a528b71c12c8aa80",
+  "static_checks": "PASS",
+  "training_executed": false,
+  "rendering_executed": false,
+  "model_restore_tested": false,
+  "runtime_smokes_required": true,
+  "production_authorized_by_this_check": false
+}
