@@ -1,0 +1,15 @@
+{
+  "core": {
+    "kind": "working-tree snapshot, NOT a clean commit",
+    "repo": "/mnt/c/Users/smirn/VSCodeProjects/nexus_project",
+    "base_head": "0a8a1615d45bbadef4a52828a3e32b5f0865fde1",
+    "semantic_diff": ".gitignore                                         |  14 ++\n .../algorithms/hierarchical_ac_pqn_playground.py   | 111 ++++++++++++++--\n .../nexus_continuous/policies/common.py            |  18 ++-\n .../nexus_continuous/policies/registry.py          |  32 ++++-\n nexus_continuous_control/tools/robustness_eval.py  | 144 +++++++++++++++++----\n vendor/mujoco_playground                           |   0\n vendor/purejaxql                                   |   0\n vendor/symbolic_options                            |   0\n 8 files changed, 277 insertions(+), 42 deletions(-)"
+  },
+  "rgb": {
+    "kind": "Git object export",
+    "commit": "7557d5d9b9c75fbe93091ead6ae525a1c377cdf6"
+  },
+  "normalization": "CRLF -> LF only; original files unchanged",
+  "files": 235,
+  "checkpoints_copied": 0
+}

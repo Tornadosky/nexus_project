@@ -1,0 +1,10 @@
+branch,live_head,role
+main,7557d5d9b9c75fbe93091ead6ae525a1c377cdf6,RGB source pinned from main
+codex/finalize-continuous-nexus,d4ee96a5de534d85cfc66e94c40a25e18cd31bd4,inspected; not checked out
+codex/phase2-eval-finalize,196ec055472ad48efa31dc0b65d1b96f9a7496ae,inspected; not checked out
+feat_wandb,aa9c27b1290c73110f8095bec62491890a98037a,inspected; not checked out
+llm-extension,549afd26765959dd26459fd0979629fc0e97776c,inspected; not checked out
+rgb-pixel-ablation,1ffa6a77874dd8cdd5692b3c3f2ab64f52aab149,inspected; not checked out
+rgb-plus-state,7542634d50a5e944cd2b0d0a0244c9c01834e0c0,inspected; not checked out
+rgb-shared-encoder,3738423487c427ef814892eb3e1feb3743eccea0,inspected; not checked out
+rosela,83759525f20a3b184622d586b02e4013e53dbd67,inspected; not checked out

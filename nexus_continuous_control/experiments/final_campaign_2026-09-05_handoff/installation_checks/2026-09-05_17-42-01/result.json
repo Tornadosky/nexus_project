@@ -1,0 +1,11 @@
+{
+  "source_files": 235,
+  "matrix_rows": 142,
+  "source_manifest_sha256": "d2499d4d15bb427a84998dc9620ba5eea831c20445e5b205a7ceb8539cbd1a3a",
+  "static_checks": "PASS",
+  "training_executed": false,
+  "rendering_executed": false,
+  "model_restore_tested": false,
+  "runtime_smokes_required": true,
+  "production_authorized_by_this_check": false
+}

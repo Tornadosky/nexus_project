@@ -1,0 +1,121 @@
+{
+  "evidence_kind": "transcription of successful Remote Desktop Commander responses; not a copy of the raw remote audit",
+  "observed_date_utc": "2026-09-05",
+  "raw_audit_path": "/home/smirn/nexus_campaign_audit_2026-09-05_16-08",
+  "repo": "/mnt/c/Users/smirn/VSCodeProjects/nexus_project",
+  "partial_package": "/mnt/c/Users/smirn/VSCodeProjects/nexus_project/nexus_continuous_control/experiments/final_campaign_2026-09-05",
+  "deployment_status": "partial; INSTALLING retained; remote writes stopped following two blocked tool operations",
+  "git": {
+    "head": "0a8a1615d45bbadef4a52828a3e32b5f0865fde1",
+    "branch": "main",
+    "behind_origin_main": 58,
+    "live_ls_remote_heads": {
+      "main": "7557d5d9b9c75fbe93091ead6ae525a1c377cdf6",
+      "codex/finalize-continuous-nexus": "d4ee96a5de534d85cfc66e94c40a25e18cd31bd4",
+      "codex/phase2-eval-finalize": "196ec055472ad48efa31dc0b65d1b96f9a7496ae",
+      "feat_wandb": "aa9c27b1290c73110f8095bec62491890a98037a",
+      "llm-extension": "549afd26765959dd26459fd0979629fc0e97776c",
+      "rgb-pixel-ablation": "1ffa6a77874dd8cdd5692b3c3f2ab64f52aab149",
+      "rgb-plus-state": "7542634d50a5e944cd2b0d0a0244c9c01834e0c0",
+      "rgb-shared-encoder": "3738423487c427ef814892eb3e1feb3743eccea0",
+      "rosela": "83759525f20a3b184622d586b02e4013e53dbd67"
+    },
+    "rgb_heads_are_ancestors_of_main": true,
+    "llm_extension_is_ancestor_of_main": false,
+    "uncommitted_core_fixes": true,
+    "no_pull_checkout_merge_commit_push": true
+  },
+  "wsl": {
+    "distribution": "Ubuntu",
+    "python": "3.12.13",
+    "interpreter": "/mnt/c/Users/smirn/VSCodeProjects/nexus_project/nexus_continuous_control/.venv-wsl312/bin/python",
+    "gpu": "RTX 4060 Ti",
+    "gpu_mib": 16380,
+    "jax_gpu_backend_verified": true,
+    "packages": {
+      "jax": "0.10.1",
+      "jaxlib": "0.10.1",
+      "flax": "0.12.7",
+      "optax": "0.2.8",
+      "brax": "0.14.2",
+      "mujoco": "3.9.0",
+      "mujoco-mjx": "3.9.0",
+      "playground": "0.2.0",
+      "numpy": "2.4.6",
+      "PyYAML": "6.0.3",
+      "warp-lang": "1.13.0"
+    },
+    "missing_verified_packages": [
+      "torch",
+      "transformers",
+      "huggingface-hub"
+    ],
+    "accelerate_status": "not_verified",
+    "project_volume_reported_free": "30G",
+    "project_volume_used_percent": 97,
+    "wsl_logical_free_not_physical_backing_proof": true,
+    "host_wslconfig_read": false
+  },
+  "checkpoints": {
+    "files": 913,
+    "bytes": 42883762520,
+    "decoded_without_errors": 913,
+    "weight_files": 907,
+    "weight_files_with_recorded_normalization": 782,
+    "weight_files_without_recorded_normalization": 125,
+    "metrics_only_files": 6,
+    "sha256_unique": 893,
+    "duplicate_pairs": 20,
+    "exact_core_budget_candidates": 0,
+    "rgb_named_weights_found_in_scanned_runs": 0,
+    "approved_primary_reuse": 0,
+    "forward_model_restore_tests": "not_executed",
+    "rollout_tests": "not_executed"
+  },
+  "viper": {
+    "reachable": true,
+    "ssh_alias": "viper11",
+    "legacy_root": "/ptmp/akalenik/nexus",
+    "legacy_code": "/ptmp/akalenik/nexus/repo",
+    "legacy_code_is_git_checkout": false,
+    "legacy_weight_files": 261,
+    "legacy_weight_bytes": 7922697103,
+    "local_remote_checkpoint_hash_comparison": "not_performed",
+    "interpreter": "/ptmp/akalenik/jaxrocm_venv/bin/python",
+    "python": "3.13.5",
+    "jax": "0.10.2",
+    "mujoco": "3.10.0",
+    "brax": "0.14.2",
+    "legacy_trainer_matches_local": false,
+    "legacy_evaluator_matches_local": false,
+    "legacy_ppo_launcher_present": false,
+    "queue_empty_when_checked": true,
+    "partition": "apu",
+    "account_from_existing_script": "mage_apu",
+    "partition_max_walltime": "24:00:00",
+    "user_quota_verified": false,
+    "new_package_deployed": false,
+    "training_or_allocations_started": false
+  },
+  "runtime_probes": {
+    "started": [
+      "wsl_state_cpu_import",
+      "wsl_ppo_cpu_import",
+      "wsl_rgb_cpu_import"
+    ],
+    "results_read": false,
+    "reason": "subsequent result-reading call was blocked",
+    "gpu_training_started": false,
+    "rendering_started": false
+  },
+  "unverified": [
+    "RTX 5080 machine and environment",
+    "actual RGB rendering/API probe results",
+    "LLM generation environment",
+    "Viper GPU import/smoke of new package",
+    "production-size memory/time",
+    "quota/remaining allocation",
+    "full deployment integrity"
+  ],
+  "portable_package_relation": "new complete source handoff; not a byte-identical reconstruction of the partial remote copy; source trees must be frozen into a fresh sibling directory"
+}

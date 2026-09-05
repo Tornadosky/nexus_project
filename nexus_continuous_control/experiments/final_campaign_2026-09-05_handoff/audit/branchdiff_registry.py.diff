@@ -1,0 +1,45 @@
+--- local-working/nexus_continuous/policies/registry.py
+
++++ origin-main/nexus_continuous/policies/registry.py
+
+@@ -48,37 +48,9 @@
+
+         description="Panda pick-cube manipulation with reach/grasp/lift/place skills.",
+     ),
+-    "cartpole_balance_rules2": PolicySpec(
+-        # No env alias, same as go1_joystick_rules2: selectable only via an explicit POLICY=,
+-        # so a plain CartpoleBalance run can never pick up the revised thresholds by accident.
+-        env_aliases=("cartpole_balance_rules2", "cartpole-balance-rules2"),
+-        module="nexus_continuous.policies.cartpole_balance_rules2",
+-        recommended_env_name="CartpoleBalance",
+-        description="cartpole_balance with mask/rule thresholds set at a working policy's "
+-                    "visitation quantiles (runbook §5 stage 1).",
+-    ),
+     "go1_joystick": PolicySpec(
+-        # RoughTerrain is an alias, not a separate policy: it has the identical observation
+-        # layout (state (48,), privileged_state (123,), action 12) and command semantics as
+-        # flat terrain, verified by tools/audit_semantics.py. The alias matters for BOTH
+-        # hierarchical and flat arms — `TASK_POLICY` falls back to `ENV_NAME`, and that
+-        # lookup is what supplies `task_metrics` (tracking success). Without it the rough
+-        # cells cannot be scored on the same metric as the flat-terrain ones.
+-        env_aliases=(
+-            "Go1JoystickFlatTerrain", "Go1JoystickRoughTerrain",
+-            "go1_joystick", "go1-joystick",
+-        ),
++        env_aliases=("Go1JoystickFlatTerrain", "go1_joystick", "go1-joystick"),
+         module="nexus_continuous.policies.go1_joystick",
+         recommended_env_name="Go1JoystickFlatTerrain",
+-        description="Unitree Go1 joystick flat/rough terrain with stand/track/turn/recover skills.",
+-    ),
+-    "go1_joystick_rules2": PolicySpec(
+-        # No env alias: this module must only ever be selected explicitly via POLICY=, so a
+-        # plain Go1 run can never pick up the revised thresholds by accident. `rules2` is
+-        # already in EXPERIMENTAL_TAGS in tools/analyze_v2.py.
+-        env_aliases=("go1_joystick_rules2", "go1-joystick-rules2"),
+-        module="nexus_continuous.policies.go1_joystick_rules2",
+-        recommended_env_name="Go1JoystickFlatTerrain",
+-        description="go1_joystick with recover-mask thresholds set at a working policy's "
+-                    "visitation quantiles (runbook §5 stage 1).",
++        description="Unitree Go1 joystick flat-terrain with stand/track/turn/recover skills.",
+     ),
+     "flat_baseline": PolicySpec(

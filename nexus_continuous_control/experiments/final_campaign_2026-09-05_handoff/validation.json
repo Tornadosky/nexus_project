@@ -1,0 +1,18 @@
+{
+  "timestamp_utc": "2026-09-05T17:00:09.943218+00:00",
+  "context": "assistant sandbox; not user WSL/Viper runtime",
+  "gpu_training_run": false,
+  "gpu_rendering_run": false,
+  "remote_deployment_complete": false,
+  "unit_tests": "5 passed",
+  "shell_syntax": "all shell and sbatch files pass bash -n",
+  "six_recorded_live_hashes_match_uploaded_core_reference": true,
+  "matrix_regeneration_against_uploaded_reference": "142 row objects and all 142 parsed YAMLs identical",
+  "post_freeze_installer_selftest": {
+    "pass": true,
+    "test_source": "uploaded reference, not a fresh remote copy",
+    "source_files": 235,
+    "original_guard_archived": true
+  },
+  "portable_install_guard": "verified to block agent before source access/runtime execution"
+}

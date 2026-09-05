@@ -1,0 +1,38 @@
+# Example W&B sweep for the open Go1 NeSy tuning problem (Person C's track).
+# Register with:  wandb sweep configs/sweeps/go1_joystick_nesy.yaml
+# Then run agents: wandb agent <entity>/<project>/<sweep_id>
+#
+# The selection metric mirrors the offline gate: deterministic primary success
+# (logged to the run summary as `primary_success_rate`). The offline collector +
+# phase2_validate_results.py remain authoritative for the final pass/fail call.
+
+program: python
+method: bayes
+metric:
+  name: primary_success_rate
+  goal: maximize
+command:
+  - ${env}
+  - python
+  - -m
+  - nexus_continuous.scripts.wandb_sweep_agent
+  - --config
+  - configs/go1_joystick_nesy_phase2.yaml
+  - ${args}
+parameters:
+  NOISE_START:
+    values: [0.2, 0.3, 0.4]
+  NOISE_DECAY:
+    values: [0.6, 0.8]
+  META_EPS_DECAY:
+    values: [0.5, 0.6, 0.7]
+  SKILL_LAMBDA:
+    values: [0.55, 0.65, 0.8]
+  META_LAMBDA:
+    values: [0.7, 0.8, 0.9]
+  ACTOR_UPDATE_MODE:
+    values: ["active_only", "all_states"]
+  LR:
+    distribution: log_uniform_values
+    min: 0.0001
+    max: 0.0005

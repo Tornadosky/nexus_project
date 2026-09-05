@@ -1,0 +1,109 @@
+--- local-working/nexus_continuous/envs/playground_adapter.py
+
++++ origin-main/nexus_continuous/envs/playground_adapter.py
+
+@@ -20,4 +20,8 @@
+
+     action_dim: int
+     episode_length: int
++    # Width of the privileged state vector the vision wrapper reconstructs
++    # (qpos+qvel). Only set in RGB mode; needed by the optional auxiliary
++    # pixel->state head, which must size its output layer before the first reset.
++    actor_obs_dim: int | None = None
+ 
+ 
+@@ -568,4 +572,33 @@
+
+ 
+ 
++def ensure_mjx_render_compat() -> None:
++    """Work around a mujoco_playground <-> mujoco-mjx 3.11 render-API drift.
++
++    mujoco 3.11's ``mjx.render(m, d, ctx)`` returns a 2-tuple ``(rgb, depth)``, but
++    the installed dm_control_suite vision path (e.g. ``cartpole.py``) was written
++    for an older API that returned ``(rgb, depth, data)`` and reads ``out[2]`` for
++    the (unchanged) data -- raising ``IndexError: tuple index out of range`` on
++    reset/step. Wrap ``mjx.render`` to append the unmodified ``data`` when it
++    returns a 2-tuple, so the stale ``out[2]`` read is a correct no-op. Idempotent,
++    and a no-op once the framework itself returns a >=3-tuple, so it is safe to call
++    unconditionally before loading a vision env.
++    """
++
++    try:
++        import mujoco.mjx as _mjx  # type: ignore
++    except Exception:
++        return
++    render = getattr(_mjx, "render", None)
++    if render is None or getattr(render, "_nexus_render_compat", False):
++        return
++
++    def _render_compat(m, d, ctx, _orig=render):
++        out = _orig(m, d, ctx)
++        return (out[0], out[1], d) if len(out) == 2 else out
++
++    _render_compat._nexus_render_compat = True
++    _mjx.render = _render_compat
++
++
+ def build_playground_env(config: dict[str, Any]) -> PlaygroundEnvBundle:
+     """Create a vectorized MuJoCo Playground environment."""
+@@ -593,13 +626,45 @@
+
+     # context batch (nworld) must equal the number of parallel envs, which is
+     # NUM_ENVS for training and EVAL_NUM_ENVS for eval (passed via RENDER_NWORLD).
++    _vision_env = None
+     if config.get("USE_RGB", False):
+-        # Guard against the MuJoCo-Warp GraphMode desync before the renderer loads.
++        # Guard against the MuJoCo-Warp GraphMode desync + the mjx.render tuple-arity
++        # drift before the renderer loads.
+         ensure_mjwarp_graphmode()
+-        env_config.vision = True
+-        env_config.vision_config.nworld = int(config.get("RENDER_NWORLD", config["NUM_ENVS"]))
+-        # vision=True forces a shorter horizon (e.g. CartpoleBalance -> 250); make
+-        # the brax episode wrapper and eval agree with it.
++        ensure_mjx_render_compat()
++        nworld = int(config.get("RENDER_NWORLD", config["NUM_ENVS"]))
++        # vision forces a shorter horizon (e.g. CartpoleBalance -> 250); make the
++        # brax episode wrapper and eval agree with it.
+         env_config.episode_length = int(config.get("RGB_EPISODE_LENGTH", 250))
+-    env = registry.load(config["ENV_NAME"], env_config)
++        if config["ENV_NAME"] == "CartpoleBalance":
++            env_config.vision = True
++            env_config.vision_config.nworld = nworld
++        elif config["ENV_NAME"] in ("CheetahRun", "WalkerWalk", "HopperHop"):
++            # The framework has no in-loop vision for the locomotion envs; use our
++            # ported subclasses (mirror cartpole's MJWarp render path).
++            from nexus_continuous.envs.dm_control_vision import VISION_ENVS
++
++            _vision_env = VISION_ENVS[config["ENV_NAME"]](
++                nworld=nworld,
++                episode_length=env_config.episode_length,
++                impl="warp",  # the MJWarp render path (refit_bvh/render) requires warp
++            )
++            # Signal the vec wrapper to run its vision obs path (emit actor_pixels).
++            env_config.vision = True
++        else:
++            raise NotImplementedError(
++                f"In-loop RGB not available for {config['ENV_NAME']}; only "
++                "CartpoleBalance (framework) and CheetahRun/WalkerWalk/HopperHop "
++                "(ported) are supported."
++            )
++    env = _vision_env if _vision_env is not None else registry.load(config["ENV_NAME"], env_config)
++    # Privileged-state width, read off the model before the wrappers hide it.
++    # Matches _proprio_from_state's concat(qpos, qvel).
++    actor_obs_dim = None
++    if config.get("USE_RGB", False):
++        _mjm = getattr(env, "mj_model", None)
++        if _mjm is None:
++            _mjm = getattr(env, "_mj_model", None)
++        if _mjm is not None:
++            actor_obs_dim = int(_mjm.nq) + int(_mjm.nv)
+     env = wrap_for_brax_training(
+         env,
+@@ -624,4 +689,5 @@
+
+         action_dim=int(action_space.shape[0]),
+         episode_length=int(getattr(env, "episode_length", config.get("EPISODE_LENGTH", 1000))),
++        actor_obs_dim=actor_obs_dim,
+     )
+ 

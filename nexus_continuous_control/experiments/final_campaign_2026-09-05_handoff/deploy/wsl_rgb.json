@@ -1,0 +1,18 @@
+{
+  "python": "/home/smirn/nexus_campaign_rgb_venv/bin/python",
+  "results": "/home/smirn/nexus_campaign_verified_v2/rgb_release",
+  "evidence": "/home/smirn/nexus_campaign_evidence_2026-09-05",
+  "specs": "/home/smirn/nexus_campaign_specs_2026-09-05",
+  "gpu_lock": "/tmp/nexus_local_gpu.lock",
+  "capacity_check_path": "/mnt/c",
+  "min_free_gib": 12,
+  "pythonpath_prefix": "",
+  "environment": {
+    "MUJOCO_GL": "egl"
+  },
+  "requires_slurm": false,
+  "allowed_groups": [
+    "rgb"
+  ],
+  "production_allowed": true
+}

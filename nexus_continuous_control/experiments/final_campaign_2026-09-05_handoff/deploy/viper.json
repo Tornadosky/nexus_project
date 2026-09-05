@@ -1,0 +1,21 @@
+{
+  "python": "/ptmp/akalenik/jaxrocm_venv/bin/python",
+  "results": "/ptmp/akalenik/nexus/final_campaign_2026-09-05_verified/results_release",
+  "evidence": "/ptmp/akalenik/nexus/final_campaign_2026-09-05_verified/evidence",
+  "specs": "/ptmp/akalenik/nexus/final_campaign_2026-09-05_verified/specs",
+  "capacity_check_path": "/ptmp/akalenik",
+  "min_free_gib": 50,
+  "pythonpath_prefix": "/ptmp/akalenik/nexus/site",
+  "environment": {
+    "XLA_FLAGS": "--xla_gpu_enable_command_buffer= --xla_gpu_autotune_level=0",
+    "MUJOCO_GL": "disable"
+  },
+  "allowed_groups": [
+    "core",
+    "llm_reference",
+    "llm_pilot",
+    "llm_final"
+  ],
+  "requires_slurm": true,
+  "production_allowed": true
+}

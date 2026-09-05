@@ -1,0 +1,28 @@
+--- local-working/nexus_continuous/policies/common.py
+
++++ origin-main/nexus_continuous/policies/common.py
+
+@@ -62,20 +62,6 @@
+
+             if key in info:
+                 value = jnp.asarray(info[key])
+-                # Squeeze only TRAILING singleton dims, never the leading batch axis.
+-                #
+-                # This used to be a bare `jnp.squeeze`, which is correct for every batch size
+-                # except one. At batch=1 it deleted the batch axis too: panda's `tcp_pos`
+-                # [1, 3] became [3], `_vec_info` then "repaired" it along the wrong axis to
+-                # [3, 1], and `skill_mask` came out [3, 4] for a single environment — which
+-                # surfaced far downstream as `vmap got inconsistent sizes ... action
+-                # float32[3, 8]` when rendering a PandaPickCube rollout.
+-                #
+-                # Training never hit it (1024+ envs, so the batch axis is not a singleton);
+-                # only single-env paths — rendering and per-episode eval — were affected.
+-                # The original intent, stripping trailing singletons off scalar metrics
+-                # stored as [B, 1], is preserved exactly.
+-                while value.ndim > 1 and value.shape[-1] == 1:
+-                    value = value[..., 0]
+-                return value
++                # Some wrappers store scalar metrics with extra trailing singleton dims.
++                return jnp.squeeze(value)
+     return default
+ 

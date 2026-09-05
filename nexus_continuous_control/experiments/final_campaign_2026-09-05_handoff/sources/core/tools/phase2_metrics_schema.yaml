@@ -1,0 +1,93 @@
+# Phase-2 required output schema for the final continuous-control NEXUS handoff.
+# These files must be present under final_research_review/ or phase2_review/.
+required_files:
+  - metrics_long.csv
+  - metrics_wide.csv
+  - final_summary.csv
+  - baseline_comparison.csv
+  - learning_trends.csv
+  - skill_disentanglement.csv
+  - mask_diagnostics.csv
+  - raw_feature_diagnostics.csv
+  - det_eval_summary.csv
+  - det_eval_episodes.csv
+  - task_success_summary.csv
+
+main_environments:
+  - CartpoleBalance
+  - CheetahRun
+  - WalkerWalk
+  - PandaPickCube
+  - Go1JoystickFlatTerrain
+
+dropped_environments:
+  - HopperHop
+
+required_variants:
+  CartpoleBalance: [flat, neural, nesy, symbolic]
+  CheetahRun: [flat, neural, nesy]
+  WalkerWalk: [flat, neural, nesy]
+  PandaPickCube: [flat, neural, nesy, symbolic]
+  Go1JoystickFlatTerrain: [flat, neural, nesy]
+
+required_eval_summary_columns:
+  - env_name
+  - policy
+  - meta_policy_type
+  - seed
+  - eval_seed
+  - num_eval_episodes
+  - episode_return_mean
+  - episode_return_std
+  - episode_length_mean
+  - primary_goal_metric
+  - primary_success_rate
+
+required_eval_task_columns_by_env:
+  CartpoleBalance:
+    - cartpole/upright_fraction
+    - cartpole/centered_fraction
+    - cartpole/angle_abs_mean
+  CheetahRun:
+    - cheetah/forward_velocity_mean
+    - cheetah/speed_success_rate
+    - cheetah/posture_stable_rate
+  WalkerWalk:
+    - walker/stand_success_rate
+    - walker/walk_success_rate
+    - walker/forward_velocity_mean
+  PandaPickCube:
+    - panda/reach_success_rate
+    - panda/closed_near_cube_rate
+    - panda/lift_success_rate
+    - panda/place_success_rate
+    - panda/cube_height_max_mean
+    - panda/cube_height_delta_max_mean
+  Go1JoystickFlatTerrain:
+    - go1/no_fall_rate
+    - go1/tracking_success_rate
+    - go1/velocity_tracking_error_mean
+    - go1/yaw_tracking_error_mean
+
+hard_acceptance_gates:
+  no_missing_runs: true
+  seeds_per_required_variant: 3
+  no_nonfinite_metric_values: true
+  hopper_absent_from_main: true
+  deterministic_eval_present: true
+  source_snapshot_present: true
+  mask_violation_rate_logged: true
+
+research_acceptance_gates:
+  neural_ratio_to_flat:
+    threshold: 0.80
+    required_envs: 4
+  nesy_ratio_to_flat:
+    threshold: 0.70
+    required_envs: 4
+  primary_success_thresholds:
+    CartpoleBalance: 0.60
+    CheetahRun: 0.40
+    WalkerWalk: 0.35
+    PandaPickCube: 0.20
+    Go1JoystickFlatTerrain: 0.35

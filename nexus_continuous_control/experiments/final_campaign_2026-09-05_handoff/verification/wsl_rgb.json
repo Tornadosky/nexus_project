@@ -1,0 +1,415 @@
+{
+  "profile": "wsl_rgb",
+  "source_fingerprint": "29096a3948f70548d3eb5476d196c520bf60ffd68bfc0110b92ec1b407d8d653",
+  "runtime": {
+    "executable": "/home/smirn/nexus_campaign_rgb_venv/bin/python",
+    "packages": {
+      "brax": "0.14.2",
+      "flax": "0.12.7",
+      "jax": "0.10.1",
+      "jaxlib": "0.10.1",
+      "mujoco": "3.9.0",
+      "mujoco-mjx": "3.9.0",
+      "numpy": "2.4.6",
+      "optax": "0.2.8",
+      "playground": "0.2.0",
+      "warp-lang": "1.12.0"
+    },
+    "python": "3.12.13 (main, May 10 2026, 19:30:01) [Clang 22.1.3 ]",
+    "xla_flags": ""
+  },
+  "smoke_training": [
+    {
+      "run_id": "rgb__cartpole__state__s0",
+      "complete": {
+        "smoke": true,
+        "actual_steps": 1024,
+        "final_sha256": "af0272568c44684556a3c3d180510ef4120a59ceb0e6c572fb10571d1ad8c438",
+        "wall_seconds": 34.29023566899923,
+        "loaded": null
+      },
+      "gate": {
+        "source_fingerprint": "29096a3948f70548d3eb5476d196c520bf60ffd68bfc0110b92ec1b407d8d653",
+        "runtime": "{\"executable\": \"/home/smirn/nexus_campaign_rgb_venv/bin/python\", \"packages\": {\"brax\": \"0.14.2\", \"flax\": \"0.12.7\", \"jax\": \"0.10.1\", \"jaxlib\": \"0.10.1\", \"mujoco\": \"3.9.0\", \"mujoco-mjx\": \"3.9.0\", \"numpy\": \"2.4.6\", \"optax\": \"0.2.8\", \"playground\": \"0.2.0\", \"warp-lang\": \"1.12.0\"}, \"python\": \"3.12.13 (main, May 10 2026, 19:30:01) [Clang 22.1.3 ]\", \"xla_flags\": \"\"}",
+        "run_id": "rgb__cartpole__state__s0",
+        "checkpoint": "/home/smirn/nexus_campaign_verified_v2/rgb/rgb__cartpole__state__s0__smoke/final.pkl",
+        "checkpoint_sha256": "af0272568c44684556a3c3d180510ef4120a59ceb0e6c572fb10571d1ad8c438",
+        "full_size_memory_tested": false
+      }
+    },
+    {
+      "run_id": "rgb__cartpole__pixels__s0",
+      "complete": {
+        "smoke": true,
+        "actual_steps": 1024,
+        "final_sha256": "86d67b864b6b8d65618d444fa7ebe7b9534b419c59c0f39a04a88f6bffd90ca3",
+        "wall_seconds": 48.60657680499935,
+        "loaded": null
+      },
+      "gate": {
+        "source_fingerprint": "29096a3948f70548d3eb5476d196c520bf60ffd68bfc0110b92ec1b407d8d653",
+        "runtime": "{\"executable\": \"/home/smirn/nexus_campaign_rgb_venv/bin/python\", \"packages\": {\"brax\": \"0.14.2\", \"flax\": \"0.12.7\", \"jax\": \"0.10.1\", \"jaxlib\": \"0.10.1\", \"mujoco\": \"3.9.0\", \"mujoco-mjx\": \"3.9.0\", \"numpy\": \"2.4.6\", \"optax\": \"0.2.8\", \"playground\": \"0.2.0\", \"warp-lang\": \"1.12.0\"}, \"python\": \"3.12.13 (main, May 10 2026, 19:30:01) [Clang 22.1.3 ]\", \"xla_flags\": \"\"}",
+        "run_id": "rgb__cartpole__pixels__s0",
+        "checkpoint": "/home/smirn/nexus_campaign_verified_v2/rgb/rgb__cartpole__pixels__s0__smoke/final.pkl",
+        "checkpoint_sha256": "86d67b864b6b8d65618d444fa7ebe7b9534b419c59c0f39a04a88f6bffd90ca3",
+        "full_size_memory_tested": false
+      }
+    },
+    {
+      "run_id": "rgb__cartpole__constant__s0",
+      "complete": {
+        "smoke": true,
+        "actual_steps": 1024,
+        "final_sha256": "e9b496bf1e379130343d6e5a3b70da25ccf26070d72a796eff30b4323922ce0b",
+        "wall_seconds": 46.34816662599951,
+        "loaded": null
+      },
+      "gate": {
+        "source_fingerprint": "29096a3948f70548d3eb5476d196c520bf60ffd68bfc0110b92ec1b407d8d653",
+        "runtime": "{\"executable\": \"/home/smirn/nexus_campaign_rgb_venv/bin/python\", \"packages\": {\"brax\": \"0.14.2\", \"flax\": \"0.12.7\", \"jax\": \"0.10.1\", \"jaxlib\": \"0.10.1\", \"mujoco\": \"3.9.0\", \"mujoco-mjx\": \"3.9.0\", \"numpy\": \"2.4.6\", \"optax\": \"0.2.8\", \"playground\": \"0.2.0\", \"warp-lang\": \"1.12.0\"}, \"python\": \"3.12.13 (main, May 10 2026, 19:30:01) [Clang 22.1.3 ]\", \"xla_flags\": \"\"}",
+        "run_id": "rgb__cartpole__constant__s0",
+        "checkpoint": "/home/smirn/nexus_campaign_verified_v2/rgb/rgb__cartpole__constant__s0__smoke/final.pkl",
+        "checkpoint_sha256": "e9b496bf1e379130343d6e5a3b70da25ccf26070d72a796eff30b4323922ce0b",
+        "full_size_memory_tested": false
+      }
+    },
+    {
+      "run_id": "rgb__walker__state__s0",
+      "complete": {
+        "smoke": true,
+        "actual_steps": 1024,
+        "final_sha256": "c5dabec4da2f16da21dec179fa95e810da9ddc664c9ac64167b6f6304ad76b06",
+        "wall_seconds": 36.01450754799953,
+        "loaded": null
+      },
+      "gate": {
+        "source_fingerprint": "29096a3948f70548d3eb5476d196c520bf60ffd68bfc0110b92ec1b407d8d653",
+        "runtime": "{\"executable\": \"/home/smirn/nexus_campaign_rgb_venv/bin/python\", \"packages\": {\"brax\": \"0.14.2\", \"flax\": \"0.12.7\", \"jax\": \"0.10.1\", \"jaxlib\": \"0.10.1\", \"mujoco\": \"3.9.0\", \"mujoco-mjx\": \"3.9.0\", \"numpy\": \"2.4.6\", \"optax\": \"0.2.8\", \"playground\": \"0.2.0\", \"warp-lang\": \"1.12.0\"}, \"python\": \"3.12.13 (main, May 10 2026, 19:30:01) [Clang 22.1.3 ]\", \"xla_flags\": \"\"}",
+        "run_id": "rgb__walker__state__s0",
+        "checkpoint": "/home/smirn/nexus_campaign_verified_v2/rgb/rgb__walker__state__s0__smoke/final.pkl",
+        "checkpoint_sha256": "c5dabec4da2f16da21dec179fa95e810da9ddc664c9ac64167b6f6304ad76b06",
+        "full_size_memory_tested": false
+      }
+    },
+    {
+      "run_id": "rgb__walker__pixels__s0",
+      "complete": {
+        "smoke": true,
+        "actual_steps": 1024,
+        "final_sha256": "4d0d4db4010f5c3de6ccdf4a45b58df8531b72f5ea348ed4a1e76391a996c815",
+        "wall_seconds": 48.37561069500043,
+        "loaded": null
+      },
+      "gate": {
+        "source_fingerprint": "29096a3948f70548d3eb5476d196c520bf60ffd68bfc0110b92ec1b407d8d653",
+        "runtime": "{\"executable\": \"/home/smirn/nexus_campaign_rgb_venv/bin/python\", \"packages\": {\"brax\": \"0.14.2\", \"flax\": \"0.12.7\", \"jax\": \"0.10.1\", \"jaxlib\": \"0.10.1\", \"mujoco\": \"3.9.0\", \"mujoco-mjx\": \"3.9.0\", \"numpy\": \"2.4.6\", \"optax\": \"0.2.8\", \"playground\": \"0.2.0\", \"warp-lang\": \"1.12.0\"}, \"python\": \"3.12.13 (main, May 10 2026, 19:30:01) [Clang 22.1.3 ]\", \"xla_flags\": \"\"}",
+        "run_id": "rgb__walker__pixels__s0",
+        "checkpoint": "/home/smirn/nexus_campaign_verified_v2/rgb/rgb__walker__pixels__s0__smoke/final.pkl",
+        "checkpoint_sha256": "4d0d4db4010f5c3de6ccdf4a45b58df8531b72f5ea348ed4a1e76391a996c815",
+        "full_size_memory_tested": false
+      }
+    },
+    {
+      "run_id": "rgb__walker__constant__s0",
+      "complete": {
+        "smoke": true,
+        "actual_steps": 1024,
+        "final_sha256": "7957ff78093918f4bdcc4ef2a480f50adc8f04a1f1309b065cfc5a9be2b9d3b7",
+        "wall_seconds": 50.53463677500076,
+        "loaded": null
+      },
+      "gate": {
+        "source_fingerprint": "29096a3948f70548d3eb5476d196c520bf60ffd68bfc0110b92ec1b407d8d653",
+        "runtime": "{\"executable\": \"/home/smirn/nexus_campaign_rgb_venv/bin/python\", \"packages\": {\"brax\": \"0.14.2\", \"flax\": \"0.12.7\", \"jax\": \"0.10.1\", \"jaxlib\": \"0.10.1\", \"mujoco\": \"3.9.0\", \"mujoco-mjx\": \"3.9.0\", \"numpy\": \"2.4.6\", \"optax\": \"0.2.8\", \"playground\": \"0.2.0\", \"warp-lang\": \"1.12.0\"}, \"python\": \"3.12.13 (main, May 10 2026, 19:30:01) [Clang 22.1.3 ]\", \"xla_flags\": \"\"}",
+        "run_id": "rgb__walker__constant__s0",
+        "checkpoint": "/home/smirn/nexus_campaign_verified_v2/rgb/rgb__walker__constant__s0__smoke/final.pkl",
+        "checkpoint_sha256": "7957ff78093918f4bdcc4ef2a480f50adc8f04a1f1309b065cfc5a9be2b9d3b7",
+        "full_size_memory_tested": false
+      }
+    }
+  ],
+  "restore_tests": [
+    {
+      "run_id": "rgb__cartpole__state__s0",
+      "evaluation_sha256": "4f907abfc439f3ad2c05aee3111031b8536893c789648d3b1f7bdca272ca840f",
+      "saved_checkpoint": "af0272568c44684556a3c3d180510ef4120a59ceb0e6c572fb10571d1ad8c438",
+      "evaluation_keys": [
+        "actor_input",
+        "actor_uses_pixels",
+        "actor_uses_pixels_strict",
+        "actor_variation_needed",
+        "attribution_note",
+        "conditions_run",
+        "env",
+        "episodes",
+        "eval_pairing_note",
+        "eval_reset_key_formula",
+        "eval_steps",
+        "final_train_return",
+        "meta",
+        "meta_pixels_held_intact",
+        "metric_key",
+        "motion_sensitive",
+        "num_envs",
+        "performance_drop_fraction",
+        "pixel_drop_median",
+        "pixel_drop_min",
+        "results",
+        "rgb_meta_sees_pixels",
+        "rgb_proprio",
+        "rgb_shared_encoder",
+        "sd_convention",
+        "seed",
+        "skipped_conditions",
+        "skipped_conditions_reason",
+        "state_only",
+        "updates",
+        "verdict_caveat"
+      ]
+    },
+    {
+      "run_id": "rgb__cartpole__pixels__s0",
+      "evaluation_sha256": "a7be66d200075132aa72c74757afe67dcc051e504266295688e5bb94906101fa",
+      "saved_checkpoint": "86d67b864b6b8d65618d444fa7ebe7b9534b419c59c0f39a04a88f6bffd90ca3",
+      "evaluation_keys": [
+        "actor_input",
+        "actor_uses_pixels",
+        "actor_uses_pixels_strict",
+        "actor_variation_needed",
+        "attribution_note",
+        "conditions_run",
+        "env",
+        "episodes",
+        "eval_pairing_note",
+        "eval_reset_key_formula",
+        "eval_steps",
+        "final_train_return",
+        "meta",
+        "meta_pixels_held_intact",
+        "metric_key",
+        "motion_sensitive",
+        "num_envs",
+        "performance_drop_fraction",
+        "pixel_drop_median",
+        "pixel_drop_min",
+        "results",
+        "rgb_meta_sees_pixels",
+        "rgb_proprio",
+        "rgb_shared_encoder",
+        "sd_convention",
+        "seed",
+        "skipped_conditions",
+        "skipped_conditions_reason",
+        "state_only",
+        "updates",
+        "verdict_caveat"
+      ]
+    },
+    {
+      "run_id": "rgb__cartpole__constant__s0",
+      "evaluation_sha256": "e123c7318b030d80379e140b0f0681cea77620dc7f045ed4d6441b4403f9bf79",
+      "saved_checkpoint": "e9b496bf1e379130343d6e5a3b70da25ccf26070d72a796eff30b4323922ce0b",
+      "evaluation_keys": [
+        "actor_input",
+        "actor_uses_pixels",
+        "actor_uses_pixels_strict",
+        "actor_variation_needed",
+        "attribution_note",
+        "conditions_run",
+        "env",
+        "episodes",
+        "eval_pairing_note",
+        "eval_reset_key_formula",
+        "eval_steps",
+        "final_train_return",
+        "meta",
+        "meta_pixels_held_intact",
+        "metric_key",
+        "motion_sensitive",
+        "num_envs",
+        "performance_drop_fraction",
+        "pixel_drop_median",
+        "pixel_drop_min",
+        "results",
+        "rgb_meta_sees_pixels",
+        "rgb_proprio",
+        "rgb_shared_encoder",
+        "sd_convention",
+        "seed",
+        "skipped_conditions",
+        "skipped_conditions_reason",
+        "state_only",
+        "updates",
+        "verdict_caveat"
+      ]
+    },
+    {
+      "run_id": "rgb__walker__state__s0",
+      "evaluation_sha256": "fa0f0db69ed67b0f80fd0e0ba9047bb78e5b3912033adbbb0c4e1363d02ab1be",
+      "saved_checkpoint": "c5dabec4da2f16da21dec179fa95e810da9ddc664c9ac64167b6f6304ad76b06",
+      "evaluation_keys": [
+        "actor_input",
+        "actor_uses_pixels",
+        "actor_uses_pixels_strict",
+        "actor_variation_needed",
+        "attribution_note",
+        "conditions_run",
+        "env",
+        "episodes",
+        "eval_pairing_note",
+        "eval_reset_key_formula",
+        "eval_steps",
+        "final_train_return",
+        "meta",
+        "meta_pixels_held_intact",
+        "metric_key",
+        "motion_sensitive",
+        "num_envs",
+        "performance_drop_fraction",
+        "pixel_drop_median",
+        "pixel_drop_min",
+        "results",
+        "rgb_meta_sees_pixels",
+        "rgb_proprio",
+        "rgb_shared_encoder",
+        "sd_convention",
+        "seed",
+        "skipped_conditions",
+        "skipped_conditions_reason",
+        "state_only",
+        "updates",
+        "verdict_caveat"
+      ]
+    },
+    {
+      "run_id": "rgb__walker__pixels__s0",
+      "evaluation_sha256": "2ec73f836e8e68d2be852e97cd02f679d58f7638f3abcac8d2b811873d44041b",
+      "saved_checkpoint": "4d0d4db4010f5c3de6ccdf4a45b58df8531b72f5ea348ed4a1e76391a996c815",
+      "evaluation_keys": [
+        "actor_input",
+        "actor_uses_pixels",
+        "actor_uses_pixels_strict",
+        "actor_variation_needed",
+        "attribution_note",
+        "conditions_run",
+        "env",
+        "episodes",
+        "eval_pairing_note",
+        "eval_reset_key_formula",
+        "eval_steps",
+        "final_train_return",
+        "meta",
+        "meta_pixels_held_intact",
+        "metric_key",
+        "motion_sensitive",
+        "num_envs",
+        "performance_drop_fraction",
+        "pixel_drop_median",
+        "pixel_drop_min",
+        "results",
+        "rgb_meta_sees_pixels",
+        "rgb_proprio",
+        "rgb_shared_encoder",
+        "sd_convention",
+        "seed",
+        "skipped_conditions",
+        "skipped_conditions_reason",
+        "state_only",
+        "updates",
+        "verdict_caveat"
+      ]
+    },
+    {
+      "run_id": "rgb__walker__constant__s0",
+      "evaluation_sha256": "c4d124d9fe9a8dab6d99c3be213bcc1807f045307925426b66f8c55a9af0b3d1",
+      "saved_checkpoint": "7957ff78093918f4bdcc4ef2a480f50adc8f04a1f1309b065cfc5a9be2b9d3b7",
+      "evaluation_keys": [
+        "actor_input",
+        "actor_uses_pixels",
+        "actor_uses_pixels_strict",
+        "actor_variation_needed",
+        "attribution_note",
+        "conditions_run",
+        "env",
+        "episodes",
+        "eval_pairing_note",
+        "eval_reset_key_formula",
+        "eval_steps",
+        "final_train_return",
+        "meta",
+        "meta_pixels_held_intact",
+        "metric_key",
+        "motion_sensitive",
+        "num_envs",
+        "performance_drop_fraction",
+        "pixel_drop_median",
+        "pixel_drop_min",
+        "results",
+        "rgb_meta_sees_pixels",
+        "rgb_proprio",
+        "rgb_shared_encoder",
+        "sd_convention",
+        "seed",
+        "skipped_conditions",
+        "skipped_conditions_reason",
+        "state_only",
+        "updates",
+        "verdict_caveat"
+      ]
+    }
+  ],
+  "capacity": [
+    {
+      "task": "cartpole",
+      "updates": 2,
+      "num_envs": 128,
+      "scientific_sample": false,
+      "wall_seconds": 61.06644687000153,
+      "memory_stats": {
+        "num_allocs": 33697,
+        "bytes_in_use": 69632,
+        "peak_bytes_in_use": 4296982528,
+        "largest_alloc_size": 3223192320,
+        "bytes_limit": 12881362944,
+        "bytes_reserved": 0,
+        "peak_bytes_reserved": 0,
+        "largest_free_block_bytes": 0,
+        "pool_bytes": 6444548096,
+        "peak_pool_bytes": 6444548096
+      }
+    },
+    {
+      "task": "walker",
+      "updates": 2,
+      "num_envs": 128,
+      "scientific_sample": false,
+      "wall_seconds": 60.637575828999616,
+      "memory_stats": {
+        "num_allocs": 35082,
+        "bytes_in_use": 46592,
+        "peak_bytes_in_use": 1342202112,
+        "largest_alloc_size": 1113042432,
+        "bytes_limit": 12881362944,
+        "bytes_reserved": 0,
+        "peak_bytes_reserved": 0,
+        "largest_free_block_bytes": 0,
+        "pool_bytes": 4431282176,
+        "peak_pool_bytes": 4431282176
+      }
+    }
+  ],
+  "model_inference": {
+    "pass_inference": true,
+    "model": "Qwen/Qwen2.5-1.5B-Instruct",
+    "revision": "989aa7980e4cf806f80c7fef2b1adb7bc71aa306",
+    "device": "cpu",
+    "dtype": "float32",
+    "torch": "2.6.0+cpu",
+    "transformers": "4.57.1",
+    "seconds": 3.4543528360009077,
+    "generated_tokens": 8,
+    "scientific_sample": false
+  },
+  "all_required_checks_passed": true,
+  "primary_matrix_training_started": false
+}

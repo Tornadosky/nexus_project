@@ -1,0 +1,7 @@
+{
+  "core": 60,
+  "llm_final": 36,
+  "llm_pilot": 6,
+  "llm_reference": 10,
+  "rgb": 30
+}

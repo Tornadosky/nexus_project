@@ -1,0 +1,19 @@
+{
+  "model": "Qwen/Qwen2.5-1.5B-Instruct",
+  "revision": "989aa7980e4cf806f80c7fef2b1adb7bc71aa306",
+  "local_path": "/home/smirn/nexus_campaign_models/hub/models--Qwen--Qwen2.5-1.5B-Instruct/snapshots/989aa7980e4cf806f80c7fef2b1adb7bc71aa306",
+  "temperature": 0.7,
+  "top_p": 0.9,
+  "max_new_tokens": 4096,
+  "max_syntax_repairs": 2,
+  "device": "cpu",
+  "dtype": "float32",
+  "top_k": 20,
+  "repetition_penalty": 1.1,
+  "generation_environment": {
+    "torch": "2.6.0+cpu",
+    "transformers": "4.57.1",
+    "huggingface-hub": "0.36.0",
+    "accelerate": "1.12.0"
+  }
+}

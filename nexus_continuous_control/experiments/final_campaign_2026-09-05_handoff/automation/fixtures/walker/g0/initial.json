@@ -1,0 +1,48 @@
+{
+  "skills": [
+    {
+      "name": "api_test_0",
+      "activation_rule": "True",
+      "reward_terms": [
+        {
+          "type": "positive_velocity",
+          "weight": 1.0,
+          "lhs": "forward_velocity"
+        }
+      ]
+    },
+    {
+      "name": "api_test_1",
+      "activation_rule": "True",
+      "reward_terms": [
+        {
+          "type": "positive_velocity",
+          "weight": 1.0,
+          "lhs": "forward_velocity"
+        }
+      ]
+    },
+    {
+      "name": "api_test_2",
+      "activation_rule": "True",
+      "reward_terms": [
+        {
+          "type": "positive_velocity",
+          "weight": 1.0,
+          "lhs": "forward_velocity"
+        }
+      ]
+    },
+    {
+      "name": "api_test_3",
+      "activation_rule": "True",
+      "reward_terms": [
+        {
+          "type": "positive_velocity",
+          "weight": 1.0,
+          "lhs": "forward_velocity"
+        }
+      ]
+    }
+  ]
+}
