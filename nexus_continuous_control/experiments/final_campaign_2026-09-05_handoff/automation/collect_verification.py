@@ -6,7 +6,7 @@ sys.path.insert(0,str(ROOT/'scripts'))
 import agent
 from common import digest
 profile=sys.argv[1]
-assert profile in ('viper','wsl_rgb')
+assert profile in ('viper','wsl_core','wsl_rgb')
 p=agent.load_profile(profile)
 base=Path(p['results']); fingerprint=agent.verify_sources()
 runtime=agent.runtime_id(p)
@@ -24,7 +24,7 @@ for ident in ids:
  assert gate['runtime']==runtime
  assert digest(Path(gate['checkpoint']))==gate['checkpoint_sha256']
  report['smoke_training'].append(dict(run_id=ident,complete=complete,gate=gate))
- if profile=='viper':
+ if profile!='wsl_rgb':
   evaluation=base.parent/'release_evaluations'/ident
   tests=json.loads((evaluation/'PASS.json').read_text())
   for item in tests['tests']:
@@ -39,7 +39,10 @@ for ident in ids:
       saved_checkpoint=gate['checkpoint_sha256'],evaluation_keys=sorted(data)))
 capacity=(base.parent/'capacity' if profile=='viper' else
           Path('/home/smirn/nexus_campaign_verified_outputs/capacity'))
-for variant in (('nesy','ppo') if profile=='viper' else ('cartpole','walker')):
+if profile=='wsl_core':
+ capacity=Path('/home/smirn/nexus_campaign_verified_outputs/nvidia_capacity')
+variants = ('nesy','ppo') if profile=='viper' else (('go1_nesy','go1_ppo','hopper_nesy','hopper_ppo') if profile=='wsl_core' else ('cartpole','walker'))
+for variant in variants:
  path=capacity/variant/'PASS.json'
  if not path.exists() and profile=='viper':
   path=capacity/(variant+'_retry')/'PASS.json'

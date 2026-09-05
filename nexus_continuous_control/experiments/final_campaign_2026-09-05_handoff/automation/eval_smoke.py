@@ -3,12 +3,15 @@ import hashlib, json, os, subprocess, sys
 from pathlib import Path
 import numpy as np
 ROOT = Path(__file__).resolve().parents[1]
-if not os.environ.get('SLURM_JOB_ID'):
+profile = os.environ.get('NEXUS_TEST_PROFILE','viper')
+if profile == 'viper' and not os.environ.get('SLURM_JOB_ID'):
     raise SystemExit('Requires a Slurm compute allocation')
 rows = json.loads((ROOT/'plan/matrix.json').read_text())
 row = next(r for r in rows if r['id'] == sys.argv[1])
-base = Path('/ptmp/akalenik/nexus/final_campaign_2026-09-05_verified')
-run = base/'results_release'/(row['id']+'__smoke')
+sys.path.insert(0,str(ROOT/'scripts'))
+import agent
+base = Path(agent.load_profile(profile)['results']).parent
+run = Path(agent.load_profile(profile)['results'])/(row['id']+'__smoke')
 assert json.loads((run/'COMPLETE.json').read_text())['smoke']
 out = base/'release_evaluations'/row['id']
 checks = [('native', run/'final.pkl', [])]

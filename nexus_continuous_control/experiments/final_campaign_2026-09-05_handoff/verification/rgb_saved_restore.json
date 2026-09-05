@@ -1,0 +1,65 @@
+{
+  "tests": [
+    {
+      "run_id": "rgb__cartpole__state__s0",
+      "checkpoint_sha256": "af0272568c44684556a3c3d180510ef4120a59ceb0e6c572fb10571d1ad8c438",
+      "evaluation_sha256": "4f907abfc439f3ad2c05aee3111031b8536893c789648d3b1f7bdca272ca840f",
+      "saved_policy_restored": true,
+      "training_executed": false
+    },
+    {
+      "run_id": "rgb__cartpole__pixels__s0",
+      "checkpoint_sha256": "fe5e2d9efe590b98dece669390f2f6a6fc74421e173bf3b6c9ce081c9c004480",
+      "evaluation_sha256": "05bcfaaebbc4bf7bdf73cb807d8648afd164b74fd0281b4fb3ed94b843ffefc8",
+      "saved_policy_restored": true,
+      "training_executed": false
+    },
+    {
+      "run_id": "rgb__cartpole__constant__s0",
+      "checkpoint_sha256": "e9b496bf1e379130343d6e5a3b70da25ccf26070d72a796eff30b4323922ce0b",
+      "evaluation_sha256": "e123c7318b030d80379e140b0f0681cea77620dc7f045ed4d6441b4403f9bf79",
+      "saved_policy_restored": true,
+      "training_executed": false
+    },
+    {
+      "run_id": "rgb__walker__state__s0",
+      "checkpoint_sha256": "1e6190bc9501175353ea7c089219bad96a0c40ad56d9be5d90b64c173f8915ba",
+      "evaluation_sha256": "72ef79532748e685eaa079aae01954e4a397003b179a384911bcee79e33ce9d4",
+      "saved_policy_restored": true,
+      "training_executed": false
+    },
+    {
+      "run_id": "rgb__walker__pixels__s0",
+      "checkpoint_sha256": "5631e6c873c2c8274be8dd2110d12a12e5338c037a21ebfe300868c3744b2f29",
+      "evaluation_sha256": "6df0a4c495492ba7044ad26b0a72d511c2399d0fdcd695f1a1c2fb9906535b5e",
+      "saved_policy_restored": true,
+      "training_executed": false
+    },
+    {
+      "run_id": "rgb__walker__constant__s0",
+      "checkpoint_sha256": "6a5bfdb8003ee823036164c429132cc6df3ea1a7b33ac3fdc9645db79da80717",
+      "evaluation_sha256": "7e99384dafa598ffd65b686aa02f9682de1a739083c8a3508a5cefd4dfe08ec8",
+      "saved_policy_restored": true,
+      "training_executed": false
+    }
+  ],
+  "source_fingerprint": "42cd15023387070bb369cdac82ca4790ee5cb84be584f9f3399ffd7ded3fe387",
+  "runtime": {
+    "executable": "/home/smirn/nexus_campaign_rgb_venv/bin/python",
+    "packages": {
+      "brax": "0.14.2",
+      "flax": "0.12.7",
+      "jax": "0.10.1",
+      "jaxlib": "0.10.1",
+      "mujoco": "3.9.0",
+      "mujoco-mjx": "3.9.0",
+      "numpy": "2.4.6",
+      "optax": "0.2.8",
+      "playground": "0.2.0",
+      "warp-lang": "1.12.0"
+    },
+    "python": "3.12.13 (main, May 10 2026, 19:30:01) [Clang 22.1.3 ]",
+    "xla_flags": ""
+  },
+  "training_executed": false
+}

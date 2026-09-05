@@ -1,0 +1,57 @@
+{
+  "tests": [
+    {
+      "task": "hopper",
+      "evidence_path": "/mnt/d/nexus_final_campaign_2026-09-05/media_smoke/core__hopper__nesy__s0",
+      "receipt": {
+        "identity": {
+          "checkpoint_sha256": "6027ed902e9b07b0055cfbbe37c37dc97c39e34d5dca2587b8d42b18bec89b95",
+          "seed": 41000,
+          "requested_steps": 4,
+          "smoke": true
+        },
+        "frames_recorded": 4,
+        "selected_frame_steps": [
+          0
+        ],
+        "image_selection": "first frame, then first ambiguous decisions at least 60 steps apart, at most four",
+        "rendered_state_timing": "after the recorded selected action",
+        "training_executed": false,
+        "files": {
+          "decisions.json": "717d2cd130fd1feb672afc61bb3b40284b7e0735af476ce4c6911a114081c983",
+          "frame_0000.png": "6bbc4769cdf615b626999fd760eb3d0c87e6542316758a2719f6d77269d0c23d",
+          "rollout.json": "c2cfc7b0dfb4ce8967fcb58e8ac9a9a678dfe85a39d027a64457d8f3de6a498d",
+          "rollout.mp4": "0252dd0cd11e13b5d9477eea2065bd4023be816fec53ebdb6ecfb295b3420250",
+          "rollout_skills.png": "036d70f6647a633e9bac820b41af644433e8a58b4c15e479b1df2b4d50f6297f"
+        }
+      }
+    },
+    {
+      "task": "go1",
+      "evidence_path": "/mnt/d/nexus_final_campaign_2026-09-05/media_smoke/core__go1__nesy__s0",
+      "receipt": {
+        "identity": {
+          "checkpoint_sha256": "25f7875ac81d32cb5db8c604bc5d9d94adac05318a4ed9206595388b5e19fe4d",
+          "seed": 41000,
+          "requested_steps": 4,
+          "smoke": true
+        },
+        "frames_recorded": 4,
+        "selected_frame_steps": [
+          0
+        ],
+        "image_selection": "first frame, then first ambiguous decisions at least 60 steps apart, at most four",
+        "rendered_state_timing": "after the recorded selected action",
+        "training_executed": false,
+        "files": {
+          "decisions.json": "74f1587925575c82d95eb98d604b0e3e43082336c6939e984d65972137598300",
+          "frame_0000.png": "e7aa523ffb89bad30d9813f4457f9707cd6e801fb208c7ff2850a8867001b21a",
+          "rollout.json": "ee3c614ac265bc9d22fca77fb758c72707e1261f7a69a26a98b495dc79c36cdf",
+          "rollout.mp4": "38ada1d936b81c13bd091ae4d6314fc2090bc620a7f391a2b46ce449938e82d2",
+          "rollout_skills.png": "238b429e97b17cecdb7ef66d13eed498e57122b0421de931d21e3eabc22b0578"
+        }
+      }
+    }
+  ],
+  "training_executed": false
+}

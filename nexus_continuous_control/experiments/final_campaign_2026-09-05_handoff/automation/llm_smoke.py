@@ -5,7 +5,8 @@ ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / 'scripts'))
 import agent
 from llm_specs import validate
-if not os.environ.get('SLURM_JOB_ID'):
+test_profile = os.environ.get('NEXUS_TEST_PROFILE','viper')
+if test_profile == 'viper' and not os.environ.get('SLURM_JOB_ID'):
     raise SystemExit('Requires a Slurm compute allocation')
 row_id = sys.argv[1]
 rows = json.loads((ROOT / 'plan/matrix.json').read_text())
@@ -29,6 +30,6 @@ def profile(name):
     result['specs'] = str(fixture_root)
     return result
 agent.load_profile = profile
-sys.argv = ['agent.py', 'run', '--profile', 'viper', '--id', row_id,
+sys.argv = ['agent.py', 'run', '--profile', test_profile, '--id', row_id,
             '--smoke', '--execute']
 agent.main()

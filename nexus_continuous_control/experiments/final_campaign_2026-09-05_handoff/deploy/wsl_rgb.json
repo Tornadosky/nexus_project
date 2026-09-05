@@ -8,7 +8,8 @@
   "min_free_gib": 12,
   "pythonpath_prefix": "",
   "environment": {
-    "MUJOCO_GL": "egl"
+    "MUJOCO_GL": "egl",
+    "XLA_FLAGS": ""
   },
   "requires_slurm": false,
   "allowed_groups": [

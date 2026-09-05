@@ -1,0 +1,19 @@
+{
+  "production_ready": true,
+  "scope": "Inspected NVIDIA machine; Viper primary training is disabled",
+  "source_fingerprint": "42cd15023387070bb369cdac82ca4790ee5cb84be584f9f3399ffd7ded3fe387",
+  "primary_matrix_training_started": false,
+  "maximum_primary_training_runs": 142,
+  "smoke_training_families": 22,
+  "production_shape_capacity_tests": 6,
+  "saved_core_evaluation_cases": 50,
+  "saved_rgb_policy_reload_tests": 6,
+  "real_simulation_media_tests": 2,
+  "proof_sha256": {
+    "verification/wsl_core.json": "109a74f5cb82a83050664ee96259d2d277a603946c22df7d0638836023de7fc5",
+    "verification/wsl_rgb.json": "fe5e3a1e7f0f3e5dbfb141ad1681b9a9db3e243337dbf3a9d09fe86a3b4a393e",
+    "verification/rgb_saved_restore.json": "f1cb5feef3077787f896a158db20bc31b063ff1bca98ea1cac01487ccf7ae098",
+    "verification/media_smoke.json": "5af17b1a70175896941b7cb84a40f8b40e4fa49cecdb9ab0b129ed44ba5e5999"
+  },
+  "created_utc": "2026-09-05T20:16:50.145713+00:00"
+}

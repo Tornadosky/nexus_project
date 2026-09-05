@@ -17,5 +17,6 @@
     "llm_final"
   ],
   "requires_slurm": true,
-  "production_allowed": true
+  "production_allowed": false,
+  "primary_campaign_role": "backup_only: full-batch ROCm capacity failed"
 }

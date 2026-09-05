@@ -1,6 +1,6 @@
 {
   "profile": "wsl_rgb",
-  "source_fingerprint": "42cd15023387070bb369cdac82ca4790ee5cb84be584f9f3399ffd7ded3fe387",
+  "source_fingerprint": "29096a3948f70548d3eb5476d196c520bf60ffd68bfc0110b92ec1b407d8d653",
   "runtime": {
     "executable": "/home/smirn/nexus_campaign_rgb_venv/bin/python",
     "packages": {
@@ -25,14 +25,14 @@
         "smoke": true,
         "actual_steps": 1024,
         "final_sha256": "af0272568c44684556a3c3d180510ef4120a59ceb0e6c572fb10571d1ad8c438",
-        "wall_seconds": 27.29478025499884,
+        "wall_seconds": 34.29023566899923,
         "loaded": null
       },
       "gate": {
-        "source_fingerprint": "42cd15023387070bb369cdac82ca4790ee5cb84be584f9f3399ffd7ded3fe387",
+        "source_fingerprint": "29096a3948f70548d3eb5476d196c520bf60ffd68bfc0110b92ec1b407d8d653",
         "runtime": "{\"executable\": \"/home/smirn/nexus_campaign_rgb_venv/bin/python\", \"packages\": {\"brax\": \"0.14.2\", \"flax\": \"0.12.7\", \"jax\": \"0.10.1\", \"jaxlib\": \"0.10.1\", \"mujoco\": \"3.9.0\", \"mujoco-mjx\": \"3.9.0\", \"numpy\": \"2.4.6\", \"optax\": \"0.2.8\", \"playground\": \"0.2.0\", \"warp-lang\": \"1.12.0\"}, \"python\": \"3.12.13 (main, May 10 2026, 19:30:01) [Clang 22.1.3 ]\", \"xla_flags\": \"\"}",
         "run_id": "rgb__cartpole__state__s0",
-        "checkpoint": "/home/smirn/nexus_campaign_verified_v2/rgb_release/rgb__cartpole__state__s0__smoke/final.pkl",
+        "checkpoint": "/home/smirn/nexus_campaign_verified_v2/rgb/rgb__cartpole__state__s0__smoke/final.pkl",
         "checkpoint_sha256": "af0272568c44684556a3c3d180510ef4120a59ceb0e6c572fb10571d1ad8c438",
         "full_size_memory_tested": false
       }
@@ -42,16 +42,16 @@
       "complete": {
         "smoke": true,
         "actual_steps": 1024,
-        "final_sha256": "fe5e2d9efe590b98dece669390f2f6a6fc74421e173bf3b6c9ce081c9c004480",
-        "wall_seconds": 36.84062474100028,
+        "final_sha256": "86d67b864b6b8d65618d444fa7ebe7b9534b419c59c0f39a04a88f6bffd90ca3",
+        "wall_seconds": 48.60657680499935,
         "loaded": null
       },
       "gate": {
-        "source_fingerprint": "42cd15023387070bb369cdac82ca4790ee5cb84be584f9f3399ffd7ded3fe387",
+        "source_fingerprint": "29096a3948f70548d3eb5476d196c520bf60ffd68bfc0110b92ec1b407d8d653",
         "runtime": "{\"executable\": \"/home/smirn/nexus_campaign_rgb_venv/bin/python\", \"packages\": {\"brax\": \"0.14.2\", \"flax\": \"0.12.7\", \"jax\": \"0.10.1\", \"jaxlib\": \"0.10.1\", \"mujoco\": \"3.9.0\", \"mujoco-mjx\": \"3.9.0\", \"numpy\": \"2.4.6\", \"optax\": \"0.2.8\", \"playground\": \"0.2.0\", \"warp-lang\": \"1.12.0\"}, \"python\": \"3.12.13 (main, May 10 2026, 19:30:01) [Clang 22.1.3 ]\", \"xla_flags\": \"\"}",
         "run_id": "rgb__cartpole__pixels__s0",
-        "checkpoint": "/home/smirn/nexus_campaign_verified_v2/rgb_release/rgb__cartpole__pixels__s0__smoke/final.pkl",
-        "checkpoint_sha256": "fe5e2d9efe590b98dece669390f2f6a6fc74421e173bf3b6c9ce081c9c004480",
+        "checkpoint": "/home/smirn/nexus_campaign_verified_v2/rgb/rgb__cartpole__pixels__s0__smoke/final.pkl",
+        "checkpoint_sha256": "86d67b864b6b8d65618d444fa7ebe7b9534b419c59c0f39a04a88f6bffd90ca3",
         "full_size_memory_tested": false
       }
     },
@@ -61,14 +61,14 @@
         "smoke": true,
         "actual_steps": 1024,
         "final_sha256": "e9b496bf1e379130343d6e5a3b70da25ccf26070d72a796eff30b4323922ce0b",
-        "wall_seconds": 35.87835161200019,
+        "wall_seconds": 46.34816662599951,
         "loaded": null
       },
       "gate": {
-        "source_fingerprint": "42cd15023387070bb369cdac82ca4790ee5cb84be584f9f3399ffd7ded3fe387",
+        "source_fingerprint": "29096a3948f70548d3eb5476d196c520bf60ffd68bfc0110b92ec1b407d8d653",
         "runtime": "{\"executable\": \"/home/smirn/nexus_campaign_rgb_venv/bin/python\", \"packages\": {\"brax\": \"0.14.2\", \"flax\": \"0.12.7\", \"jax\": \"0.10.1\", \"jaxlib\": \"0.10.1\", \"mujoco\": \"3.9.0\", \"mujoco-mjx\": \"3.9.0\", \"numpy\": \"2.4.6\", \"optax\": \"0.2.8\", \"playground\": \"0.2.0\", \"warp-lang\": \"1.12.0\"}, \"python\": \"3.12.13 (main, May 10 2026, 19:30:01) [Clang 22.1.3 ]\", \"xla_flags\": \"\"}",
         "run_id": "rgb__cartpole__constant__s0",
-        "checkpoint": "/home/smirn/nexus_campaign_verified_v2/rgb_release/rgb__cartpole__constant__s0__smoke/final.pkl",
+        "checkpoint": "/home/smirn/nexus_campaign_verified_v2/rgb/rgb__cartpole__constant__s0__smoke/final.pkl",
         "checkpoint_sha256": "e9b496bf1e379130343d6e5a3b70da25ccf26070d72a796eff30b4323922ce0b",
         "full_size_memory_tested": false
       }
@@ -78,16 +78,16 @@
       "complete": {
         "smoke": true,
         "actual_steps": 1024,
-        "final_sha256": "1e6190bc9501175353ea7c089219bad96a0c40ad56d9be5d90b64c173f8915ba",
-        "wall_seconds": 27.933347272999526,
+        "final_sha256": "c5dabec4da2f16da21dec179fa95e810da9ddc664c9ac64167b6f6304ad76b06",
+        "wall_seconds": 36.01450754799953,
         "loaded": null
       },
       "gate": {
-        "source_fingerprint": "42cd15023387070bb369cdac82ca4790ee5cb84be584f9f3399ffd7ded3fe387",
+        "source_fingerprint": "29096a3948f70548d3eb5476d196c520bf60ffd68bfc0110b92ec1b407d8d653",
         "runtime": "{\"executable\": \"/home/smirn/nexus_campaign_rgb_venv/bin/python\", \"packages\": {\"brax\": \"0.14.2\", \"flax\": \"0.12.7\", \"jax\": \"0.10.1\", \"jaxlib\": \"0.10.1\", \"mujoco\": \"3.9.0\", \"mujoco-mjx\": \"3.9.0\", \"numpy\": \"2.4.6\", \"optax\": \"0.2.8\", \"playground\": \"0.2.0\", \"warp-lang\": \"1.12.0\"}, \"python\": \"3.12.13 (main, May 10 2026, 19:30:01) [Clang 22.1.3 ]\", \"xla_flags\": \"\"}",
         "run_id": "rgb__walker__state__s0",
-        "checkpoint": "/home/smirn/nexus_campaign_verified_v2/rgb_release/rgb__walker__state__s0__smoke/final.pkl",
-        "checkpoint_sha256": "1e6190bc9501175353ea7c089219bad96a0c40ad56d9be5d90b64c173f8915ba",
+        "checkpoint": "/home/smirn/nexus_campaign_verified_v2/rgb/rgb__walker__state__s0__smoke/final.pkl",
+        "checkpoint_sha256": "c5dabec4da2f16da21dec179fa95e810da9ddc664c9ac64167b6f6304ad76b06",
         "full_size_memory_tested": false
       }
     },
@@ -96,16 +96,16 @@
       "complete": {
         "smoke": true,
         "actual_steps": 1024,
-        "final_sha256": "5631e6c873c2c8274be8dd2110d12a12e5338c037a21ebfe300868c3744b2f29",
-        "wall_seconds": 40.182963309000115,
+        "final_sha256": "4d0d4db4010f5c3de6ccdf4a45b58df8531b72f5ea348ed4a1e76391a996c815",
+        "wall_seconds": 48.37561069500043,
         "loaded": null
       },
       "gate": {
-        "source_fingerprint": "42cd15023387070bb369cdac82ca4790ee5cb84be584f9f3399ffd7ded3fe387",
+        "source_fingerprint": "29096a3948f70548d3eb5476d196c520bf60ffd68bfc0110b92ec1b407d8d653",
         "runtime": "{\"executable\": \"/home/smirn/nexus_campaign_rgb_venv/bin/python\", \"packages\": {\"brax\": \"0.14.2\", \"flax\": \"0.12.7\", \"jax\": \"0.10.1\", \"jaxlib\": \"0.10.1\", \"mujoco\": \"3.9.0\", \"mujoco-mjx\": \"3.9.0\", \"numpy\": \"2.4.6\", \"optax\": \"0.2.8\", \"playground\": \"0.2.0\", \"warp-lang\": \"1.12.0\"}, \"python\": \"3.12.13 (main, May 10 2026, 19:30:01) [Clang 22.1.3 ]\", \"xla_flags\": \"\"}",
         "run_id": "rgb__walker__pixels__s0",
-        "checkpoint": "/home/smirn/nexus_campaign_verified_v2/rgb_release/rgb__walker__pixels__s0__smoke/final.pkl",
-        "checkpoint_sha256": "5631e6c873c2c8274be8dd2110d12a12e5338c037a21ebfe300868c3744b2f29",
+        "checkpoint": "/home/smirn/nexus_campaign_verified_v2/rgb/rgb__walker__pixels__s0__smoke/final.pkl",
+        "checkpoint_sha256": "4d0d4db4010f5c3de6ccdf4a45b58df8531b72f5ea348ed4a1e76391a996c815",
         "full_size_memory_tested": false
       }
     },
@@ -114,16 +114,16 @@
       "complete": {
         "smoke": true,
         "actual_steps": 1024,
-        "final_sha256": "6a5bfdb8003ee823036164c429132cc6df3ea1a7b33ac3fdc9645db79da80717",
-        "wall_seconds": 38.3416755599992,
+        "final_sha256": "7957ff78093918f4bdcc4ef2a480f50adc8f04a1f1309b065cfc5a9be2b9d3b7",
+        "wall_seconds": 50.53463677500076,
         "loaded": null
       },
       "gate": {
-        "source_fingerprint": "42cd15023387070bb369cdac82ca4790ee5cb84be584f9f3399ffd7ded3fe387",
+        "source_fingerprint": "29096a3948f70548d3eb5476d196c520bf60ffd68bfc0110b92ec1b407d8d653",
         "runtime": "{\"executable\": \"/home/smirn/nexus_campaign_rgb_venv/bin/python\", \"packages\": {\"brax\": \"0.14.2\", \"flax\": \"0.12.7\", \"jax\": \"0.10.1\", \"jaxlib\": \"0.10.1\", \"mujoco\": \"3.9.0\", \"mujoco-mjx\": \"3.9.0\", \"numpy\": \"2.4.6\", \"optax\": \"0.2.8\", \"playground\": \"0.2.0\", \"warp-lang\": \"1.12.0\"}, \"python\": \"3.12.13 (main, May 10 2026, 19:30:01) [Clang 22.1.3 ]\", \"xla_flags\": \"\"}",
         "run_id": "rgb__walker__constant__s0",
-        "checkpoint": "/home/smirn/nexus_campaign_verified_v2/rgb_release/rgb__walker__constant__s0__smoke/final.pkl",
-        "checkpoint_sha256": "6a5bfdb8003ee823036164c429132cc6df3ea1a7b33ac3fdc9645db79da80717",
+        "checkpoint": "/home/smirn/nexus_campaign_verified_v2/rgb/rgb__walker__constant__s0__smoke/final.pkl",
+        "checkpoint_sha256": "7957ff78093918f4bdcc4ef2a480f50adc8f04a1f1309b065cfc5a9be2b9d3b7",
         "full_size_memory_tested": false
       }
     }
@@ -169,8 +169,8 @@
     },
     {
       "run_id": "rgb__cartpole__pixels__s0",
-      "evaluation_sha256": "05bcfaaebbc4bf7bdf73cb807d8648afd164b74fd0281b4fb3ed94b843ffefc8",
-      "saved_checkpoint": "fe5e2d9efe590b98dece669390f2f6a6fc74421e173bf3b6c9ce081c9c004480",
+      "evaluation_sha256": "a7be66d200075132aa72c74757afe67dcc051e504266295688e5bb94906101fa",
+      "saved_checkpoint": "86d67b864b6b8d65618d444fa7ebe7b9534b419c59c0f39a04a88f6bffd90ca3",
       "evaluation_keys": [
         "actor_input",
         "actor_uses_pixels",
@@ -245,8 +245,8 @@
     },
     {
       "run_id": "rgb__walker__state__s0",
-      "evaluation_sha256": "72ef79532748e685eaa079aae01954e4a397003b179a384911bcee79e33ce9d4",
-      "saved_checkpoint": "1e6190bc9501175353ea7c089219bad96a0c40ad56d9be5d90b64c173f8915ba",
+      "evaluation_sha256": "fa0f0db69ed67b0f80fd0e0ba9047bb78e5b3912033adbbb0c4e1363d02ab1be",
+      "saved_checkpoint": "c5dabec4da2f16da21dec179fa95e810da9ddc664c9ac64167b6f6304ad76b06",
       "evaluation_keys": [
         "actor_input",
         "actor_uses_pixels",
@@ -283,8 +283,8 @@
     },
     {
       "run_id": "rgb__walker__pixels__s0",
-      "evaluation_sha256": "6df0a4c495492ba7044ad26b0a72d511c2399d0fdcd695f1a1c2fb9906535b5e",
-      "saved_checkpoint": "5631e6c873c2c8274be8dd2110d12a12e5338c037a21ebfe300868c3744b2f29",
+      "evaluation_sha256": "2ec73f836e8e68d2be852e97cd02f679d58f7638f3abcac8d2b811873d44041b",
+      "saved_checkpoint": "4d0d4db4010f5c3de6ccdf4a45b58df8531b72f5ea348ed4a1e76391a996c815",
       "evaluation_keys": [
         "actor_input",
         "actor_uses_pixels",
@@ -321,8 +321,8 @@
     },
     {
       "run_id": "rgb__walker__constant__s0",
-      "evaluation_sha256": "7e99384dafa598ffd65b686aa02f9682de1a739083c8a3508a5cefd4dfe08ec8",
-      "saved_checkpoint": "6a5bfdb8003ee823036164c429132cc6df3ea1a7b33ac3fdc9645db79da80717",
+      "evaluation_sha256": "c4d124d9fe9a8dab6d99c3be213bcc1807f045307925426b66f8c55a9af0b3d1",
+      "saved_checkpoint": "7957ff78093918f4bdcc4ef2a480f50adc8f04a1f1309b065cfc5a9be2b9d3b7",
       "evaluation_keys": [
         "actor_input",
         "actor_uses_pixels",
@@ -376,8 +376,7 @@
         "largest_free_block_bytes": 0,
         "pool_bytes": 6444548096,
         "peak_pool_bytes": 6444548096
-      },
-      "evidence_path": "/home/smirn/nexus_campaign_verified_outputs/capacity/cartpole/PASS.json"
+      }
     },
     {
       "task": "walker",
@@ -396,8 +395,7 @@
         "largest_free_block_bytes": 0,
         "pool_bytes": 4431282176,
         "peak_pool_bytes": 4431282176
-      },
-      "evidence_path": "/home/smirn/nexus_campaign_verified_outputs/capacity/walker/PASS.json"
+      }
     }
   ],
   "model_inference": {

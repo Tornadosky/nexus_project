@@ -1,17 +1,13 @@
 {
   "python": "/mnt/c/Users/smirn/VSCodeProjects/nexus_project/nexus_continuous_control/.venv-wsl312/bin/python",
-  "results": "/mnt/d/nexus_final_campaign_2026-09-05/results",
-  "evidence": "/mnt/d/nexus_final_campaign_2026-09-05/evidence",
+  "results": "/home/smirn/nexus_campaign_results_2026-09-05",
+  "evidence": "/home/smirn/nexus_campaign_evidence_2026-09-05",
   "specs": "/home/smirn/nexus_campaign_specs_2026-09-05",
   "gpu_lock": "/tmp/nexus_local_gpu.lock",
-  "capacity_check_path": "/mnt/d",
-  "min_free_gib": 20,
+  "capacity_check_path": "/mnt/c",
+  "min_free_gib": 50,
   "pythonpath_prefix": "",
-  "environment": {
-    "MUJOCO_GL": "disable",
-    "XLA_FLAGS": "--xla_gpu_enable_command_buffer=",
-    "OMP_NUM_THREADS": "8"
-  },
+  "environment": {},
   "requires_slurm": false,
   "allowed_groups": [
     "core",
@@ -19,5 +15,5 @@
     "llm_pilot",
     "llm_final"
   ],
-  "production_allowed": true
+  "production_allowed": false
 }

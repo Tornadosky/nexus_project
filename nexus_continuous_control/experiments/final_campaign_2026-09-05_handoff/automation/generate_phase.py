@@ -10,7 +10,7 @@ fcntl.flock(mutex,fcntl.LOCK_EX|fcntl.LOCK_NB)
 phase=sys.argv[1]
 assert phase in ('initial','resample','refined')
 base=Path('/home/smirn/nexus_campaign_specs_2026-09-05')
-evidence=Path('/home/smirn/nexus_campaign_evidence_2026-09-05')
+evidence=Path('/mnt/d/nexus_final_campaign_2026-09-05/evidence')
 lock=base/'model_lock.json'
 model=json.loads(lock.read_text())
 pin=json.loads((ROOT/'deploy/model_pin.json').read_text())

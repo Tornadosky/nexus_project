@@ -1,41 +1,26 @@
-# Coding-agent handoff — finish installation, then run the fixed campaign
+# Coding-agent handoff
 
-## Read this first
-
-The live audit was completed through Remote Desktop Commander, but deployment was interrupted by two blocked connector operations. **Do not launch from the partial directory** `nexus_continuous_control/experiments/final_campaign_2026-09-05`. Its `INSTALLING` guard remains intentionally. Do not retry blocked connector operations through another access path.
-
-Use this portable handoff for a fresh, authorized local installation in the sibling `nexus_continuous_control/experiments/final_campaign_2026-09-05_handoff`. It includes all campaign code/configurations but deliberately does not claim to include a recovered live source tree. Follow `docs/RUNBOOK.md` in order. No training has been run as part of the audit.
+Open the WSL Ubuntu worktree `/home/smirn/nexus_project_final` on `campaign/final-matrix-2026-09-05`.
+The active package is `nexus_continuous_control/experiments/final_campaign_2026-09-05_handoff`.
+Do not continue from the original Windows checkout or the old guarded partial installation.
 
 ## Assignment
 
-Preserve the user's dirty repository, every old checkpoint, all partial outputs, and the raw audit at `/home/smirn/nexus_campaign_audit_2026-09-05_16-08`. No `git pull`, `reset`, `clean`, checkout, merge, dependency upgrade, old-run deletion, or force push is authorized by this handoff. Source freeze uses the actual working core and RGB Git object `7557d5d…` without switching branches. The working HEAD must still be `0a8a161…`, and six critical file hashes must match.
+Execute the complete sequence in `docs/RUNBOOK.md`, after checking `READY.json` and `SHA256SUMS.txt`. All actual training/evaluation parameters are already in `plan/` and the worker scripts. Do not design more experiments or retune an underperforming method.
+Use `bash RUN_ALL.sh --execute` for the complete fixed sequence, or `RUN_MATRIX.sh <phase> --execute` for an individual phase. Without the explicit argument, either entry point only prints the plan. The controller is a thin sequential wrapper over the same tested phase commands.
+The maximum is 142 production training rows. Readiness/smoke/capacity runs are not part of those rows or the paper.
+All core/LLM primary training and their common evaluations use the verified NVIDIA/MuJoCo 3.9 environment. RGB uses its isolated Warp 1.12 environment. Viper is backup-only after reproducible full-batch ROCm failures. The 5080 is not required.
 
-Finish code-only installation checks first. They verify source integrity and exact regeneration of all 142 run configurations. They do not establish GPU training/rendering/restore compatibility. Use the recorded working interpreter, not system Python or the old home-directory venv.
+## Preserve evidence
 
-The source/API probes started during the audit have **unread results**. Do not treat them as passes. Run fresh, uniquely named checks after installing. Resolve any compatibility problem before allocating the full campaign. Record each change, failing test, corrected file, and rerun validation; do not silently edit an accepted frozen source tree or reuse an old smoke receipt.
+Never delete a partial run, replace an unsuccessful seed/specification, edit the source manifest to bypass an error, or mix old endpoint runs into the new curve cohort.
+Generation may produce a bounded validation failure. `select_executable.py` records that outcome and excludes only its dependent training cells. It must not trigger another unplanned proposal.
+Use the pilot validation summaries for refinement. Do not feed final-test results back into the LLM.
+Check actual snapshot budgets and completion hashes. Keep the explicit per-episode tables, raw LLM proposals/repair histories, and intact/corrupted image evaluations.
+Run the backup phase after major stages as well as at the end. It does not delete either source or destination data.
 
-All 112 non-RGB primary training rows belong on Viper using the new frozen source and the existing ROCm environment/site overlay. The legacy Viper code tree is not current and lacks the PPO launcher. Do not overwrite it. WSL core is smoke/debug only. All 30 RGB rows must share one verified NVIDIA rendering environment. The 5080 is unverified and not assigned work automatically.
+## Completion
 
-Resolve physical storage before local RGB production. The project volume had only about 30 GB free. The 50 GiB guard is deliberately conservative; bypassing it without verifying the actual output/VHD backing volume is not a fix. Check Viper project allocation and user quota separately from filesystem capacity.
-
-There is no verified LLM-generation environment. Torch, Transformers, and Hugging Face Hub were absent from the core venv; Accelerate was not checked. Prepare/verify a separate environment as a bounded setup task, preserving the existing RL environment. Pin the selected environment and exact model revision before generating proposals. Do not claim these missing setup choices were tested by the assistant.
-
-## Acceptance before production
-
-Run one smoke for every core task/method path, both reference task paths, both generated-policy paths, and all six RGB task/input paths. Check saved initial/intermediate/final weights, exact steps, finite outputs, normalization, common-evaluator restoration, actor deletion/selection, zero-command override, and actual camera/constant-image behavior. The smoke receipts enforce training-path checks; their existence does not replace inspection of evaluation/rendering results.
-
-The first full-size production row for each distinct resource-heavy path supplies production memory/timing evidence and counts toward the 142 rows. Preserve its full budget/schedule. Release the remaining rows only after those checks; no scientific sweep is allowed. The production wall-time request is 24 hours, not a prediction. Intermediate snapshots are evaluation-only and cannot resume timed-out optimization.
-
-No old primary run is approved for substitution. The 913-file audit found 907 weighted files and six metrics-only files; no matching verified core counters or RGB weights were located. Old weights can be considered for supplemental diagnostics only with their original provenance, not used to manufacture missing new learning curves.
-
-## Fixed experiment scope
-
-60 core + 10 LLM references + 6 LLM pilots + 36 final LLM runs + 30 RGB = 142 maximum new runs. Keep the seeds, budgets, methods, proposal families, metric definitions, and comparisons in `docs/PROTOCOL.md` and `plan/matrix.json`. Run the checkpoint-only `curves`, `probes`, `shifts`, `pilot`, and `llm` suites. LLM refinement receives pilot validation metrics only, not final-test outcomes. RGB reports fixed-window return, not first-episode return.
-
-Do not tune after seeing favorable or unfavorable results. A bounded LLM generation failure is a recorded failure, not permission for replacement sampling. After this fixed campaign, stop training and produce the paper figures/statistics, contribution and LLM-use disclosures, final text, and a separately reviewed minimal upstream PR.
-
-## Required agent completion report
-
-Report exact package/source hashes, actual interpreter paths/versions, all smoke/evaluation check results, storage/quota resolution, a per-row completed/failed/missing manifest, actual step counts, reused artifacts with proofs, failed infrastructure attempts, and remaining limitations. Do not report “fully wired” or “paper ready” merely because a launcher exists.
-
-All commands are included in `docs/RUNBOOK.md`; full code and configuration listings are in `ALL_CODE.md`.
+Deliver the trained matrix and declared checkpoint evaluations, a table of any recorded invalid-generation cells, actual compute times, and the fixed figure ingredients. Research conclusions follow the observations, not readiness test scores.
+Final figure composition, student-authored analysis, contribution/LLM-use statements, and paper editing remain report work, not additional training.
+The full executable source/configuration text is in `ALL_CODE.md`; the final archive and Git branch preserve the exact release.
