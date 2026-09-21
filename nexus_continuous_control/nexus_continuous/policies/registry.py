@@ -59,6 +59,18 @@ POLICY_SPECS: dict[str, PolicySpec] = {
         recommended_env_name="Any supported Playground environment",
         description="Single-skill flat AC-PQN baseline trained on environment reward.",
     ),
+    "ant_walk": PolicySpec(
+        env_aliases = ("AntWalk", "ant_walk", "ant-walk"),
+        module = "nexus_continuous.policies.ant_walk",
+        recommended_env_name = "Ant",
+        description = "Ant locomotion with stand/walk/bound/turn/recover skills.",
+    ),
+    "humanoid_walk": PolicySpec(
+        env_aliases = ("HumanoidWalk", "humanoid_walk", "humanoid-walk"),
+        module = "nexus_continuous.policies.humanoid_walk",
+        recommended_env_name = "Humanoid",
+        description = "Humanoid locomotion with stand/walk/bound/turn/recover skills.",
+    ),
 }
 
 
@@ -72,9 +84,9 @@ def canonicalize_policy_name(name: str) -> str:
     )
 
 
-def load_policy_module(name: str) -> ModuleType:
-    canonical = canonicalize_policy_name(name)
-    return importlib.import_module(POLICY_SPECS[canonical].module)
+# def load_policy_module(name: str) -> ModuleType:
+#     canonical = canonicalize_policy_name(name)
+#     return importlib.import_module(POLICY_SPECS[canonical].module)
 
 
 def list_policies() -> dict[str, dict[str, Any]]:
@@ -86,3 +98,25 @@ def list_policies() -> dict[str, dict[str, Any]]:
         }
         for name, spec in POLICY_SPECS.items()
     }
+
+
+from nexus_continuous.llm.interpreter import make_policy_module
+
+def load_policy_module(name_or_cfg) -> ModuleType:
+    """ 
+    Loads either:
+    - LLM-generated policy
+    - Handwritten policy from registry
+    """
+    if isinstance(name_or_cfg, dict):
+        cfg = name_or_cfg
+        
+        if cfg.get("USE_LLM_SKILLS", False):
+            return make_policy_module(skillset = cfg["LLM_SKILLSET"], field_names = tuple(cfg["OBS_FIELDS"]))
+        
+        name = cfg["POLICY"]
+    else:
+        name = name_or_cfg
+    
+    canonical = canonicalize_policy_name(name)
+    return importlib.import_module(POLICY_SPECS[canonical].module)

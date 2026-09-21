@@ -1,0 +1,723 @@
+[
+  {
+    "iteration": 0,
+    "metrics": {
+      "action/action_norm_mean": 1.07051682472229,
+      "action/noise_norm_mean": 0.09029570966959,
+      "action/original_action_norm_mean": 1.0739974975585938,
+      "debug/host_time_token": 0.0,
+      "env/nonfinite_reward": 0.0,
+      "env/original_reward": 0.0,
+      "env/returned_episode_lengths": 1000.0,
+      "env/returned_episode_returns": 0.6284924745559692,
+      "env_step": 52166656.0,
+      "episode/done_fraction": 0.0,
+      "loss/actor": -25.75466537475586,
+      "loss/critic": 0.16278381645679474,
+      "loss/meta": 2.4100622795231175e-06,
+      "mask/violation_rate": 0.0,
+      "mask_available/0_Initial Stability": 0.7944900393486023,
+      "mask_available/1_Forward Movement": 0.8457229733467102,
+      "mask_available/2_Optimal Locomotion": 0.0,
+      "mask_selected_given_available/0_Initial Stability": 0.5742572546005249,
+      "mask_selected_given_available/1_Forward Movement": 0.6473060846328735,
+      "mask_selected_given_available/2_Optimal Locomotion": 0.0,
+      "mask_selected_when_available/0_Initial Stability": 0.456185907125473,
+      "mask_selected_when_available/1_Forward Movement": 0.5438140630722046,
+      "mask_selected_when_available/2_Optimal Locomotion": 0.0,
+      "mask_violation/0_Initial Stability": 0.0,
+      "mask_violation/1_Forward Movement": 0.0,
+      "mask_violation/2_Optimal Locomotion": 0.0,
+      "meta_epsilon": 0.05000000074505806,
+      "noise": 0.05150000378489494,
+      "policy_diag/hopper/forward_velocity_mean": 0.789694607257843,
+      "policy_diag/hopper/hop_success_rate": 0.0,
+      "policy_diag/hopper/upright_rate": 0.0,
+      "policy_diag/primary_goal_metric": 0.789694607257843,
+      "policy_diag/primary_success_rate": 0.0,
+      "returns/env_reward_mean": 0.0,
+      "returns/skill_reward_mean": -0.12993791699409485,
+      "rollout/done_fraction": 0.0,
+      "rollout/episode_length": 1000.0,
+      "rollout/episode_return": 0.6284924745559692,
+      "schedule/meta_epsilon": 0.05000000074505806,
+      "schedule/noise": 0.05150000378489494,
+      "schedule/skill_epsilon": 0.05000000074505806,
+      "skill_reward/0_Initial Stability": -1.7062259912490845,
+      "skill_reward/1_Forward Movement": 1.2896945476531982,
+      "skill_reward/2_Optimal Locomotion": 0.02671760320663452,
+      "skill_usage/0_Initial Stability": 0.456185907125473,
+      "skill_usage/1_Forward Movement": 0.5438140630722046,
+      "skill_usage/2_Optimal Locomotion": 0.0,
+      "train/actor_grad_norm": 0.19427058100700378,
+      "train/actor_loss": -25.75466537475586,
+      "train/actor_penalty": 0.4285721778869629,
+      "train/actor_q": 25.754878997802734,
+      "train/critic_abs_td": 0.3816371560096741,
+      "train/critic_grad_norm": 2.009734869003296,
+      "train/critic_loss": 0.16278381645679474,
+      "train/critic_target": 24.67068862915039,
+      "train/critic_value": 24.675472259521484,
+      "train/meta_abs_td": 0.0012578064342960715,
+      "train/meta_grad_norm": 0.0008223915356211364,
+      "train/meta_loss": 2.4100622795231175e-06,
+      "train/meta_q": 0.04808053746819496,
+      "update": 398.0
+    },
+    "skillset": {
+      "environment": "HopperHop",
+      "observation_schema": "torso_pitch,x_velocity,forward_velocity,joint_speed",
+      "skills": [
+        {
+          "name": "Initial Stability",
+          "description": "Maintain balance by adjusting pitch to prevent falling.",
+          "activation_rule": "torso_pitch > 0.2 || torso_pitch < -0.2",
+          "reward_terms": [
+            {
+              "type": "posture_penalty",
+              "weight": 1.0,
+              "lhs": "torso_pitch",
+              "rhs": "null",
+              "threshold": 0.0,
+              "description": ""
+            },
+            {
+              "type": "action_penalty",
+              "weight": 0.5,
+              "lhs": "joint_speed",
+              "rhs": "null",
+              "threshold": 0.0,
+              "description": ""
+            }
+          ]
+        },
+        {
+          "name": "Forward Movement",
+          "description": "Adjust velocity to maintain forward motion without overshooting.",
+          "activation_rule": "forward_velocity > 0 && forward_velocity < 4",
+          "reward_terms": [
+            {
+              "type": "positive_velocity",
+              "weight": 1.0,
+              "lhs": "forward_velocity",
+              "rhs": "null",
+              "threshold": 0.0,
+              "description": ""
+            },
+            {
+              "type": "binary_bonus",
+              "weight": 0.5,
+              "lhs": "joint_speed",
+              "rhs": "null",
+              "threshold": 0.0,
+              "description": ""
+            }
+          ]
+        },
+        {
+          "name": "Optimal Locomotion",
+          "description": "Fine-tune movements to maximize efficiency in hop distance.",
+          "activation_rule": "forward_velocity >= 3 && torso_pitch <= 0.1",
+          "reward_terms": [
+            {
+              "type": "target_height",
+              "weight": 1.0,
+              "lhs": "forward_velocity",
+              "rhs": "null",
+              "threshold": 0.0,
+              "description": ""
+            },
+            {
+              "type": "action_penalty",
+              "weight": 0.5,
+              "lhs": "joint_speed",
+              "rhs": "null",
+              "threshold": 0.0,
+              "description": ""
+            }
+          ]
+        }
+      ],
+      "meta_policy_notes": ""
+    },
+    "refinement_ok": true,
+    "refinement_error": null
+  },
+  {
+    "iteration": 1,
+    "metrics": {
+      "action/action_norm_mean": 0.992720901966095,
+      "action/noise_norm_mean": 0.09182258695363998,
+      "action/original_action_norm_mean": 0.9957648515701294,
+      "debug/host_time_token": 0.0,
+      "env/nonfinite_reward": 0.0,
+      "env/original_reward": 0.0,
+      "env/returned_episode_lengths": 1000.0,
+      "env/returned_episode_returns": 0.3861599564552307,
+      "env_step": 52166656.0,
+      "episode/done_fraction": 0.0,
+      "loss/actor": 8.105329513549805,
+      "loss/critic": 0.053156089037656784,
+      "loss/meta": 2.0261538793420186e-06,
+      "mask/violation_rate": 0.0,
+      "mask_available/0_Initial Balance": 0.456878662109375,
+      "mask_available/1_Forward Momentum": 0.7041641473770142,
+      "mask_available/2_Efficient Locomotion": 0.0,
+      "mask_available/3_Stability Enhancement": 0.48611754179000854,
+      "mask_selected_given_available/0_Initial Balance": 0.4884614050388336,
+      "mask_selected_given_available/1_Forward Momentum": 0.7719894647598267,
+      "mask_selected_given_available/2_Efficient Locomotion": 0.0,
+      "mask_selected_given_available/3_Stability Enhancement": 0.4702455997467041,
+      "mask_selected_when_available/0_Initial Balance": 0.229808047413826,
+      "mask_selected_when_available/1_Forward Momentum": 0.5447341799736023,
+      "mask_selected_when_available/2_Efficient Locomotion": 0.0,
+      "mask_selected_when_available/3_Stability Enhancement": 0.22545775771141052,
+      "mask_violation/0_Initial Balance": 0.0,
+      "mask_violation/1_Forward Momentum": 0.0,
+      "mask_violation/2_Efficient Locomotion": 0.0,
+      "mask_violation/3_Stability Enhancement": 0.0,
+      "meta_epsilon": 0.05000000074505806,
+      "noise": 0.05150000378489494,
+      "policy_diag/hopper/forward_velocity_mean": 0.4149249494075775,
+      "policy_diag/hopper/hop_success_rate": 0.0,
+      "policy_diag/hopper/upright_rate": 0.0,
+      "policy_diag/primary_goal_metric": 0.4149249494075775,
+      "policy_diag/primary_success_rate": 0.0,
+      "returns/env_reward_mean": 0.0,
+      "returns/skill_reward_mean": -0.4019125998020172,
+      "rollout/done_fraction": 0.0,
+      "rollout/episode_length": 1000.0,
+      "rollout/episode_return": 0.3861599564552307,
+      "schedule/meta_epsilon": 0.05000000074505806,
+      "schedule/noise": 0.05150000378489494,
+      "schedule/skill_epsilon": 0.05000000074505806,
+      "skill_reward/0_Initial Balance": -1.139364242553711,
+      "skill_reward/1_Forward Momentum": 0.9149249792098999,
+      "skill_reward/2_Efficient Locomotion": -0.24384668469429016,
+      "skill_reward/3_Stability Enhancement": -1.139364242553711,
+      "skill_usage/0_Initial Balance": 0.229808047413826,
+      "skill_usage/1_Forward Momentum": 0.5447341799736023,
+      "skill_usage/2_Efficient Locomotion": 0.0,
+      "skill_usage/3_Stability Enhancement": 0.22545775771141052,
+      "train/actor_grad_norm": 0.08790526539087296,
+      "train/actor_loss": 8.105329513549805,
+      "train/actor_penalty": 0.432710736989975,
+      "train/actor_q": -8.10511302947998,
+      "train/critic_abs_td": 0.19313263893127441,
+      "train/critic_grad_norm": 0.9007970690727234,
+      "train/critic_loss": 0.053156089037656784,
+      "train/critic_target": -8.946239471435547,
+      "train/critic_value": -8.943942070007324,
+      "train/meta_abs_td": 0.001186758978292346,
+      "train/meta_grad_norm": 0.0005773456068709493,
+      "train/meta_loss": 2.0261538793420186e-06,
+      "train/meta_q": 0.03412137180566788,
+      "update": 398.0
+    },
+    "skillset": {
+      "environment": "HopperHop",
+      "observation_schema": "torso_pitch,x_velocity,forward_velocity,joint_speed",
+      "skills": [
+        {
+          "name": "Initial Balance",
+          "description": "Maintain balance by adjusting pitch to prevent falling.",
+          "activation_rule": "torso_pitch > 0.2 || torso_pitch < -0.2",
+          "reward_terms": [
+            {
+              "type": "posture_penalty",
+              "weight": 1.0,
+              "lhs": "torso_pitch",
+              "rhs": "null",
+              "threshold": 0.0,
+              "description": ""
+            },
+            {
+              "type": "action_penalty",
+              "weight": 0.5,
+              "lhs": "joint_speed",
+              "rhs": "null",
+              "threshold": 0.0,
+              "description": ""
+            }
+          ]
+        },
+        {
+          "name": "Forward Momentum",
+          "description": "Adjust velocity to maintain forward motion without overshooting.",
+          "activation_rule": "forward_velocity > 0 && forward_velocity < 4",
+          "reward_terms": [
+            {
+              "type": "positive_velocity",
+              "weight": 1.0,
+              "lhs": "forward_velocity",
+              "rhs": "null",
+              "threshold": 0.0,
+              "description": ""
+            },
+            {
+              "type": "binary_bonus",
+              "weight": 0.5,
+              "lhs": "joint_speed",
+              "rhs": "null",
+              "threshold": 0.0,
+              "description": ""
+            }
+          ]
+        },
+        {
+          "name": "Efficient Locomotion",
+          "description": "Fine-tune movements to maximize hop distance while maintaining stability.",
+          "activation_rule": "forward_velocity >= 3 && torso_pitch <= 0.1",
+          "reward_terms": [
+            {
+              "type": "target_height",
+              "weight": 1.0,
+              "lhs": "forward_velocity",
+              "rhs": "null",
+              "threshold": 0.0,
+              "description": ""
+            },
+            {
+              "type": "action_penalty",
+              "weight": 0.5,
+              "lhs": "joint_speed",
+              "rhs": "null",
+              "threshold": 0.0,
+              "description": ""
+            }
+          ]
+        },
+        {
+          "name": "Stability Enhancement",
+          "description": "Improve overall stability during movement.",
+          "activation_rule": "torso_pitch > 0.1 || torso_pitch < -0.1",
+          "reward_terms": [
+            {
+              "type": "posture_penalty",
+              "weight": 1.0,
+              "lhs": "torso_pitch",
+              "rhs": "null",
+              "threshold": 0.0,
+              "description": ""
+            },
+            {
+              "type": "action_penalty",
+              "weight": 0.5,
+              "lhs": "joint_speed",
+              "rhs": "null",
+              "threshold": 0.0,
+              "description": ""
+            }
+          ]
+        }
+      ],
+      "meta_policy_notes": ""
+    },
+    "refinement_ok": true,
+    "refinement_error": null
+  },
+  {
+    "iteration": 2,
+    "metrics": {
+      "action/action_norm_mean": 1.0596632957458496,
+      "action/noise_norm_mean": 0.09054450690746307,
+      "action/original_action_norm_mean": 1.0666395425796509,
+      "debug/host_time_token": 0.0,
+      "env/nonfinite_reward": 0.0,
+      "env/original_reward": 0.0,
+      "env/returned_episode_lengths": 1000.0,
+      "env/returned_episode_returns": 0.5959130525588989,
+      "env_step": 52166656.0,
+      "episode/done_fraction": 0.0,
+      "loss/actor": 8.002317428588867,
+      "loss/critic": 0.06437551230192184,
+      "loss/meta": 2.1536727672355482e-06,
+      "mask/violation_rate": 0.0,
+      "mask_available/0_Initial Balance": 0.437295526266098,
+      "mask_available/1_Forward Momentum": 0.735369861125946,
+      "mask_available/2_Efficient Locomotion": 0.0,
+      "mask_available/3_Stability Enhancement": 0.4528244137763977,
+      "mask_available/4_Dynamic Stabilization": 0.187744140625,
+      "mask_selected_given_available/0_Initial Balance": 0.4407115578651428,
+      "mask_selected_given_available/1_Forward Momentum": 0.7952104210853577,
+      "mask_selected_given_available/2_Efficient Locomotion": 0.0,
+      "mask_selected_given_available/3_Stability Enhancement": 0.4539077877998352,
+      "mask_selected_given_available/4_Dynamic Stabilization": 0.10368833690881729,
+      "mask_selected_when_available/0_Initial Balance": 0.19137878715991974,
+      "mask_selected_when_available/1_Forward Momentum": 0.5850738286972046,
+      "mask_selected_when_available/2_Efficient Locomotion": 0.0,
+      "mask_selected_when_available/3_Stability Enhancement": 0.2062728852033615,
+      "mask_selected_when_available/4_Dynamic Stabilization": 0.01727447472512722,
+      "mask_violation/0_Initial Balance": 0.0,
+      "mask_violation/1_Forward Momentum": 0.0,
+      "mask_violation/2_Efficient Locomotion": 0.0,
+      "mask_violation/3_Stability Enhancement": 0.0,
+      "mask_violation/4_Dynamic Stabilization": 0.0,
+      "meta_epsilon": 0.05000000074505806,
+      "noise": 0.05150000378489494,
+      "policy_diag/hopper/forward_velocity_mean": 0.49143099784851074,
+      "policy_diag/hopper/hop_success_rate": 0.0,
+      "policy_diag/hopper/upright_rate": 0.0,
+      "policy_diag/primary_goal_metric": 0.49143099784851074,
+      "policy_diag/primary_success_rate": 0.0,
+      "returns/env_reward_mean": 0.0,
+      "returns/skill_reward_mean": -0.45502084493637085,
+      "rollout/done_fraction": 0.0,
+      "rollout/episode_length": 1000.0,
+      "rollout/episode_return": 0.5959130525588989,
+      "schedule/meta_epsilon": 0.05000000074505806,
+      "schedule/noise": 0.05150000378489494,
+      "schedule/skill_epsilon": 0.05000000074505806,
+      "skill_reward/0_Initial Balance": -1.1698752641677856,
+      "skill_reward/1_Forward Momentum": 0.991430938243866,
+      "skill_reward/2_Efficient Locomotion": -0.2176770716905594,
+      "skill_reward/3_Stability Enhancement": -1.1698752641677856,
+      "skill_reward/4_Dynamic Stabilization": -0.7091081142425537,
+      "skill_usage/0_Initial Balance": 0.19137878715991974,
+      "skill_usage/1_Forward Momentum": 0.5850738286972046,
+      "skill_usage/2_Efficient Locomotion": 0.0,
+      "skill_usage/3_Stability Enhancement": 0.2062728852033615,
+      "skill_usage/4_Dynamic Stabilization": 0.01727447472512722,
+      "train/actor_grad_norm": 0.08986778557300568,
+      "train/actor_loss": 8.002317428588867,
+      "train/actor_penalty": 0.511886715888977,
+      "train/actor_q": -8.00206184387207,
+      "train/critic_abs_td": 0.19223013520240784,
+      "train/critic_grad_norm": 0.564026951789856,
+      "train/critic_loss": 0.06437551230192184,
+      "train/critic_target": -9.038813591003418,
+      "train/critic_value": -9.039083480834961,
+      "train/meta_abs_td": 0.001271669054403901,
+      "train/meta_grad_norm": 0.000683671678416431,
+      "train/meta_loss": 2.1536727672355482e-06,
+      "train/meta_q": 0.04857394099235535,
+      "update": 398.0
+    },
+    "skillset": {
+      "environment": "HopperHop",
+      "observation_schema": "torso_pitch,x_velocity,forward_velocity,joint_speed",
+      "skills": [
+        {
+          "name": "Initial Balance",
+          "description": "Maintain balance by adjusting pitch to prevent falling.",
+          "activation_rule": "torso_pitch > 0.2 || torso_pitch < -0.2",
+          "reward_terms": [
+            {
+              "type": "posture_penalty",
+              "weight": 1.0,
+              "lhs": "torso_pitch",
+              "rhs": "null",
+              "threshold": 0.0,
+              "description": ""
+            },
+            {
+              "type": "action_penalty",
+              "weight": 0.5,
+              "lhs": "joint_speed",
+              "rhs": "null",
+              "threshold": 0.0,
+              "description": ""
+            }
+          ]
+        },
+        {
+          "name": "Forward Momentum",
+          "description": "Adjust velocity to maintain forward motion without overshooting.",
+          "activation_rule": "forward_velocity > 0 && forward_velocity < 4",
+          "reward_terms": [
+            {
+              "type": "positive_velocity",
+              "weight": 1.0,
+              "lhs": "forward_velocity",
+              "rhs": "null",
+              "threshold": 0.0,
+              "description": ""
+            },
+            {
+              "type": "binary_bonus",
+              "weight": 0.5,
+              "lhs": "joint_speed",
+              "rhs": "null",
+              "threshold": 0.0,
+              "description": ""
+            }
+          ]
+        },
+        {
+          "name": "Efficient Locomotion",
+          "description": "Fine-tune movements to maximize hop distance while maintaining stability.",
+          "activation_rule": "forward_velocity >= 3 && torso_pitch <= 0.1",
+          "reward_terms": [
+            {
+              "type": "target_height",
+              "weight": 1.0,
+              "lhs": "forward_velocity",
+              "rhs": "null",
+              "threshold": 0.0,
+              "description": ""
+            },
+            {
+              "type": "action_penalty",
+              "weight": 0.5,
+              "lhs": "joint_speed",
+              "rhs": "null",
+              "threshold": 0.0,
+              "description": ""
+            }
+          ]
+        },
+        {
+          "name": "Stability Enhancement",
+          "description": "Improve overall stability during movement.",
+          "activation_rule": "torso_pitch > 0.1 || torso_pitch < -0.1",
+          "reward_terms": [
+            {
+              "type": "posture_penalty",
+              "weight": 1.0,
+              "lhs": "torso_pitch",
+              "rhs": "null",
+              "threshold": 0.0,
+              "description": ""
+            },
+            {
+              "type": "action_penalty",
+              "weight": 0.5,
+              "lhs": "joint_speed",
+              "rhs": "null",
+              "threshold": 0.0,
+              "description": ""
+            }
+          ]
+        },
+        {
+          "name": "Dynamic Stabilization",
+          "description": "Enhance stabilization in dynamic environments.",
+          "activation_rule": "forward_velocity > 0 && torso_pitch > 0.1",
+          "reward_terms": [
+            {
+              "type": "dynamic_stabilization",
+              "weight": 1.0,
+              "lhs": "forward_velocity",
+              "rhs": "null",
+              "threshold": 0.0,
+              "description": ""
+            },
+            {
+              "type": "action_penalty",
+              "weight": 0.5,
+              "lhs": "joint_speed",
+              "rhs": "null",
+              "threshold": 0.0,
+              "description": ""
+            }
+          ]
+        }
+      ],
+      "meta_policy_notes": ""
+    },
+    "refinement_ok": true,
+    "refinement_error": null
+  },
+  {
+    "iteration": 3,
+    "metrics": {
+      "action/action_norm_mean": 1.0596632957458496,
+      "action/noise_norm_mean": 0.09054450690746307,
+      "action/original_action_norm_mean": 1.0666395425796509,
+      "debug/host_time_token": 0.0,
+      "env/nonfinite_reward": 0.0,
+      "env/original_reward": 0.0,
+      "env/returned_episode_lengths": 1000.0,
+      "env/returned_episode_returns": 0.5959130525588989,
+      "env_step": 52166656.0,
+      "episode/done_fraction": 0.0,
+      "loss/actor": 8.002317428588867,
+      "loss/critic": 0.06437551230192184,
+      "loss/meta": 2.1536727672355482e-06,
+      "mask/violation_rate": 0.0,
+      "mask_available/0_Initial Balance": 0.437295526266098,
+      "mask_available/1_Forward Momentum": 0.735369861125946,
+      "mask_available/2_Efficient Locomotion": 0.0,
+      "mask_available/3_Stability Enhancement": 0.4528244137763977,
+      "mask_available/4_Dynamic Stabilization": 0.187744140625,
+      "mask_selected_given_available/0_Initial Balance": 0.4407115578651428,
+      "mask_selected_given_available/1_Forward Momentum": 0.7952104210853577,
+      "mask_selected_given_available/2_Efficient Locomotion": 0.0,
+      "mask_selected_given_available/3_Stability Enhancement": 0.4539077877998352,
+      "mask_selected_given_available/4_Dynamic Stabilization": 0.10368833690881729,
+      "mask_selected_when_available/0_Initial Balance": 0.19137878715991974,
+      "mask_selected_when_available/1_Forward Momentum": 0.5850738286972046,
+      "mask_selected_when_available/2_Efficient Locomotion": 0.0,
+      "mask_selected_when_available/3_Stability Enhancement": 0.2062728852033615,
+      "mask_selected_when_available/4_Dynamic Stabilization": 0.01727447472512722,
+      "mask_violation/0_Initial Balance": 0.0,
+      "mask_violation/1_Forward Momentum": 0.0,
+      "mask_violation/2_Efficient Locomotion": 0.0,
+      "mask_violation/3_Stability Enhancement": 0.0,
+      "mask_violation/4_Dynamic Stabilization": 0.0,
+      "meta_epsilon": 0.05000000074505806,
+      "noise": 0.05150000378489494,
+      "policy_diag/hopper/forward_velocity_mean": 0.49143099784851074,
+      "policy_diag/hopper/hop_success_rate": 0.0,
+      "policy_diag/hopper/upright_rate": 0.0,
+      "policy_diag/primary_goal_metric": 0.49143099784851074,
+      "policy_diag/primary_success_rate": 0.0,
+      "returns/env_reward_mean": 0.0,
+      "returns/skill_reward_mean": -0.45502084493637085,
+      "rollout/done_fraction": 0.0,
+      "rollout/episode_length": 1000.0,
+      "rollout/episode_return": 0.5959130525588989,
+      "schedule/meta_epsilon": 0.05000000074505806,
+      "schedule/noise": 0.05150000378489494,
+      "schedule/skill_epsilon": 0.05000000074505806,
+      "skill_reward/0_Initial Balance": -1.1698752641677856,
+      "skill_reward/1_Forward Momentum": 0.991430938243866,
+      "skill_reward/2_Efficient Locomotion": -0.2176770716905594,
+      "skill_reward/3_Stability Enhancement": -1.1698752641677856,
+      "skill_reward/4_Dynamic Stabilization": -0.7091081142425537,
+      "skill_usage/0_Initial Balance": 0.19137878715991974,
+      "skill_usage/1_Forward Momentum": 0.5850738286972046,
+      "skill_usage/2_Efficient Locomotion": 0.0,
+      "skill_usage/3_Stability Enhancement": 0.2062728852033615,
+      "skill_usage/4_Dynamic Stabilization": 0.01727447472512722,
+      "train/actor_grad_norm": 0.08986778557300568,
+      "train/actor_loss": 8.002317428588867,
+      "train/actor_penalty": 0.511886715888977,
+      "train/actor_q": -8.00206184387207,
+      "train/critic_abs_td": 0.19223013520240784,
+      "train/critic_grad_norm": 0.564026951789856,
+      "train/critic_loss": 0.06437551230192184,
+      "train/critic_target": -9.038813591003418,
+      "train/critic_value": -9.039083480834961,
+      "train/meta_abs_td": 0.001271669054403901,
+      "train/meta_grad_norm": 0.000683671678416431,
+      "train/meta_loss": 2.1536727672355482e-06,
+      "train/meta_q": 0.04857394099235535,
+      "update": 398.0
+    },
+    "skillset": {
+      "environment": "HopperHop",
+      "observation_schema": "torso_pitch,x_velocity,forward_velocity,joint_speed",
+      "skills": [
+        {
+          "name": "Initial Balance",
+          "description": "Maintain balance by adjusting pitch to prevent falling.",
+          "activation_rule": "torso_pitch > 0.2 || torso_pitch < -0.2",
+          "reward_terms": [
+            {
+              "type": "posture_penalty",
+              "weight": 1.0,
+              "lhs": "torso_pitch",
+              "rhs": "null",
+              "threshold": 0.0,
+              "description": ""
+            },
+            {
+              "type": "action_penalty",
+              "weight": 0.5,
+              "lhs": "joint_speed",
+              "rhs": "null",
+              "threshold": 0.0,
+              "description": ""
+            }
+          ]
+        },
+        {
+          "name": "Forward Momentum",
+          "description": "Adjust velocity to maintain forward motion without overshooting.",
+          "activation_rule": "forward_velocity > 0 && forward_velocity < 4",
+          "reward_terms": [
+            {
+              "type": "positive_velocity",
+              "weight": 1.0,
+              "lhs": "forward_velocity",
+              "rhs": "null",
+              "threshold": 0.0,
+              "description": ""
+            },
+            {
+              "type": "binary_bonus",
+              "weight": 0.5,
+              "lhs": "joint_speed",
+              "rhs": "null",
+              "threshold": 0.0,
+              "description": ""
+            }
+          ]
+        },
+        {
+          "name": "Efficient Locomotion",
+          "description": "Fine-tune movements to maximize hop distance while maintaining stability.",
+          "activation_rule": "forward_velocity >= 3 && torso_pitch <= 0.1",
+          "reward_terms": [
+            {
+              "type": "target_height",
+              "weight": 1.0,
+              "lhs": "forward_velocity",
+              "rhs": "null",
+              "threshold": 0.0,
+              "description": ""
+            },
+            {
+              "type": "action_penalty",
+              "weight": 0.5,
+              "lhs": "joint_speed",
+              "rhs": "null",
+              "threshold": 0.0,
+              "description": ""
+            }
+          ]
+        },
+        {
+          "name": "Stability Enhancement",
+          "description": "Improve overall stability during movement.",
+          "activation_rule": "torso_pitch > 0.1 || torso_pitch < -0.1",
+          "reward_terms": [
+            {
+              "type": "posture_penalty",
+              "weight": 1.0,
+              "lhs": "torso_pitch",
+              "rhs": "null",
+              "threshold": 0.0,
+              "description": ""
+            },
+            {
+              "type": "action_penalty",
+              "weight": 0.5,
+              "lhs": "joint_speed",
+              "rhs": "null",
+              "threshold": 0.0,
+              "description": ""
+            }
+          ]
+        },
+        {
+          "name": "Dynamic Stabilization",
+          "description": "Enhance stabilization in dynamic environments.",
+          "activation_rule": "forward_velocity > 0 && torso_pitch > 0.1",
+          "reward_terms": [
+            {
+              "type": "dynamic_stabilization",
+              "weight": 1.0,
+              "lhs": "forward_velocity",
+              "rhs": "null",
+              "threshold": 0.0,
+              "description": ""
+            },
+            {
+              "type": "action_penalty",
+              "weight": 0.5,
+              "lhs": "joint_speed",
+              "rhs": "null",
+              "threshold": 0.0,
+              "description": ""
+            }
+          ]
+        }
+      ],
+      "meta_policy_notes": ""
+    },
+    "refinement_ok": true,
+    "refinement_error": null
+  }
+]

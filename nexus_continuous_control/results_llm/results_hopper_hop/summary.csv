@@ -1,0 +1,9 @@
+env,backend,kind,metric,mean,std
+HopperHop,-,hand_written,env_reward,0.20566612780094146,0.09316550276298471
+HopperHop,-,hand_written,success_rate,0.2409437596797943,0.05276603826414518
+HopperHop,-,hand_written,goal_metric,0.9752886533737183,0.18914826948910876
+HopperHop,hf,llm,env_reward,0.0,0.0
+HopperHop,hf,llm,success_rate,0.0007765625487081707,0.000289320016081977
+HopperHop,hf,llm,goal_metric,0.30711897015571593,0.016906220803165218
+HopperHop,hf,refined_first_iter,env_reward,0.0,
+HopperHop,hf,refined_last_iter,env_reward,0.0,

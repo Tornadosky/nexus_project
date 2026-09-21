@@ -8,26 +8,16 @@ functions in `nexus_continuous.policies`.
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from typing import Literal
-
-
-RewardTermType = Literal[
-    "negative_distance",
-    "positive_velocity",
-    "target_height",
-    "binary_bonus",
-    "action_penalty",
-    "posture_penalty",
-]
+from typing import Optional
 
 
 @dataclass(frozen=True)
 class RewardTerm:
-    type: RewardTermType
-    weight: float = 1.0
-    lhs: str | None = None
-    rhs: str | None = None
-    threshold: float | None = None
+    type: str
+    weight: float
+    lhs: Optional[float | str] = None
+    rhs: Optional[float | str] = None
+    threshold: Optional[float] = None
     description: str = ""
 
 
@@ -36,7 +26,7 @@ class SkillSpec:
     name: str
     description: str
     activation_rule: str
-    reward_terms: list[RewardTerm] = field(default_factory=list)
+    reward_terms: list[RewardTerm]
 
 
 @dataclass(frozen=True)
@@ -44,4 +34,4 @@ class NexusSkillSet:
     environment: str
     observation_schema: str
     skills: list[SkillSpec]
-    meta_policy_notes: str = ""
+    meta_policy_notes: str

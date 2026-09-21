@@ -1,0 +1,723 @@
+[
+  {
+    "iteration": 0,
+    "metrics": {
+      "action/action_norm_mean": 1.6060739755630493,
+      "action/noise_norm_mean": 0.06652037799358368,
+      "action/original_action_norm_mean": 1.6114906072616577,
+      "debug/host_time_token": 0.0,
+      "env/nonfinite_reward": 0.0,
+      "env/original_reward": 0.6374319791793823,
+      "env/returned_episode_lengths": 1000.0,
+      "env/returned_episode_returns": 628.7579956054688,
+      "env_step": 52166656.0,
+      "episode/done_fraction": 0.0,
+      "loss/actor": -449.2750549316406,
+      "loss/critic": 0.6064101457595825,
+      "loss/meta": 0.0168844573199749,
+      "mask/violation_rate": 0.0,
+      "mask_available/0_Initial Balance Check": 0.02485046349465847,
+      "mask_available/1_Forward Movement": 0.988079845905304,
+      "mask_available/2_Optimal Locomotion": 0.9890701174736023,
+      "mask_selected_given_available/0_Initial Balance Check": 0.7080838084220886,
+      "mask_selected_given_available/1_Forward Movement": 0.4197600483894348,
+      "mask_selected_given_available/2_Optimal Locomotion": 0.5745986104011536,
+      "mask_selected_when_available/0_Initial Balance Check": 0.01691436767578125,
+      "mask_selected_when_available/1_Forward Movement": 0.41479796171188354,
+      "mask_selected_when_available/2_Optimal Locomotion": 0.5682876706123352,
+      "mask_violation/0_Initial Balance Check": 0.0,
+      "mask_violation/1_Forward Movement": 0.0,
+      "mask_violation/2_Optimal Locomotion": 0.0,
+      "meta_epsilon": 0.019999999552965164,
+      "noise": 0.029999997466802597,
+      "policy_diag/primary_goal_metric": 6.754863739013672,
+      "policy_diag/primary_success_rate": 0.6761566400527954,
+      "policy_diag/walker/forward_velocity_mean": 6.754863739013672,
+      "policy_diag/walker/stand_success_rate": 0.6765030026435852,
+      "policy_diag/walker/walk_success_rate": 0.6761566400527954,
+      "returns/env_reward_mean": 0.6374319791793823,
+      "returns/skill_reward_mean": 4.399273872375488,
+      "rollout/done_fraction": 0.0,
+      "rollout/episode_length": 1000.0,
+      "rollout/episode_return": 628.7579956054688,
+      "schedule/meta_epsilon": 0.019999999552965164,
+      "schedule/noise": 0.029999997466802597,
+      "schedule/skill_epsilon": 0.019999999552965164,
+      "skill_reward/0_Initial Balance Check": 0.5295506715774536,
+      "skill_reward/1_Forward Movement": 7.254863739013672,
+      "skill_reward/2_Optimal Locomotion": 5.413406848907471,
+      "skill_usage/0_Initial Balance Check": 0.01691436767578125,
+      "skill_usage/1_Forward Movement": 0.41479796171188354,
+      "skill_usage/2_Optimal Locomotion": 0.5682876706123352,
+      "train/actor_grad_norm": 0.6821610927581787,
+      "train/actor_loss": -449.2750549316406,
+      "train/actor_penalty": 0.03317403420805931,
+      "train/actor_q": 449.2750549316406,
+      "train/critic_abs_td": 0.8678503036499023,
+      "train/critic_grad_norm": 6.026925563812256,
+      "train/critic_loss": 0.6064101457595825,
+      "train/critic_target": 448.75054931640625,
+      "train/critic_value": 449.07733154296875,
+      "train/meta_abs_td": 0.10079469531774521,
+      "train/meta_grad_norm": 0.41394028067588806,
+      "train/meta_loss": 0.0168844573199749,
+      "train/meta_q": 63.50690841674805,
+      "update": 398.0
+    },
+    "skillset": {
+      "environment": "WalkerWalk",
+      "observation_schema": "torso_height, height, torso_pitch, pitch, x_velocity, forward_velocity, joint_speed",
+      "skills": [
+        {
+          "name": "Initial Balance Check",
+          "description": "Ensure the walker is standing upright.",
+          "activation_rule": "height < 0.2 || torso_pitch > 0.4",
+          "reward_terms": [
+            {
+              "type": "target_height",
+              "weight": 1.0,
+              "lhs": "height",
+              "rhs": 0.8,
+              "threshold": 0.0,
+              "description": ""
+            },
+            {
+              "type": "posture_penalty",
+              "weight": 0.5,
+              "lhs": "torso_pitch",
+              "rhs": 0.4,
+              "threshold": 0.0,
+              "description": ""
+            }
+          ]
+        },
+        {
+          "name": "Forward Movement",
+          "description": "Maintain steady walking motion.",
+          "activation_rule": "forward_velocity > 0 && torso_pitch < 0.6",
+          "reward_terms": [
+            {
+              "type": "positive_velocity",
+              "weight": 1.0,
+              "lhs": "forward_velocity",
+              "rhs": 0.1,
+              "threshold": 0.0,
+              "description": ""
+            },
+            {
+              "type": "binary_bonus",
+              "weight": 0.5,
+              "lhs": "joint_speed",
+              "rhs": 0.9,
+              "threshold": 0.0,
+              "description": ""
+            }
+          ]
+        },
+        {
+          "name": "Optimal Locomotion",
+          "description": "Maximize speed and stability during walking.",
+          "activation_rule": "forward_velocity > 0 && torso_pitch < 0.7",
+          "reward_terms": [
+            {
+              "type": "positive_velocity",
+              "weight": 1.0,
+              "lhs": "forward_velocity",
+              "rhs": 0.2,
+              "threshold": 0.0,
+              "description": ""
+            },
+            {
+              "type": "action_penalty",
+              "weight": 0.5,
+              "lhs": "joint_speed",
+              "rhs": 0.8,
+              "threshold": 0.0,
+              "description": ""
+            }
+          ]
+        }
+      ],
+      "meta_policy_notes": ""
+    },
+    "refinement_ok": true,
+    "refinement_error": null
+  },
+  {
+    "iteration": 1,
+    "metrics": {
+      "action/action_norm_mean": 1.7321306467056274,
+      "action/noise_norm_mean": 0.0649978369474411,
+      "action/original_action_norm_mean": 1.7395355701446533,
+      "debug/host_time_token": 0.0,
+      "env/nonfinite_reward": 0.0,
+      "env/original_reward": 0.44417405128479004,
+      "env/returned_episode_lengths": 1000.0,
+      "env/returned_episode_returns": 316.9434509277344,
+      "env_step": 52166656.0,
+      "episode/done_fraction": 0.0,
+      "loss/actor": -223.6287078857422,
+      "loss/critic": 0.7922161221504211,
+      "loss/meta": 0.39374852180480957,
+      "mask/violation_rate": 0.0,
+      "mask_available/0_Initial Balance Check": 0.7280060052871704,
+      "mask_available/1_Steady Walking": 0.4577895998954773,
+      "mask_available/2_Smooth Locomotion": 0.5162887573242188,
+      "mask_available/3_Dynamic Stance": 0.5267044305801392,
+      "mask_selected_given_available/0_Initial Balance Check": 0.7071571946144104,
+      "mask_selected_given_available/1_Steady Walking": 0.13646501302719116,
+      "mask_selected_given_available/2_Smooth Locomotion": 0.7285189628601074,
+      "mask_selected_given_available/3_Dynamic Stance": 0.08503858745098114,
+      "mask_selected_when_available/0_Initial Balance Check": 0.5158187747001648,
+      "mask_selected_when_available/1_Steady Walking": 0.06154022365808487,
+      "mask_selected_when_available/2_Smooth Locomotion": 0.3785049319267273,
+      "mask_selected_when_available/3_Dynamic Stance": 0.04413604736328125,
+      "mask_violation/0_Initial Balance Check": 0.0,
+      "mask_violation/1_Steady Walking": 0.0,
+      "mask_violation/2_Smooth Locomotion": 0.0,
+      "mask_violation/3_Dynamic Stance": 0.0,
+      "meta_epsilon": 0.019999999552965164,
+      "noise": 0.029999997466802597,
+      "policy_diag/primary_goal_metric": 2.2567999362945557,
+      "policy_diag/primary_success_rate": 0.4805664122104645,
+      "policy_diag/walker/forward_velocity_mean": 2.2567999362945557,
+      "policy_diag/walker/stand_success_rate": 0.928820788860321,
+      "policy_diag/walker/walk_success_rate": 0.4805664122104645,
+      "returns/env_reward_mean": 0.44417405128479004,
+      "returns/skill_reward_mean": 1.0546751022338867,
+      "rollout/done_fraction": 0.0,
+      "rollout/episode_length": 1000.0,
+      "rollout/episode_return": 316.9434509277344,
+      "schedule/meta_epsilon": 0.019999999552965164,
+      "schedule/noise": 0.029999997466802597,
+      "schedule/skill_epsilon": 0.019999999552965164,
+      "skill_reward/0_Initial Balance Check": 0.7536799311637878,
+      "skill_reward/1_Steady Walking": 2.7567999362945557,
+      "skill_reward/2_Smooth Locomotion": 0.7082206010818481,
+      "skill_reward/3_Dynamic Stance": 0.0,
+      "skill_usage/0_Initial Balance Check": 0.5158187747001648,
+      "skill_usage/1_Steady Walking": 0.06154022365808487,
+      "skill_usage/2_Smooth Locomotion": 0.3785049319267273,
+      "skill_usage/3_Dynamic Stance": 0.04413604736328125,
+      "train/actor_grad_norm": 0.39725613594055176,
+      "train/actor_loss": -223.6287078857422,
+      "train/actor_penalty": 0.957983136177063,
+      "train/actor_q": 223.6291961669922,
+      "train/critic_abs_td": 1.0247877836227417,
+      "train/critic_grad_norm": 4.6261749267578125,
+      "train/critic_loss": 0.7922161221504211,
+      "train/critic_target": 220.60263061523438,
+      "train/critic_value": 220.7997589111328,
+      "train/meta_abs_td": 0.5548837780952454,
+      "train/meta_grad_norm": 2.7325599193573,
+      "train/meta_loss": 0.39374852180480957,
+      "train/meta_q": 46.049461364746094,
+      "update": 398.0
+    },
+    "skillset": {
+      "environment": "WalkerWalk",
+      "observation_schema": "torso_height, height, torso_pitch, pitch, x_velocity, forward_velocity, joint_speed",
+      "skills": [
+        {
+          "name": "Initial Balance Check",
+          "description": "Ensure the walker is standing upright.",
+          "activation_rule": "height < 0.2 || torso_pitch > 0.4",
+          "reward_terms": [
+            {
+              "type": "target_height",
+              "weight": 1.0,
+              "lhs": "height",
+              "rhs": 0.8,
+              "threshold": 0.0,
+              "description": ""
+            },
+            {
+              "type": "posture_penalty",
+              "weight": 0.5,
+              "lhs": "torso_pitch",
+              "rhs": 0.4,
+              "threshold": 0.0,
+              "description": ""
+            }
+          ]
+        },
+        {
+          "name": "Steady Walking",
+          "description": "Maintain consistent walking posture without swaying.",
+          "activation_rule": "forward_velocity > 0 && torso_pitch < 0.6",
+          "reward_terms": [
+            {
+              "type": "positive_velocity",
+              "weight": 1.0,
+              "lhs": "forward_velocity",
+              "rhs": 0.1,
+              "threshold": 0.0,
+              "description": ""
+            },
+            {
+              "type": "binary_bonus",
+              "weight": 0.5,
+              "lhs": "joint_speed",
+              "rhs": 0.9,
+              "threshold": 0.0,
+              "description": ""
+            }
+          ]
+        },
+        {
+          "name": "Smooth Locomotion",
+          "description": "Achieve smooth movement with minimal jerks.",
+          "activation_rule": "forward_velocity > 0 && torso_pitch < 0.7",
+          "reward_terms": [
+            {
+              "type": "positive_velocity",
+              "weight": 1.0,
+              "lhs": "forward_velocity",
+              "rhs": 0.2,
+              "threshold": 0.0,
+              "description": ""
+            },
+            {
+              "type": "action_penalty",
+              "weight": 0.5,
+              "lhs": "joint_speed",
+              "rhs": 0.8,
+              "threshold": 0.0,
+              "description": ""
+            }
+          ]
+        },
+        {
+          "name": "Dynamic Stance",
+          "description": "Adjust stance dynamically to maintain balance under varying conditions.",
+          "activation_rule": "forward_velocity > 0 && torso_pitch < 0.8",
+          "reward_terms": [
+            {
+              "type": "dynamic_balance",
+              "weight": 1.0,
+              "lhs": "forward_velocity",
+              "rhs": 0.1,
+              "threshold": 0.0,
+              "description": ""
+            },
+            {
+              "type": "balance_penalty",
+              "weight": 0.5,
+              "lhs": "torso_pitch",
+              "rhs": 0.8,
+              "threshold": 0.0,
+              "description": ""
+            }
+          ]
+        }
+      ],
+      "meta_policy_notes": ""
+    },
+    "refinement_ok": true,
+    "refinement_error": null
+  },
+  {
+    "iteration": 2,
+    "metrics": {
+      "action/action_norm_mean": 1.8322627544403076,
+      "action/noise_norm_mean": 0.06341030448675156,
+      "action/original_action_norm_mean": 1.84171462059021,
+      "debug/host_time_token": 0.0,
+      "env/nonfinite_reward": 0.0,
+      "env/original_reward": 0.5769139528274536,
+      "env/returned_episode_lengths": 1000.0,
+      "env/returned_episode_returns": 547.760986328125,
+      "env_step": 52166656.0,
+      "episode/done_fraction": 0.0,
+      "loss/actor": -156.37789916992188,
+      "loss/critic": 0.879725456237793,
+      "loss/meta": 0.5315998196601868,
+      "mask/violation_rate": 0.0,
+      "mask_available/0_Initial Balance Check": 0.6388641595840454,
+      "mask_available/1_Steady Walking": 0.5193694829940796,
+      "mask_available/2_Smooth Locomotion": 0.557293713092804,
+      "mask_available/3_Dynamic Stance": 0.5764816403388977,
+      "mask_available/4_Stealthy Movement": 0.5861282348632812,
+      "mask_selected_given_available/0_Initial Balance Check": 0.9022315740585327,
+      "mask_selected_given_available/1_Steady Walking": 0.43899551033973694,
+      "mask_selected_given_available/2_Smooth Locomotion": 0.28869009017944336,
+      "mask_selected_given_available/3_Dynamic Stance": 0.03260127082467079,
+      "mask_selected_given_available/4_Stealthy Movement": 0.02691574953496456,
+      "mask_selected_when_available/0_Initial Balance Check": 0.5763595700263977,
+      "mask_selected_when_available/1_Steady Walking": 0.227935791015625,
+      "mask_selected_when_available/2_Smooth Locomotion": 0.16117706894874573,
+      "mask_selected_when_available/3_Dynamic Stance": 0.01893768273293972,
+      "mask_selected_when_available/4_Stealthy Movement": 0.015589904971420765,
+      "mask_violation/0_Initial Balance Check": 0.0,
+      "mask_violation/1_Steady Walking": 0.0,
+      "mask_violation/2_Smooth Locomotion": 0.0,
+      "mask_violation/3_Dynamic Stance": 0.0,
+      "mask_violation/4_Stealthy Movement": 0.0,
+      "meta_epsilon": 0.019999999552965164,
+      "noise": 0.029999997466802597,
+      "policy_diag/primary_goal_metric": 2.0201244354248047,
+      "policy_diag/primary_success_rate": 0.5443207025527954,
+      "policy_diag/walker/forward_velocity_mean": 2.0201244354248047,
+      "policy_diag/walker/stand_success_rate": 0.9417327642440796,
+      "policy_diag/walker/walk_success_rate": 0.5443207025527954,
+      "returns/env_reward_mean": 0.5769139528274536,
+      "returns/skill_reward_mean": 0.7418182492256165,
+      "rollout/done_fraction": 0.0,
+      "rollout/episode_length": 1000.0,
+      "rollout/episode_return": 547.760986328125,
+      "schedule/meta_epsilon": 0.019999999552965164,
+      "schedule/noise": 0.029999997466802597,
+      "schedule/skill_epsilon": 0.019999999552965164,
+      "skill_reward/0_Initial Balance Check": 0.9084631204605103,
+      "skill_reward/1_Steady Walking": 2.5201244354248047,
+      "skill_reward/2_Smooth Locomotion": 0.28050386905670166,
+      "skill_reward/3_Dynamic Stance": 0.0,
+      "skill_reward/4_Stealthy Movement": 0.0,
+      "skill_usage/0_Initial Balance Check": 0.5763595700263977,
+      "skill_usage/1_Steady Walking": 0.227935791015625,
+      "skill_usage/2_Smooth Locomotion": 0.16117706894874573,
+      "skill_usage/3_Dynamic Stance": 0.01893768273293972,
+      "skill_usage/4_Stealthy Movement": 0.015589904971420765,
+      "train/actor_grad_norm": 0.338664710521698,
+      "train/actor_loss": -156.37789916992188,
+      "train/actor_penalty": 1.0184123516082764,
+      "train/actor_q": 156.37838745117188,
+      "train/critic_abs_td": 1.0960547924041748,
+      "train/critic_grad_norm": 3.7208659648895264,
+      "train/critic_loss": 0.879725456237793,
+      "train/critic_target": 153.88253784179688,
+      "train/critic_value": 154.02655029296875,
+      "train/meta_abs_td": 0.7809564471244812,
+      "train/meta_grad_norm": 3.3733673095703125,
+      "train/meta_loss": 0.5315998196601868,
+      "train/meta_q": 57.74945068359375,
+      "update": 398.0
+    },
+    "skillset": {
+      "environment": "WalkerWalk",
+      "observation_schema": "torso_height, height, torso_pitch, pitch, x_velocity, forward_velocity, joint_speed",
+      "skills": [
+        {
+          "name": "Initial Balance Check",
+          "description": "Ensure the walker is standing upright.",
+          "activation_rule": "height < 0.2 || torso_pitch > 0.4",
+          "reward_terms": [
+            {
+              "type": "target_height",
+              "weight": 1.0,
+              "lhs": "height",
+              "rhs": 0.8,
+              "threshold": 0.0,
+              "description": ""
+            },
+            {
+              "type": "posture_penalty",
+              "weight": 0.5,
+              "lhs": "torso_pitch",
+              "rhs": 0.4,
+              "threshold": 0.0,
+              "description": ""
+            }
+          ]
+        },
+        {
+          "name": "Steady Walking",
+          "description": "Maintain consistent walking posture without swaying.",
+          "activation_rule": "forward_velocity > 0 && torso_pitch < 0.6",
+          "reward_terms": [
+            {
+              "type": "positive_velocity",
+              "weight": 1.0,
+              "lhs": "forward_velocity",
+              "rhs": 0.1,
+              "threshold": 0.0,
+              "description": ""
+            },
+            {
+              "type": "binary_bonus",
+              "weight": 0.5,
+              "lhs": "joint_speed",
+              "rhs": 0.9,
+              "threshold": 0.0,
+              "description": ""
+            }
+          ]
+        },
+        {
+          "name": "Smooth Locomotion",
+          "description": "Achieve smooth movement with minimal jerks.",
+          "activation_rule": "forward_velocity > 0 && torso_pitch < 0.7",
+          "reward_terms": [
+            {
+              "type": "positive_velocity",
+              "weight": 1.0,
+              "lhs": "forward_velocity",
+              "rhs": 0.2,
+              "threshold": 0.0,
+              "description": ""
+            },
+            {
+              "type": "action_penalty",
+              "weight": 0.5,
+              "lhs": "joint_speed",
+              "rhs": 0.8,
+              "threshold": 0.0,
+              "description": ""
+            }
+          ]
+        },
+        {
+          "name": "Dynamic Stance",
+          "description": "Adjust stance dynamically to maintain balance under varying conditions.",
+          "activation_rule": "forward_velocity > 0 && torso_pitch < 0.8",
+          "reward_terms": [
+            {
+              "type": "dynamic_balance",
+              "weight": 1.0,
+              "lhs": "forward_velocity",
+              "rhs": 0.1,
+              "threshold": 0.0,
+              "description": ""
+            },
+            {
+              "type": "balance_penalty",
+              "weight": 0.5,
+              "lhs": "torso_pitch",
+              "rhs": 0.8,
+              "threshold": 0.0,
+              "description": ""
+            }
+          ]
+        },
+        {
+          "name": "Stealthy Movement",
+          "description": "Move stealthily while maintaining balance.",
+          "activation_rule": "forward_velocity > 0 && torso_pitch < 0.9",
+          "reward_terms": [
+            {
+              "type": "stealthiness",
+              "weight": 1.0,
+              "lhs": "forward_velocity",
+              "rhs": 0.1,
+              "threshold": 0.0,
+              "description": ""
+            },
+            {
+              "type": "balance_penalty",
+              "weight": 0.5,
+              "lhs": "torso_pitch",
+              "rhs": 0.9,
+              "threshold": 0.0,
+              "description": ""
+            }
+          ]
+        }
+      ],
+      "meta_policy_notes": ""
+    },
+    "refinement_ok": true,
+    "refinement_error": null
+  },
+  {
+    "iteration": 3,
+    "metrics": {
+      "action/action_norm_mean": 1.5168193578720093,
+      "action/noise_norm_mean": 0.06697855144739151,
+      "action/original_action_norm_mean": 1.5207204818725586,
+      "debug/host_time_token": 0.0,
+      "env/nonfinite_reward": 0.0,
+      "env/original_reward": 0.4070952832698822,
+      "env/returned_episode_lengths": 1000.0,
+      "env/returned_episode_returns": 316.318359375,
+      "env_step": 52166656.0,
+      "episode/done_fraction": 0.0,
+      "loss/actor": -155.97743225097656,
+      "loss/critic": 0.5853665471076965,
+      "loss/meta": 0.45474690198898315,
+      "mask/violation_rate": 0.0,
+      "mask_available/0_Initial Balance Check": 0.8748672604560852,
+      "mask_available/1_Steady Walking": 0.32926177978515625,
+      "mask_available/2_Smooth Locomotion": 0.3763900697231293,
+      "mask_available/3_Dynamic Stance": 0.381356805562973,
+      "mask_available/4_Stealthy Movement": 0.3842788636684418,
+      "mask_selected_given_available/0_Initial Balance Check": 0.7299709320068359,
+      "mask_selected_given_available/1_Steady Walking": 0.2119625359773636,
+      "mask_selected_given_available/2_Smooth Locomotion": 0.6519026756286621,
+      "mask_selected_given_available/3_Dynamic Stance": 0.10657866299152374,
+      "mask_selected_given_available/4_Stealthy Movement": 0.013474458828568459,
+      "mask_selected_when_available/0_Initial Balance Check": 0.6390151977539062,
+      "mask_selected_when_available/1_Steady Walking": 0.07100524753332138,
+      "mask_selected_when_available/2_Smooth Locomotion": 0.24477997422218323,
+      "mask_selected_when_available/3_Dynamic Stance": 0.04017181321978569,
+      "mask_selected_when_available/4_Stealthy Movement": 0.00502777099609375,
+      "mask_violation/0_Initial Balance Check": 0.0,
+      "mask_violation/1_Steady Walking": 0.0,
+      "mask_violation/2_Smooth Locomotion": 0.0,
+      "mask_violation/3_Dynamic Stance": 0.0,
+      "mask_violation/4_Stealthy Movement": 0.0,
+      "meta_epsilon": 0.019999999552965164,
+      "noise": 0.029999997466802597,
+      "policy_diag/primary_goal_metric": 1.4219869375228882,
+      "policy_diag/primary_success_rate": 0.36343079805374146,
+      "policy_diag/walker/forward_velocity_mean": 1.4219869375228882,
+      "policy_diag/walker/stand_success_rate": 0.9570099115371704,
+      "policy_diag/walker/walk_success_rate": 0.36343079805374146,
+      "returns/env_reward_mean": 0.4070952832698822,
+      "returns/skill_reward_mean": 0.6028055548667908,
+      "rollout/done_fraction": 0.0,
+      "rollout/episode_length": 1000.0,
+      "rollout/episode_return": 316.318359375,
+      "schedule/meta_epsilon": 0.019999999552965164,
+      "schedule/noise": 0.029999997466802597,
+      "schedule/skill_epsilon": 0.019999999552965164,
+      "skill_reward/0_Initial Balance Check": 0.8964483141899109,
+      "skill_reward/1_Steady Walking": 1.9219869375228882,
+      "skill_reward/2_Smooth Locomotion": 0.1955927461385727,
+      "skill_reward/3_Dynamic Stance": 0.0,
+      "skill_reward/4_Stealthy Movement": 0.0,
+      "skill_usage/0_Initial Balance Check": 0.6390151977539062,
+      "skill_usage/1_Steady Walking": 0.07100524753332138,
+      "skill_usage/2_Smooth Locomotion": 0.24477997422218323,
+      "skill_usage/3_Dynamic Stance": 0.04017181321978569,
+      "skill_usage/4_Stealthy Movement": 0.00502777099609375,
+      "train/actor_grad_norm": 0.41340675950050354,
+      "train/actor_loss": -155.97743225097656,
+      "train/actor_penalty": 0.8857215642929077,
+      "train/actor_q": 155.97787475585938,
+      "train/critic_abs_td": 0.7747097015380859,
+      "train/critic_grad_norm": 2.7212791442871094,
+      "train/critic_loss": 0.5853665471076965,
+      "train/critic_target": 153.30673217773438,
+      "train/critic_value": 153.44277954101562,
+      "train/meta_abs_td": 0.6040881872177124,
+      "train/meta_grad_norm": 3.544612407684326,
+      "train/meta_loss": 0.45474690198898315,
+      "train/meta_q": 38.97455978393555,
+      "update": 398.0
+    },
+    "skillset": {
+      "environment": "WalkerWalk",
+      "observation_schema": "torso_height, height, torso_pitch, pitch, x_velocity, forward_velocity, joint_speed",
+      "skills": [
+        {
+          "name": "Initial Balance Check",
+          "description": "Ensure the walker is standing upright.",
+          "activation_rule": "height < 0.2 || torso_pitch > 0.4",
+          "reward_terms": [
+            {
+              "type": "target_height",
+              "weight": 1.0,
+              "lhs": "height",
+              "rhs": 0.8,
+              "threshold": 0.0,
+              "description": ""
+            },
+            {
+              "type": "posture_penalty",
+              "weight": 0.5,
+              "lhs": "torso_pitch",
+              "rhs": 0.4,
+              "threshold": 0.0,
+              "description": ""
+            }
+          ]
+        },
+        {
+          "name": "Steady Walking",
+          "description": "Maintain consistent walking posture without swaying.",
+          "activation_rule": "forward_velocity > 0 && torso_pitch < 0.6",
+          "reward_terms": [
+            {
+              "type": "positive_velocity",
+              "weight": 1.0,
+              "lhs": "forward_velocity",
+              "rhs": 0.1,
+              "threshold": 0.0,
+              "description": ""
+            },
+            {
+              "type": "binary_bonus",
+              "weight": 0.5,
+              "lhs": "joint_speed",
+              "rhs": 0.9,
+              "threshold": 0.0,
+              "description": ""
+            }
+          ]
+        },
+        {
+          "name": "Smooth Locomotion",
+          "description": "Achieve smooth movement with minimal jerks.",
+          "activation_rule": "forward_velocity > 0 && torso_pitch < 0.7",
+          "reward_terms": [
+            {
+              "type": "positive_velocity",
+              "weight": 1.0,
+              "lhs": "forward_velocity",
+              "rhs": 0.2,
+              "threshold": 0.0,
+              "description": ""
+            },
+            {
+              "type": "action_penalty",
+              "weight": 0.5,
+              "lhs": "joint_speed",
+              "rhs": 0.8,
+              "threshold": 0.0,
+              "description": ""
+            }
+          ]
+        },
+        {
+          "name": "Dynamic Stance",
+          "description": "Adjust stance dynamically to maintain balance under varying conditions.",
+          "activation_rule": "forward_velocity > 0 && torso_pitch < 0.8",
+          "reward_terms": [
+            {
+              "type": "dynamic_balance",
+              "weight": 1.0,
+              "lhs": "forward_velocity",
+              "rhs": 0.1,
+              "threshold": 0.0,
+              "description": ""
+            },
+            {
+              "type": "balance_penalty",
+              "weight": 0.5,
+              "lhs": "torso_pitch",
+              "rhs": 0.8,
+              "threshold": 0.0,
+              "description": ""
+            }
+          ]
+        },
+        {
+          "name": "Stealthy Movement",
+          "description": "Move stealthily while maintaining balance.",
+          "activation_rule": "forward_velocity > 0 && torso_pitch < 0.9",
+          "reward_terms": [
+            {
+              "type": "stealthiness",
+              "weight": 1.0,
+              "lhs": "forward_velocity",
+              "rhs": 0.1,
+              "threshold": 0.0,
+              "description": ""
+            },
+            {
+              "type": "balance_penalty",
+              "weight": 0.5,
+              "lhs": "torso_pitch",
+              "rhs": 0.9,
+              "threshold": 0.0,
+              "description": ""
+            }
+          ]
+        }
+      ],
+      "meta_policy_notes": ""
+    },
+    "refinement_ok": true,
+    "refinement_error": null
+  }
+]

@@ -1,0 +1,76 @@
+{
+  "environment": "HopperHop",
+  "observation_schema": "torso_pitch,x_velocity,forward_velocity,joint_speed",
+  "skills": [
+    {
+      "name": "Initial Stability",
+      "description": "Maintain balance by adjusting pitch to prevent falling.",
+      "activation_rule": "torso_pitch > 0.2 || torso_pitch < -0.2",
+      "reward_terms": [
+        {
+          "type": "posture_penalty",
+          "weight": 1.0,
+          "lhs": "torso_pitch",
+          "rhs": "null",
+          "threshold": 0.0,
+          "description": ""
+        },
+        {
+          "type": "action_penalty",
+          "weight": 0.5,
+          "lhs": "joint_speed",
+          "rhs": "null",
+          "threshold": 0.0,
+          "description": ""
+        }
+      ]
+    },
+    {
+      "name": "Forward Movement",
+      "description": "Adjust velocity to maintain forward motion without overshooting.",
+      "activation_rule": "forward_velocity > 0 && joint_speed < 0.5",
+      "reward_terms": [
+        {
+          "type": "positive_velocity",
+          "weight": 1.0,
+          "lhs": "forward_velocity",
+          "rhs": "null",
+          "threshold": 0.0,
+          "description": ""
+        },
+        {
+          "type": "binary_bonus",
+          "weight": 0.5,
+          "lhs": "joint_speed",
+          "rhs": "null",
+          "threshold": 0.0,
+          "description": ""
+        }
+      ]
+    },
+    {
+      "name": "Optimal Locomotion",
+      "description": "Fine-tune movements for maximum efficiency in forward motion.",
+      "activation_rule": "forward_velocity > 0 && joint_speed > 0.7",
+      "reward_terms": [
+        {
+          "type": "target_height",
+          "weight": 1.0,
+          "lhs": "forward_velocity",
+          "rhs": "null",
+          "threshold": 0.0,
+          "description": ""
+        },
+        {
+          "type": "action_penalty",
+          "weight": 0.5,
+          "lhs": "joint_speed",
+          "rhs": "null",
+          "threshold": 0.0,
+          "description": ""
+        }
+      ]
+    }
+  ],
+  "meta_policy_notes": ""
+}

@@ -1,0 +1,76 @@
+{
+  "environment": "WalkerWalk",
+  "observation_schema": "torso_height, height, torso_pitch, pitch, x_velocity, forward_velocity, joint_speed",
+  "skills": [
+    {
+      "name": "Initial Balance Check",
+      "description": "Ensure initial stability by checking if torso is at ground level.",
+      "activation_rule": "torso_height < 0.2",
+      "reward_terms": [
+        {
+          "type": "target_height",
+          "weight": 1.0,
+          "lhs": "torso_height",
+          "rhs": 0.2,
+          "threshold": 0.0,
+          "description": ""
+        },
+        {
+          "type": "action_penalty",
+          "weight": 0.5,
+          "lhs": "joint_speed",
+          "rhs": 0.0,
+          "threshold": 0.0,
+          "description": ""
+        }
+      ]
+    },
+    {
+      "name": "Forward Movement",
+      "description": "Maintain forward movement with controlled speed.",
+      "activation_rule": "forward_velocity > 0.0",
+      "reward_terms": [
+        {
+          "type": "positive_velocity",
+          "weight": 1.0,
+          "lhs": "forward_velocity",
+          "rhs": 0.0,
+          "threshold": 0.0,
+          "description": ""
+        },
+        {
+          "type": "binary_bonus",
+          "weight": 0.5,
+          "lhs": "joint_speed",
+          "rhs": 0.0,
+          "threshold": 0.0,
+          "description": ""
+        }
+      ]
+    },
+    {
+      "name": "Optimal Locomotion",
+      "description": "Achieve smooth walking with minimal energy expenditure.",
+      "activation_rule": "joint_speed < 0.5 && forward_velocity > 0.0",
+      "reward_terms": [
+        {
+          "type": "posture_penalty",
+          "weight": 1.0,
+          "lhs": "joint_speed",
+          "rhs": 0.5,
+          "threshold": 0.0,
+          "description": ""
+        },
+        {
+          "type": "action_penalty",
+          "weight": 0.5,
+          "lhs": "forward_velocity",
+          "rhs": 0.0,
+          "threshold": 0.0,
+          "description": ""
+        }
+      ]
+    }
+  ],
+  "meta_policy_notes": ""
+}

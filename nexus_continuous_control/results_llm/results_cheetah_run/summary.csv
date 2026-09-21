@@ -1,0 +1,9 @@
+env,backend,kind,metric,mean,std
+CheetahRun,-,hand_written,env_reward,0.8423047184944152,0.02864789136901978
+CheetahRun,-,hand_written,success_rate,0.899275028705597,0.09493703407111595
+CheetahRun,-,hand_written,goal_metric,7.994136905670166,0.9507529737076034
+CheetahRun,hf,llm,env_reward,0.7825345158576965,0.13316203573408247
+CheetahRun,hf,llm,success_rate,0.9127531886100769,0.042182055017635896
+CheetahRun,hf,llm,goal_metric,7.851214599609375,0.4954125516080006
+CheetahRun,hf,refined_first_iter,env_reward,0.7428790330886841,
+CheetahRun,hf,refined_last_iter,env_reward,0.8492482900619507,

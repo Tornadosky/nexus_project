@@ -21,8 +21,17 @@ from types import ModuleType
 from typing import Any
 
 import jax.numpy as jnp
+from dataclasses import asdict, is_dataclass
 
-from nexus_continuous.policies.common import actor_obs, feature_info, info_value, safe_index
+from nexus_continuous.llm.jax_bootstrap import ensure_jax 
+
+ensure_jax()
+
+try:
+    from nexus_continuous.policies.common import actor_obs, feature_info, info_value, safe_index
+except Exception: 
+    from nexus_continuous.llm.common_fallback import actor_obs, feature_info, info_value, safe_index
+
 
 # Default obs-index fallbacks per env field (used only if the semantic key is
 # absent). Indices follow the hand-written policies' conventions.
@@ -67,6 +76,8 @@ def _normalize(rule: str) -> str:
     rule = re.sub(r"\bAND\b", "and", rule)
     rule = re.sub(r"\bOR\b", "or", rule)
     rule = re.sub(r"\bNOT\b", "not", rule)
+    rule = rule.replace("&&", " and ").replace("||", " or ")
+    rule = re.sub(r"!(?!=)", " not ", rule)
     return rule
 
 
@@ -144,11 +155,32 @@ def eval_rule(rule: str, fields: dict[str, jnp.ndarray]) -> jnp.ndarray:
 
 
 # ---- reward-term -> JAX ----
+def _resolve_side(value: object, fields: dict[str, jnp.ndarray]) -> jnp.ndarray | None:
+    """Resolve a reward-term lhs/rhs value: a field name -> the field's array;
+    a numeric constant (JSON number, or a numeric-looking JSON string like
+    "0.75") -> a scalar; anything else (a genuinely unrecognized field name,
+    e.g. an accidental function-call expression) -> None, same fail-closed
+    behavior as before."""
+    if value is None:
+        return None
+    if isinstance(value, bool):  # bool is an int subclass -- exclude explicitly
+        return None
+    if isinstance(value, (int, float)):
+        return jnp.asarray(float(value))
+    if isinstance(value, str):
+        if value in fields:
+            return fields[value]
+        try:
+            return jnp.asarray(float(value))
+        except ValueError:
+            return None
+    return None
+
 def _term_reward(term: dict, fields: dict[str, jnp.ndarray], action: jnp.ndarray) -> jnp.ndarray:
     t = term.get("type")
     w = float(term.get("weight", 1.0) or 1.0)
-    lhs = fields.get(term.get("lhs")) if term.get("lhs") in fields else None
-    rhs = fields.get(term.get("rhs")) if term.get("rhs") in fields else None
+    lhs = _resolve_side(term.get("lhs"), fields)
+    rhs = _resolve_side(term.get("rhs"), fields)
     thr = term.get("threshold")
     thr = float(thr) if thr is not None else None
     zero = jnp.zeros(action.shape[:-1], dtype=action.dtype)
@@ -180,7 +212,7 @@ def _term_reward(term: dict, fields: dict[str, jnp.ndarray], action: jnp.ndarray
     return zero
 
 
-def make_policy_module(skillset: dict, field_names: tuple[str, ...],
+def make_policy_module(skillset, field_names: tuple[str, ...],
                        task_metrics_fn=None, name: str = "llm_generated",
                        field_fn=None, mask_mode: str = "strict") -> ModuleType:
     """Return a policy-module-like object the trainer can load.
@@ -195,9 +227,19 @@ def make_policy_module(skillset: dict, field_names: tuple[str, ...],
                        also allow every skill up to (highest active index + 1),
                        so the meta can try the next step instead of being stuck.
     """
+    if is_dataclass(skillset):
+        skillset = asdict(skillset)
+    if not isinstance(skillset, dict):
+        raise TypeError(
+            "Skillset must be a dict or dataclass instance,"
+            f"got {type(skillset).__name__}"
+        )
+        
     skills = skillset.get("skills", [])
     skill_names = tuple(s.get("name", f"skill_{i}") for i, s in enumerate(skills))
     num_skills = len(skills)
+    if num_skills == 0:
+        raise ValueError()
     build = field_fn if field_fn is not None else (lambda obs, info: _build_fields(field_names, obs, info))
 
     def skill_rewards(prev_obs, obs, action, env_reward, done, info=None):

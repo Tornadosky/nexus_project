@@ -1,0 +1,6 @@
+env,hand_written_wall_s_mean,llm_initial_wall_s_mean
+CartpoleBalance,63.14,67.76
+CheetahRun,793.95,879.39
+Go1JoystickFlatTerrain,450.44,370.1
+HopperHop,1275.69,1150.36
+WalkerWalk,1484.38,1348.47
