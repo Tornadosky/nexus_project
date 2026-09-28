@@ -32,6 +32,7 @@ nexus_continuous/
   networks.py                                    # actor, critic, meta-Q modules
   returns.py                                     # Q(lambda) targets
   envs/playground_adapter.py                     # PureJAXQL Playground wrapper adapter
+  llm/                                           # LLM extension
   policies/*.py                                  # hand-written skills/rewards/rules
   scripts/train_nexus_playground.py              # CLI training entry point
   scripts/eval_policy.py                         # inspect rules on synthetic states
@@ -434,3 +435,85 @@ The policy modules first look for semantic keys in `info`, such as `x_velocity`,
 missing, they fall back to conservative observation indices. For a final paper
 run, inspect the installed Playground environment's observation schema and, if
 needed, tighten the feature extraction in the corresponding policy module.
+
+## LLM extension 
+
+An LLM proposes the skill definitions (per-skill reward functions and
+activation rules) for the hierarchical NEXUS agent. The proposal is validated,
+compiled into JAX, and trained by the trainer
+(`algorithms/hierarchical_ac_pqn_playground.py`) used for the hand-written
+skills, so the two can be compared head to head. A refinement loop then feeds
+training metrics back to the LLM and asks for a revised skillset.
+
+### Reproducibility
+
+1. **Hand-written baseline**: trains the hand-designed skills once per seed.
+2. **LLM skillset**: generates ONE skillset for (env, backend), then trains that
+   same skillset on every seed (fair mean/std against the baseline).
+3. **Refinement loop** (`--refine-iterations 4`): the LLM proposes a fresh
+   skillset, it is trained (seed = first seed), metrics are fed back, the LLM
+   revises, repeat for 4 trainings total. Note this loop starts from its own
+   proposal, not the skillset from step 2.
+
+```bash
+python -m nexus_continuous.scripts.run_llm_full_suite \
+    --envs CartpoleBalance \
+    --backends hf \
+    --seeds 0 1 2 3 4 \
+    --refine-iterations 4 \
+    --output results_cartpole_balance_test \
+    --override EVAL_AFTER_TRAIN=True \
+    --override EVAL_NUM_ENVS=128 \
+    --override EVAL_NUM_EPISODES=128
+
+python -m nexus_continuous.scripts.collect_llm_results --results results_cartpole_balance_test
+```
+All analysis and results are stored inside `nexus_continuous_control/results_llm`. The measurements andcomparisons are analysed by extracting from `<env>/manifest.json` and produces main tables and plots that summarize differences, skill usages and refinement behaviours.
+
+### Skills generated
+
+| Env | Hand-written (n, names) | LLM-initial (n, names) | LLM-refined (n, names) |
+|---|---|---|---|
+| CartpoleBalance | 3: recover_balance, center_cart, damp_motion | 3: Initial Balance Check, Leverage Gravity to Maintain Balance, Optimize Locomotion for Stability | 5: Initial Balance Check, Pole Locomotion, Stability Enhancement, Dynamic Pole Control, Improved Stability |
+| CheetahRun | 3: accelerate_forward, stabilize_posture, energy_efficient_run | 3: Initial Stability, Lateral Locomotion, Optimal Performance | 5: Initial Balance, Sideways Movement, High-Speed Forward Motion, Steering Maneuver, Dynamic Locomotion |
+| WalkerWalk | 4: stand_recover, walk_forward, stabilize_gait, energy_efficient | 3: Initial Balance Check, Forward Movement, Optimal Locomotion | 5: Initial Balance Check, Steady Walking, Smooth Locomotion, Dynamic Stance, Stealthy Movement |
+| HopperHop | 4: stand_recover, hop_forward, stabilize_landing, energy_efficient | 3: Initial Stability, Forward Movement, Optimal Locomotion | 5: Initial Balance, Forward Momentum, Efficient Locomotion, Stability Enhancement, Dynamic Stabilization |
+| Go1JoystickFlatTerrain | 4: stand, track_velocity, turn, recover | 3: BaseHeightSafety, LateralMovementControl, OptimalGait | 5: SafeDistanceFromObstacles, AvoidCollisions, OptimalLandingParameters, SmoothSwinging, StabilizeBaseHeight |
+
+### Result observations
+
+- **CheetahRun is the one environment where the LLM is competitive out of the
+  box** and the refined skillset actually surpasses the hand-written
+  policy on both env reward and success rate.
+- **HopperHop and Go1JoystickFlatTerrain are near-total LLM failures.** These are also the two hardest tasks
+  (contact-precondition hopping, and quadruped balance + command tracking),
+  suggesting the LLM's activation rules and reward shaping are least reliable
+  exactly where dense rewards matter most.
+- **The LLM always proposes exactly 3 skills initially and the refinement
+  loop always grows to 5 skills** (the schema's stated max) by the final
+  iteration, in every single environment. This looks like a systematic
+  refinement bias toward adding rather than fizing the weaker skills.
+- **LLM skill names are generic and cross-environment**
+  ("Initial Balance Check", "Optimal Locomotion", "Stability Enhancement"
+  appear across CartpoleBalance/WalkerWalk/HopperHop) — a signal
+  that the LLM is pattern-completing a locomotion-skill template rather than
+  reasoning about the specific observation schema.
+- **The hand-written policies show a healthy, non-degenerate usage
+  distribution in every environment**. No skill is ever exactly 0% or 100%
+  except WalkerWalk's `walk_forward` (0.00, because `energy_efficient` already
+  subsumes forward progress once walking is established.)
+- **WalkerWalk's LLM-refined skillset still leans heavily on the first,
+  safety-flavored skill** (`Initial Balance Check`, 64%) rather than a
+  locomotion skill. The refined meta-policy is still spending most of its
+  time being cautious rather than walking forward.
+- **The refinement loop only reliably helps on CheetahRun**, the environment
+  where the LLM was already closest to hand-written performance. On the three
+  hardest environments (WalkerWalk, HopperHop, Go1), more
+  refinement iterations either do nothing or actively hurt. 
+- **`skill_reward_mean` (the mean of the *per-skill* shaped rewards, as opposed
+  to env reward) does not track env reward well** This means the LLM's self-reported reward         shaping is not a
+  reliable proxy for the metric that actually matters, which limits how well
+  the refinement loop's own feedback signal can guide improvement.
+
+For more detailed results and explanations check the READMEs on `nexus_continuous_control/results_llm` and `nexus_continuous_control/nexus_continuous/llm`.
+
