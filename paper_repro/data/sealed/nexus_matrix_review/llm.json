@@ -1,0 +1,1203 @@
+{
+ "sealed": {
+  "llm_pilot_disposition": {
+   "planned": 6,
+   "executable": 0,
+   "excluded": [
+    {
+     "id": "llm_pilot__cheetah__initial__g0__s900",
+     "reason": "bounded_validation_failed"
+    },
+    {
+     "id": "llm_pilot__cheetah__initial__g1__s901",
+     "reason": "bounded_validation_failed"
+    },
+    {
+     "id": "llm_pilot__cheetah__initial__g2__s902",
+     "reason": "bounded_validation_failed"
+    },
+    {
+     "id": "llm_pilot__walker__initial__g0__s900",
+     "reason": "bounded_validation_failed"
+    },
+    {
+     "id": "llm_pilot__walker__initial__g1__s901",
+     "reason": "bounded_validation_failed"
+    },
+    {
+     "id": "llm_pilot__walker__initial__g2__s902",
+     "reason": "bounded_validation_failed"
+    }
+   ],
+   "provenance": {
+    "/home/smirn/nexus_campaign_specs_2026-09-05/cheetah/g0/initial.generation.json": "067bfeb03dd03c9131f8cba46a48690b6172012913724077594d06508f37e44f",
+    "/home/smirn/nexus_campaign_specs_2026-09-05/cheetah/g1/initial.generation.json": "ff1b04e59f1ad2970a25023c4cc93de1bae13f73914e842116efeeee52e41bd6",
+    "/home/smirn/nexus_campaign_specs_2026-09-05/cheetah/g2/initial.generation.json": "16a28023a8a4e4ea66b4a869ef12d3b7318bb6ae9f425570d927506bc33c1543",
+    "/home/smirn/nexus_campaign_specs_2026-09-05/walker/g0/initial.generation.json": "51eeab1f98c6a76c7d3e1c43cfff76570319592fcd16e9ec313b87f74bf34fce",
+    "/home/smirn/nexus_campaign_specs_2026-09-05/walker/g1/initial.generation.json": "7ea7c3bd5c7704dbfda72dba35b83426c0c8d043e5159d6ef726b9c12a98ee97",
+    "/home/smirn/nexus_campaign_specs_2026-09-05/walker/g2/initial.generation.json": "aef78c8e6f7508ccd5c628f2702b69c87cc2e0a2b8795f22ba7e03046a64de80"
+   },
+   "replacement_samples_allowed": false
+  },
+  "llm_final_disposition": {
+   "planned": 36,
+   "executable": 0,
+   "excluded": [
+    {
+     "id": "llm_final__cheetah__initial__g0__s0",
+     "reason": "bounded_validation_failed"
+    },
+    {
+     "id": "llm_final__cheetah__initial__g0__s1",
+     "reason": "bounded_validation_failed"
+    },
+    {
+     "id": "llm_final__cheetah__refined__g0__s0",
+     "reason": "initial_failed_bounded_validation"
+    },
+    {
+     "id": "llm_final__cheetah__refined__g0__s1",
+     "reason": "initial_failed_bounded_validation"
+    },
+    {
+     "id": "llm_final__cheetah__resample__g0__s0",
+     "reason": "bounded_validation_failed"
+    },
+    {
+     "id": "llm_final__cheetah__resample__g0__s1",
+     "reason": "bounded_validation_failed"
+    },
+    {
+     "id": "llm_final__cheetah__initial__g1__s0",
+     "reason": "bounded_validation_failed"
+    },
+    {
+     "id": "llm_final__cheetah__initial__g1__s1",
+     "reason": "bounded_validation_failed"
+    },
+    {
+     "id": "llm_final__cheetah__refined__g1__s0",
+     "reason": "initial_failed_bounded_validation"
+    },
+    {
+     "id": "llm_final__cheetah__refined__g1__s1",
+     "reason": "initial_failed_bounded_validation"
+    },
+    {
+     "id": "llm_final__cheetah__resample__g1__s0",
+     "reason": "bounded_validation_failed"
+    },
+    {
+     "id": "llm_final__cheetah__resample__g1__s1",
+     "reason": "bounded_validation_failed"
+    },
+    {
+     "id": "llm_final__cheetah__initial__g2__s0",
+     "reason": "bounded_validation_failed"
+    },
+    {
+     "id": "llm_final__cheetah__initial__g2__s1",
+     "reason": "bounded_validation_failed"
+    },
+    {
+     "id": "llm_final__cheetah__refined__g2__s0",
+     "reason": "initial_failed_bounded_validation"
+    },
+    {
+     "id": "llm_final__cheetah__refined__g2__s1",
+     "reason": "initial_failed_bounded_validation"
+    },
+    {
+     "id": "llm_final__cheetah__resample__g2__s0",
+     "reason": "bounded_validation_failed"
+    },
+    {
+     "id": "llm_final__cheetah__resample__g2__s1",
+     "reason": "bounded_validation_failed"
+    },
+    {
+     "id": "llm_final__walker__initial__g0__s0",
+     "reason": "bounded_validation_failed"
+    },
+    {
+     "id": "llm_final__walker__initial__g0__s1",
+     "reason": "bounded_validation_failed"
+    },
+    {
+     "id": "llm_final__walker__refined__g0__s0",
+     "reason": "initial_failed_bounded_validation"
+    },
+    {
+     "id": "llm_final__walker__refined__g0__s1",
+     "reason": "initial_failed_bounded_validation"
+    },
+    {
+     "id": "llm_final__walker__resample__g0__s0",
+     "reason": "bounded_validation_failed"
+    },
+    {
+     "id": "llm_final__walker__resample__g0__s1",
+     "reason": "bounded_validation_failed"
+    },
+    {
+     "id": "llm_final__walker__initial__g1__s0",
+     "reason": "bounded_validation_failed"
+    },
+    {
+     "id": "llm_final__walker__initial__g1__s1",
+     "reason": "bounded_validation_failed"
+    },
+    {
+     "id": "llm_final__walker__refined__g1__s0",
+     "reason": "initial_failed_bounded_validation"
+    },
+    {
+     "id": "llm_final__walker__refined__g1__s1",
+     "reason": "initial_failed_bounded_validation"
+    },
+    {
+     "id": "llm_final__walker__resample__g1__s0",
+     "reason": "bounded_validation_failed"
+    },
+    {
+     "id": "llm_final__walker__resample__g1__s1",
+     "reason": "bounded_validation_failed"
+    },
+    {
+     "id": "llm_final__walker__initial__g2__s0",
+     "reason": "bounded_validation_failed"
+    },
+    {
+     "id": "llm_final__walker__initial__g2__s1",
+     "reason": "bounded_validation_failed"
+    },
+    {
+     "id": "llm_final__walker__refined__g2__s0",
+     "reason": "initial_failed_bounded_validation"
+    },
+    {
+     "id": "llm_final__walker__refined__g2__s1",
+     "reason": "initial_failed_bounded_validation"
+    },
+    {
+     "id": "llm_final__walker__resample__g2__s0",
+     "reason": "bounded_validation_failed"
+    },
+    {
+     "id": "llm_final__walker__resample__g2__s1",
+     "reason": "bounded_validation_failed"
+    }
+   ],
+   "provenance": {
+    "/home/smirn/nexus_campaign_specs_2026-09-05/cheetah/g0/initial.generation.json": "067bfeb03dd03c9131f8cba46a48690b6172012913724077594d06508f37e44f",
+    "/home/smirn/nexus_campaign_specs_2026-09-05/cheetah/g0/refined.SKIPPED.json": "4780bb2ad7806a3b1914e803663940458a8fe9270ba9b034aa8af1991e5115ca",
+    "/home/smirn/nexus_campaign_specs_2026-09-05/cheetah/g0/resample.generation.json": "e3d4b71973a128695091b482e5789f14d80aaaffcfb89c7754c71e42c118df6b",
+    "/home/smirn/nexus_campaign_specs_2026-09-05/cheetah/g1/initial.generation.json": "ff1b04e59f1ad2970a25023c4cc93de1bae13f73914e842116efeeee52e41bd6",
+    "/home/smirn/nexus_campaign_specs_2026-09-05/cheetah/g1/refined.SKIPPED.json": "1cf9c904b0fba8c1781ac090834771654fc350d9b99300534fba098d5b589c73",
+    "/home/smirn/nexus_campaign_specs_2026-09-05/cheetah/g1/resample.generation.json": "b9f85992c7eb8f612d6df0863b014dd394f5afc722f990b2af16b5c5b87fa438",
+    "/home/smirn/nexus_campaign_specs_2026-09-05/cheetah/g2/initial.generation.json": "16a28023a8a4e4ea66b4a869ef12d3b7318bb6ae9f425570d927506bc33c1543",
+    "/home/smirn/nexus_campaign_specs_2026-09-05/cheetah/g2/refined.SKIPPED.json": "82ab94fc0fa9be76caaad74d95f99d0b1000c7a1436f97a68b355cb287b8ada2",
+    "/home/smirn/nexus_campaign_specs_2026-09-05/cheetah/g2/resample.generation.json": "5202f4c154dbeab47a27ff3a1404566514e6e5c63c119a185a76bdfff1d42f91",
+    "/home/smirn/nexus_campaign_specs_2026-09-05/walker/g0/initial.generation.json": "51eeab1f98c6a76c7d3e1c43cfff76570319592fcd16e9ec313b87f74bf34fce",
+    "/home/smirn/nexus_campaign_specs_2026-09-05/walker/g0/refined.SKIPPED.json": "656f31384c332c89cc85af802f4c521816c01f18361c568781ec84657ca39c6a",
+    "/home/smirn/nexus_campaign_specs_2026-09-05/walker/g0/resample.generation.json": "b52d685199d16d6a3df071d79ef89afb0d929be5bab5e95cc5689639af49d6d7",
+    "/home/smirn/nexus_campaign_specs_2026-09-05/walker/g1/initial.generation.json": "7ea7c3bd5c7704dbfda72dba35b83426c0c8d043e5159d6ef726b9c12a98ee97",
+    "/home/smirn/nexus_campaign_specs_2026-09-05/walker/g1/refined.SKIPPED.json": "cec22a3498c4a541e29600eda143b00487f92678f9351bd37191f378d6cc19e1",
+    "/home/smirn/nexus_campaign_specs_2026-09-05/walker/g1/resample.generation.json": "a5809f47130997775b57a952013352f5cdf66964104f27c3fe6e908332167ade",
+    "/home/smirn/nexus_campaign_specs_2026-09-05/walker/g2/initial.generation.json": "aef78c8e6f7508ccd5c628f2702b69c87cc2e0a2b8795f22ba7e03046a64de80",
+    "/home/smirn/nexus_campaign_specs_2026-09-05/walker/g2/refined.SKIPPED.json": "300abfd49a7c5d353dd0a5b630586aba51e3c4667a8b5b5d37de61ed7a2df200",
+    "/home/smirn/nexus_campaign_specs_2026-09-05/walker/g2/resample.generation.json": "c2c8c3377697c005687d0f859b33332b3c64d7c13f44a02e7e32ddfa027a1a3f"
+   },
+   "replacement_samples_allowed": false
+  },
+  "llm_pilot_evaluation": [],
+  "llm_final_evaluation": [
+   {
+    "id": "llm_reference__cheetah__nesy__s0",
+    "group": "llm_reference",
+    "task": "cheetah",
+    "env": "CheetahRun",
+    "method": "nesy",
+    "seed": 0,
+    "proposal_family": null,
+    "budget": 52428800,
+    "engine": "state",
+    "repo": "core",
+    "config": "configs/llm_reference__cheetah__nesy__s0.yaml",
+    "spec": null
+   },
+   {
+    "id": "llm_reference__cheetah__nesy__s1",
+    "group": "llm_reference",
+    "task": "cheetah",
+    "env": "CheetahRun",
+    "method": "nesy",
+    "seed": 1,
+    "proposal_family": null,
+    "budget": 52428800,
+    "engine": "state",
+    "repo": "core",
+    "config": "configs/llm_reference__cheetah__nesy__s1.yaml",
+    "spec": null
+   },
+   {
+    "id": "llm_reference__cheetah__nesy__s2",
+    "group": "llm_reference",
+    "task": "cheetah",
+    "env": "CheetahRun",
+    "method": "nesy",
+    "seed": 2,
+    "proposal_family": null,
+    "budget": 52428800,
+    "engine": "state",
+    "repo": "core",
+    "config": "configs/llm_reference__cheetah__nesy__s2.yaml",
+    "spec": null
+   },
+   {
+    "id": "llm_reference__cheetah__nesy__s3",
+    "group": "llm_reference",
+    "task": "cheetah",
+    "env": "CheetahRun",
+    "method": "nesy",
+    "seed": 3,
+    "proposal_family": null,
+    "budget": 52428800,
+    "engine": "state",
+    "repo": "core",
+    "config": "configs/llm_reference__cheetah__nesy__s3.yaml",
+    "spec": null
+   },
+   {
+    "id": "llm_reference__cheetah__nesy__s4",
+    "group": "llm_reference",
+    "task": "cheetah",
+    "env": "CheetahRun",
+    "method": "nesy",
+    "seed": 4,
+    "proposal_family": null,
+    "budget": 52428800,
+    "engine": "state",
+    "repo": "core",
+    "config": "configs/llm_reference__cheetah__nesy__s4.yaml",
+    "spec": null
+   },
+   {
+    "id": "llm_reference__walker__nesy__s0",
+    "group": "llm_reference",
+    "task": "walker",
+    "env": "WalkerWalk",
+    "method": "nesy",
+    "seed": 0,
+    "proposal_family": null,
+    "budget": 52428800,
+    "engine": "state",
+    "repo": "core",
+    "config": "configs/llm_reference__walker__nesy__s0.yaml",
+    "spec": null
+   },
+   {
+    "id": "llm_reference__walker__nesy__s1",
+    "group": "llm_reference",
+    "task": "walker",
+    "env": "WalkerWalk",
+    "method": "nesy",
+    "seed": 1,
+    "proposal_family": null,
+    "budget": 52428800,
+    "engine": "state",
+    "repo": "core",
+    "config": "configs/llm_reference__walker__nesy__s1.yaml",
+    "spec": null
+   },
+   {
+    "id": "llm_reference__walker__nesy__s2",
+    "group": "llm_reference",
+    "task": "walker",
+    "env": "WalkerWalk",
+    "method": "nesy",
+    "seed": 2,
+    "proposal_family": null,
+    "budget": 52428800,
+    "engine": "state",
+    "repo": "core",
+    "config": "configs/llm_reference__walker__nesy__s2.yaml",
+    "spec": null
+   },
+   {
+    "id": "llm_reference__walker__nesy__s3",
+    "group": "llm_reference",
+    "task": "walker",
+    "env": "WalkerWalk",
+    "method": "nesy",
+    "seed": 3,
+    "proposal_family": null,
+    "budget": 52428800,
+    "engine": "state",
+    "repo": "core",
+    "config": "configs/llm_reference__walker__nesy__s3.yaml",
+    "spec": null
+   },
+   {
+    "id": "llm_reference__walker__nesy__s4",
+    "group": "llm_reference",
+    "task": "walker",
+    "env": "WalkerWalk",
+    "method": "nesy",
+    "seed": 4,
+    "proposal_family": null,
+    "budget": 52428800,
+    "engine": "state",
+    "repo": "core",
+    "config": "configs/llm_reference__walker__nesy__s4.yaml",
+    "spec": null
+   }
+  ]
+ },
+ "v2": {
+  "specs": [
+   {
+    "path": "cheetah/g2/initial.generation.json",
+    "attempts": [
+     {
+      "seed": 2002,
+      "prompt": [
+       {
+        "role": "system",
+        "content": "Design a continuous-control NEXUS skillset. Return JSON only: {\"skills\": [\n {\"name\":\"...\", \"activation_rule\":\"...\", \"reward_terms\":[{\"type\":\"...\",\"weight\":1.0,\"lhs\":\"...\"}]}]}.\nEvery scalar field is the same semantic feature supplied to the hand-designed controller.\nFields and units: forward_velocity in m/s, torso_pitch in radians, joint_speed mean absolute joint\nangular speed in rad/s, and height in metres only when listed. No hidden fields or environmental\nreward are available. Use EXACTLY the requested skill count and no extra term keys.\nOne skill must have activation_rule \"True\". Others may overlap. NeSy chooses max learned meta-Q\namong allowed skills every step. Define simple complementary goals, not named copies.\nRules: numeric comparisons, and/or/not, + - *, abs(x), min(x,y), max(x,y). No division.\nRewards sum terms. All weights >0 and <=10; penalty types negate their weight internally.\nAllowed vocabulary and EXACT executable semantics:\nnegative_distance: -weight*abs(lhs-rhs), or -weight*abs(lhs-threshold), or -weight*abs(lhs).\npositive_velocity: weight*lhs.\ntarget_height: weight*clip(lhs/threshold,0,1), requires positive threshold (not rhs).\nbinary_bonus: weight*(lhs>threshold), requires lhs and threshold.\naction_penalty: -weight*sum(action**2), has neither lhs nor rhs nor threshold.\nposture_penalty: -weight*abs(lhs).\nrhs must name another available field, never a number. Constants use threshold when supported.\nA terminal penalty of 1 is subtracted from every skill. Produce between one and six terms per skill.\n"
+       },
+       {
+        "role": "user",
+        "content": "Task: cheetah. Run forward quickly while maintaining posture. Available fields: ('forward_velocity', 'torso_pitch', 'joint_speed'). Skill count: 3."
+       }
+      ],
+      "raw": "{\n  \"skills\": [\n    {\n      \"name\": \"sprint\",\n      \"activation_rule\": \"True\",\n      \"reward_terms\": [\n        {\n          \"type\": \"positive_velocity\",\n          \"weight\": 5.0,\n          \"lhs\": \"forward_velocity\"\n        },\n        {\n          \"type\": \"posture_penalty\",\n          \"weight\": 2.0,\n          \"lhs\": \"torso_pitch\"\n        },\n        {\n          \"type\": \"action_penalty\",\n          \"weight\": 0.5\n        }\n      ]\n    },\n    {\n      \"name\": \"stabilize\",\n      \"activation_rule\": \"abs(torso_pitch) > 0.5\",\n      \"reward_terms\": [\n        {\n          \"type\": \"negative_distance\",\n          \"weight\": 4.0,\n          \"lhs\": \"torso_pitch\",\n          \"threshold\": 0.0\n        },\n        {\n          \"type\": \"positive_velocity\",\n          \"weight\": 1.0,\n          \"lhs\": \"forward_velocity\"\n        }\n      ]\n    },\n    {\n      \"name\": \"smooth_motion\",\n      \"activation_rule\": \"joint_speed > 10.0\",\n      \"reward_terms\": [\n        {\n          \"type\": \"negative_distance\",\n          \"weight\": 3.0,\n          \"lhs\": \"joint_speed\",\n          \"threshold\": 5.0\n        },\n        {\n          \"type\": \"positive_velocity\",\n          \"weight\": 2.0,\n          \"lhs\": \"forward_velocity\"\n        }\n      ]\n    }\n  ]\n}",
+      "error": null
+     }
+    ],
+    "valid": true,
+    "model": {
+     "model": "Qwen/Qwen3.8-27B",
+     "revision": "1d4bf0f2ff6012fd82039f2fa52739d0dd7c60c0",
+     "local_path": "/home/smirn/nexus_campaign_models_v2/hub/models--Qwen--Qwen3.8-27B/snapshots/1d4bf0f2ff6012fd82039f2fa52739d0dd7c60c0",
+     "temperature": 0.7,
+     "top_p": 0.9,
+     "max_new_tokens": 4096,
+     "max_syntax_repairs": 2,
+     "quantization": "bnb-nf4-double",
+     "thinking": "disabled"
+    },
+    "n_skills": 3,
+    "skill_names": [
+     "sprint",
+     "stabilize",
+     "smooth_motion"
+    ]
+   },
+   {
+    "path": "cheetah/g2/refined.generation.json",
+    "attempts": [
+     {
+      "seed": 4002,
+      "prompt": [
+       {
+        "role": "system",
+        "content": "Design a continuous-control NEXUS skillset. Return JSON only: {\"skills\": [\n {\"name\":\"...\", \"activation_rule\":\"...\", \"reward_terms\":[{\"type\":\"...\",\"weight\":1.0,\"lhs\":\"...\"}]}]}.\nEvery scalar field is the same semantic feature supplied to the hand-designed controller.\nFields and units: forward_velocity in m/s, torso_pitch in radians, joint_speed mean absolute joint\nangular speed in rad/s, and height in metres only when listed. No hidden fields or environmental\nreward are available. Use EXACTLY the requested skill count and no extra term keys.\nOne skill must have activation_rule \"True\". Others may overlap. NeSy chooses max learned meta-Q\namong allowed skills every step. Define simple complementary goals, not named copies.\nRules: numeric comparisons, and/or/not, + - *, abs(x), min(x,y), max(x,y). No division.\nRewards sum terms. All weights >0 and <=10; penalty types negate their weight internally.\nAllowed vocabulary and EXACT executable semantics:\nnegative_distance: -weight*abs(lhs-rhs), or -weight*abs(lhs-threshold), or -weight*abs(lhs).\npositive_velocity: weight*lhs.\ntarget_height: weight*clip(lhs/threshold,0,1), requires positive threshold (not rhs).\nbinary_bonus: weight*(lhs>threshold), requires lhs and threshold.\naction_penalty: -weight*sum(action**2), has neither lhs nor rhs nor threshold.\nposture_penalty: -weight*abs(lhs).\nrhs must name another available field, never a number. Constants use threshold when supported.\nA terminal penalty of 1 is subtracted from every skill. Produce between one and six terms per skill.\n"
+       },
+       {
+        "role": "user",
+        "content": "Task: cheetah. Run forward quickly while maintaining posture. Available fields: ('forward_velocity', 'torso_pitch', 'joint_speed'). Skill count: 3."
+       },
+       {
+        "role": "assistant",
+        "content": "{\n  \"skills\": [\n    {\n      \"name\": \"sprint\",\n      \"activation_rule\": \"True\",\n      \"reward_terms\": [\n        {\n          \"type\": \"positive_velocity\",\n          \"weight\": 5.0,\n          \"lhs\": \"forward_velocity\"\n        },\n        {\n          \"type\": \"posture_penalty\",\n          \"weight\": 2.0,\n          \"lhs\": \"torso_pitch\"\n        },\n        {\n          \"type\": \"action_penalty\",\n          \"weight\": 0.5\n        }\n      ]\n    },\n    {\n      \"name\": \"stabilize\",\n      \"activation_rule\": \"abs(torso_pitch) > 0.5\",\n      \"reward_terms\": [\n        {\n          \"type\": \"negative_distance\",\n          \"weight\": 4.0,\n          \"lhs\": \"torso_pitch\",\n          \"threshold\": 0.0\n        },\n        {\n          \"type\": \"positive_velocity\",\n          \"weight\": 1.0,\n          \"lhs\": \"forward_velocity\"\n        }\n      ]\n    },\n    {\n      \"name\": \"smooth_motion\",\n      \"activation_rule\": \"joint_speed > 10.0\",\n      \"reward_terms\": [\n        {\n          \"type\": \"negative_distance\",\n          \"weight\": 3.0,\n          \"lhs\": \"joint_speed\",\n          \"threshold\": 5.0\n        },\n        {\n          \"type\": \"positive_velocity\",\n          \"weight\": 2.0,\n          \"lhs\": \"forward_velocity\"\n        }\n      ]\n    }\n  ]\n}"
+       },
+       {
+        "role": "user",
+        "content": "Revise this SAME proposal once using these pilot validation metrics. Do not add skills. All fields and reward constraints stay the same.\n{\n  \"episode_return_mean\": 463.810302734375,\n  \"episode_return_std\": 59.37163543701172,\n  \"episode_length_mean\": 1000.0,\n  \"action_square_mean\": 0.5742929577827454,\n  \"cheetah/action_norm\": 1.8131752014160156,\n  \"cheetah/forward_velocity\": 4.647381782531738,\n  \"cheetah/forward_velocity_mean\": 4.647381782531738,\n  \"cheetah/joint_speed\": 5.230077743530273,\n  \"cheetah/posture_stable_rate\": 0.9785780906677246,\n  \"cheetah/speed_success_rate\": 0.9164843559265137,\n  \"cheetah/torso_pitch\": -0.05432555079460144,\n  \"common_skill_step/0_accelerate_forward\": 4.642935752868652,\n  \"common_skill_step/1_stabilize_posture\": 0.572869062423706,\n  \"common_skill_step/2_energy_efficient_run\": 2.305461883544922,\n  \"primary_goal_metric\": 4.647381782531738,\n  \"primary_success_rate\": 0.912656307220459,\n  \"rules/eligible_count\": 1.035656213760376,\n  \"rules/overlap_fraction\": 0.03551562875509262,\n  \"skill_usage/0_sprint\": 0.9855625629425049,\n  \"skill_usage/1_stabilize\": 0.013890624977648258,\n  \"skill_usage/2_smooth_motion\": 0.0005468750023283064,\n  \"common_skill_return/0_accelerate_forward\": 4642.935546875,\n  \"common_skill_return/1_stabilize_posture\": 572.8690795898438,\n  \"common_skill_return/2_energy_efficient_run\": 2305.4619140625\n}"
+       }
+      ],
+      "raw": "{\n  \"skills\": [\n    {\n      \"name\": \"sprint\",\n      \"activation_rule\": \"True\",\n      \"reward_terms\": [\n        {\n          \"type\": \"positive_velocity\",\n          \"weight\": 8.0,\n          \"lhs\": \"forward_velocity\"\n        },\n        {\n          \"type\": \"posture_penalty\",\n          \"weight\": 3.0,\n          \"lhs\": \"torso_pitch\"\n        },\n        {\n          \"type\": \"action_penalty\",\n          \"weight\": 0.8\n        }\n      ]\n    },\n    {\n      \"name\": \"stabilize\",\n      \"activation_rule\": \"abs(torso_pitch) > 0.2\",\n      \"reward_terms\": [\n        {\n          \"type\": \"negative_distance\",\n          \"weight\": 6.0,\n          \"lhs\": \"torso_pitch\",\n          \"threshold\": 0.0\n        },\n        {\n          \"type\": \"positive_velocity\",\n          \"weight\": 2.0,\n          \"lhs\": \"forward_velocity\"\n        }\n      ]\n    },\n    {\n      \"name\": \"smooth_motion\",\n      \"activation_rule\": \"joint_speed > 6.0\",\n      \"reward_terms\": [\n        {\n          \"type\": \"negative_distance\",\n          \"weight\": 4.0,\n          \"lhs\": \"joint_speed\",\n          \"threshold\": 5.0\n        },\n        {\n          \"type\": \"positive_velocity\",\n          \"weight\": 3.0,\n          \"lhs\": \"forward_velocity\"\n        }\n      ]\n    }\n  ]\n}",
+      "error": null
+     }
+    ],
+    "valid": true,
+    "model": {
+     "model": "Qwen/Qwen3.8-27B",
+     "revision": "1d4bf0f2ff6012fd82039f2fa52739d0dd7c60c0",
+     "local_path": "/home/smirn/nexus_campaign_models_v2/hub/models--Qwen--Qwen3.8-27B/snapshots/1d4bf0f2ff6012fd82039f2fa52739d0dd7c60c0",
+     "temperature": 0.7,
+     "top_p": 0.9,
+     "max_new_tokens": 4096,
+     "max_syntax_repairs": 2,
+     "quantization": "bnb-nf4-double",
+     "thinking": "disabled"
+    },
+    "n_skills": 3,
+    "skill_names": [
+     "sprint",
+     "stabilize",
+     "smooth_motion"
+    ]
+   },
+   {
+    "path": "cheetah/g2/resample.generation.json",
+    "attempts": [
+     {
+      "seed": 3002,
+      "prompt": [
+       {
+        "role": "system",
+        "content": "Design a continuous-control NEXUS skillset. Return JSON only: {\"skills\": [\n {\"name\":\"...\", \"activation_rule\":\"...\", \"reward_terms\":[{\"type\":\"...\",\"weight\":1.0,\"lhs\":\"...\"}]}]}.\nEvery scalar field is the same semantic feature supplied to the hand-designed controller.\nFields and units: forward_velocity in m/s, torso_pitch in radians, joint_speed mean absolute joint\nangular speed in rad/s, and height in metres only when listed. No hidden fields or environmental\nreward are available. Use EXACTLY the requested skill count and no extra term keys.\nOne skill must have activation_rule \"True\". Others may overlap. NeSy chooses max learned meta-Q\namong allowed skills every step. Define simple complementary goals, not named copies.\nRules: numeric comparisons, and/or/not, + - *, abs(x), min(x,y), max(x,y). No division.\nRewards sum terms. All weights >0 and <=10; penalty types negate their weight internally.\nAllowed vocabulary and EXACT executable semantics:\nnegative_distance: -weight*abs(lhs-rhs), or -weight*abs(lhs-threshold), or -weight*abs(lhs).\npositive_velocity: weight*lhs.\ntarget_height: weight*clip(lhs/threshold,0,1), requires positive threshold (not rhs).\nbinary_bonus: weight*(lhs>threshold), requires lhs and threshold.\naction_penalty: -weight*sum(action**2), has neither lhs nor rhs nor threshold.\nposture_penalty: -weight*abs(lhs).\nrhs must name another available field, never a number. Constants use threshold when supported.\nA terminal penalty of 1 is subtracted from every skill. Produce between one and six terms per skill.\n"
+       },
+       {
+        "role": "user",
+        "content": "Task: cheetah. Run forward quickly while maintaining posture. Available fields: ('forward_velocity', 'torso_pitch', 'joint_speed'). Skill count: 3."
+       }
+      ],
+      "raw": "{\n  \"skills\": [\n    {\n      \"name\": \"sprint_forward\",\n      \"activation_rule\": \"True\",\n      \"reward_terms\": [\n        {\n          \"type\": \"positive_velocity\",\n          \"weight\": 5.0,\n          \"lhs\": \"forward_velocity\"\n        },\n        {\n          \"type\": \"posture_penalty\",\n          \"weight\": 2.0,\n          \"lhs\": \"torso_pitch\"\n        }\n      ]\n    },\n    {\n      \"name\": \"stabilize_upright\",\n      \"activation_rule\": \"abs(torso_pitch) > 0.5\",\n      \"reward_terms\": [\n        {\n          \"type\": \"negative_distance\",\n          \"weight\": 8.0,\n          \"lhs\": \"torso_pitch\",\n          \"threshold\": 0.0\n        },\n        {\n          \"type\": \"posture_penalty\",\n          \"weight\": 1.0,\n          \"lhs\": \"joint_speed\"\n        }\n      ]\n    },\n    {\n      \"name\": \"efficient_motion\",\n      \"activation_rule\": \"forward_velocity < 2.0\",\n      \"reward_terms\": [\n        {\n          \"type\": \"posture_penalty\",\n          \"weight\": 4.0,\n          \"lhs\": \"joint_speed\"\n        },\n        {\n          \"type\": \"positive_velocity\",\n          \"weight\": 3.0,\n          \"lhs\": \"forward_velocity\"\n        }\n      ]\n    }\n  ]\n}",
+      "error": null
+     }
+    ],
+    "valid": true,
+    "model": {
+     "model": "Qwen/Qwen3.8-27B",
+     "revision": "1d4bf0f2ff6012fd82039f2fa52739d0dd7c60c0",
+     "local_path": "/home/smirn/nexus_campaign_models_v2/hub/models--Qwen--Qwen3.8-27B/snapshots/1d4bf0f2ff6012fd82039f2fa52739d0dd7c60c0",
+     "temperature": 0.7,
+     "top_p": 0.9,
+     "max_new_tokens": 4096,
+     "max_syntax_repairs": 2,
+     "quantization": "bnb-nf4-double",
+     "thinking": "disabled"
+    },
+    "n_skills": 3,
+    "skill_names": [
+     "sprint_forward",
+     "stabilize_upright",
+     "efficient_motion"
+    ]
+   },
+   {
+    "path": "cheetah/g1/initial.generation.json",
+    "attempts": [
+     {
+      "seed": 2001,
+      "prompt": [
+       {
+        "role": "system",
+        "content": "Design a continuous-control NEXUS skillset. Return JSON only: {\"skills\": [\n {\"name\":\"...\", \"activation_rule\":\"...\", \"reward_terms\":[{\"type\":\"...\",\"weight\":1.0,\"lhs\":\"...\"}]}]}.\nEvery scalar field is the same semantic feature supplied to the hand-designed controller.\nFields and units: forward_velocity in m/s, torso_pitch in radians, joint_speed mean absolute joint\nangular speed in rad/s, and height in metres only when listed. No hidden fields or environmental\nreward are available. Use EXACTLY the requested skill count and no extra term keys.\nOne skill must have activation_rule \"True\". Others may overlap. NeSy chooses max learned meta-Q\namong allowed skills every step. Define simple complementary goals, not named copies.\nRules: numeric comparisons, and/or/not, + - *, abs(x), min(x,y), max(x,y). No division.\nRewards sum terms. All weights >0 and <=10; penalty types negate their weight internally.\nAllowed vocabulary and EXACT executable semantics:\nnegative_distance: -weight*abs(lhs-rhs), or -weight*abs(lhs-threshold), or -weight*abs(lhs).\npositive_velocity: weight*lhs.\ntarget_height: weight*clip(lhs/threshold,0,1), requires positive threshold (not rhs).\nbinary_bonus: weight*(lhs>threshold), requires lhs and threshold.\naction_penalty: -weight*sum(action**2), has neither lhs nor rhs nor threshold.\nposture_penalty: -weight*abs(lhs).\nrhs must name another available field, never a number. Constants use threshold when supported.\nA terminal penalty of 1 is subtracted from every skill. Produce between one and six terms per skill.\n"
+       },
+       {
+        "role": "user",
+        "content": "Task: cheetah. Run forward quickly while maintaining posture. Available fields: ('forward_velocity', 'torso_pitch', 'joint_speed'). Skill count: 3."
+       }
+      ],
+      "raw": "{\n  \"skills\": [\n    {\n      \"name\": \"HighSpeedRun\",\n      \"activation_rule\": \"True\",\n      \"reward_terms\": [\n        {\n          \"type\": \"positive_velocity\",\n          \"weight\": 10.0,\n          \"lhs\": \"forward_velocity\"\n        },\n        {\n          \"type\": \"posture_penalty\",\n          \"weight\": 2.0,\n          \"lhs\": \"torso_pitch\"\n        }\n      ]\n    },\n    {\n      \"name\": \"StableGait\",\n      \"activation_rule\": \"abs(torso_pitch) < 0.5\",\n      \"reward_terms\": [\n        {\n          \"type\": \"posture_penalty\",\n          \"weight\": 5.0,\n          \"lhs\": \"torso_pitch\"\n        },\n        {\n          \"type\": \"positive_velocity\",\n          \"weight\": 5.0,\n          \"lhs\": \"forward_velocity\"\n        }\n      ]\n    },\n    {\n      \"name\": \"EfficientMotion\",\n      \"activation_rule\": \"joint_speed < 5.0\",\n      \"reward_terms\": [\n        {\n          \"type\": \"posture_penalty\",\n          \"weight\": 3.0,\n          \"lhs\": \"joint_speed\"\n        },\n        {\n          \"type\": \"positive_velocity\",\n          \"weight\": 8.0,\n          \"lhs\": \"forward_velocity\"\n        }\n      ]\n    }\n  ]\n}",
+      "error": null
+     }
+    ],
+    "valid": true,
+    "model": {
+     "model": "Qwen/Qwen3.8-27B",
+     "revision": "1d4bf0f2ff6012fd82039f2fa52739d0dd7c60c0",
+     "local_path": "/home/smirn/nexus_campaign_models_v2/hub/models--Qwen--Qwen3.8-27B/snapshots/1d4bf0f2ff6012fd82039f2fa52739d0dd7c60c0",
+     "temperature": 0.7,
+     "top_p": 0.9,
+     "max_new_tokens": 4096,
+     "max_syntax_repairs": 2,
+     "quantization": "bnb-nf4-double",
+     "thinking": "disabled"
+    },
+    "n_skills": 3,
+    "skill_names": [
+     "HighSpeedRun",
+     "StableGait",
+     "EfficientMotion"
+    ]
+   },
+   {
+    "path": "cheetah/g1/refined.generation.json",
+    "attempts": [
+     {
+      "seed": 4001,
+      "prompt": [
+       {
+        "role": "system",
+        "content": "Design a continuous-control NEXUS skillset. Return JSON only: {\"skills\": [\n {\"name\":\"...\", \"activation_rule\":\"...\", \"reward_terms\":[{\"type\":\"...\",\"weight\":1.0,\"lhs\":\"...\"}]}]}.\nEvery scalar field is the same semantic feature supplied to the hand-designed controller.\nFields and units: forward_velocity in m/s, torso_pitch in radians, joint_speed mean absolute joint\nangular speed in rad/s, and height in metres only when listed. No hidden fields or environmental\nreward are available. Use EXACTLY the requested skill count and no extra term keys.\nOne skill must have activation_rule \"True\". Others may overlap. NeSy chooses max learned meta-Q\namong allowed skills every step. Define simple complementary goals, not named copies.\nRules: numeric comparisons, and/or/not, + - *, abs(x), min(x,y), max(x,y). No division.\nRewards sum terms. All weights >0 and <=10; penalty types negate their weight internally.\nAllowed vocabulary and EXACT executable semantics:\nnegative_distance: -weight*abs(lhs-rhs), or -weight*abs(lhs-threshold), or -weight*abs(lhs).\npositive_velocity: weight*lhs.\ntarget_height: weight*clip(lhs/threshold,0,1), requires positive threshold (not rhs).\nbinary_bonus: weight*(lhs>threshold), requires lhs and threshold.\naction_penalty: -weight*sum(action**2), has neither lhs nor rhs nor threshold.\nposture_penalty: -weight*abs(lhs).\nrhs must name another available field, never a number. Constants use threshold when supported.\nA terminal penalty of 1 is subtracted from every skill. Produce between one and six terms per skill.\n"
+       },
+       {
+        "role": "user",
+        "content": "Task: cheetah. Run forward quickly while maintaining posture. Available fields: ('forward_velocity', 'torso_pitch', 'joint_speed'). Skill count: 3."
+       },
+       {
+        "role": "assistant",
+        "content": "{\n  \"skills\": [\n    {\n      \"name\": \"HighSpeedRun\",\n      \"activation_rule\": \"True\",\n      \"reward_terms\": [\n        {\n          \"type\": \"positive_velocity\",\n          \"weight\": 10.0,\n          \"lhs\": \"forward_velocity\"\n        },\n        {\n          \"type\": \"posture_penalty\",\n          \"weight\": 2.0,\n          \"lhs\": \"torso_pitch\"\n        }\n      ]\n    },\n    {\n      \"name\": \"StableGait\",\n      \"activation_rule\": \"abs(torso_pitch) < 0.5\",\n      \"reward_terms\": [\n        {\n          \"type\": \"posture_penalty\",\n          \"weight\": 5.0,\n          \"lhs\": \"torso_pitch\"\n        },\n        {\n          \"type\": \"positive_velocity\",\n          \"weight\": 5.0,\n          \"lhs\": \"forward_velocity\"\n        }\n      ]\n    },\n    {\n      \"name\": \"EfficientMotion\",\n      \"activation_rule\": \"joint_speed < 5.0\",\n      \"reward_terms\": [\n        {\n          \"type\": \"posture_penalty\",\n          \"weight\": 3.0,\n          \"lhs\": \"joint_speed\"\n        },\n        {\n          \"type\": \"positive_velocity\",\n          \"weight\": 8.0,\n          \"lhs\": \"forward_velocity\"\n        }\n      ]\n    }\n  ]\n}"
+       },
+       {
+        "role": "user",
+        "content": "Revise this SAME proposal once using these pilot validation metrics. Do not add skills. All fields and reward constraints stay the same.\n{\n  \"episode_return_mean\": 372.99261474609375,\n  \"episode_return_std\": 66.53436279296875,\n  \"episode_length_mean\": 1000.0,\n  \"action_square_mean\": 0.503762423992157,\n  \"cheetah/action_norm\": 1.69468092918396,\n  \"cheetah/forward_velocity\": 3.7319231033325195,\n  \"cheetah/forward_velocity_mean\": 3.7319231033325195,\n  \"cheetah/joint_speed\": 3.9657092094421387,\n  \"cheetah/posture_stable_rate\": 0.9517031311988831,\n  \"cheetah/speed_success_rate\": 0.8950625658035278,\n  \"cheetah/torso_pitch\": 0.05097072571516037,\n  \"common_skill_step/0_accelerate_forward\": 3.727900505065918,\n  \"common_skill_step/1_stabilize_posture\": 0.5355799794197083,\n  \"common_skill_step/2_energy_efficient_run\": 1.8498485088348389,\n  \"primary_goal_metric\": 3.7319231033325195,\n  \"primary_success_rate\": 0.892625093460083,\n  \"rules/eligible_count\": 2.7039377689361572,\n  \"rules/overlap_fraction\": 0.9976093769073486,\n  \"skill_usage/0_HighSpeedRun\": 0.13676564395427704,\n  \"skill_usage/1_StableGait\": 0.6571875810623169,\n  \"skill_usage/2_EfficientMotion\": 0.20604687929153442,\n  \"common_skill_return/0_accelerate_forward\": 3727.900390625,\n  \"common_skill_return/1_stabilize_posture\": 535.5799560546875,\n  \"common_skill_return/2_energy_efficient_run\": 1849.8485107421875\n}"
+       }
+      ],
+      "raw": "```json\n{\n  \"skills\": [\n    {\n      \"name\": \"HighSpeedRun\",\n      \"activation_rule\": \"True\",\n      \"reward_terms\": [\n        {\n          \"type\": \"positive_velocity\",\n          \"weight\": 10.0,\n          \"lhs\": \"forward_velocity\"\n        },\n        {\n          \"type\": \"posture_penalty\",\n          \"weight\": 1.0,\n          \"lhs\": \"torso_pitch\"\n        }\n      ]\n    },\n    {\n      \"name\": \"StableGait\",\n      \"activation_rule\": \"abs(torso_pitch) < 0.5\",\n      \"reward_terms\": [\n        {\n          \"type\": \"posture_penalty\",\n          \"weight\": 10.0,\n          \"lhs\": \"torso_pitch\"\n        },\n        {\n          \"type\": \"positive_velocity\",\n          \"weight\": 2.0,\n          \"lhs\": \"forward_velocity\"\n        }\n      ]\n    },\n    {\n      \"name\": \"EfficientMotion\",\n      \"activation_rule\": \"joint_speed < 5.0\",\n      \"reward_terms\": [\n        {\n          \"type\": \"posture_penalty\",\n          \"weight\": 5.0,\n          \"lhs\": \"joint_speed\"\n        },\n        {\n          \"type\": \"positive_velocity\",\n          \"weight\": 10.0,\n          \"lhs\": \"forward_velocity\"\n        }\n      ]\n    }\n  ]\n}\n```",
+      "error": null
+     }
+    ],
+    "valid": true,
+    "model": {
+     "model": "Qwen/Qwen3.8-27B",
+     "revision": "1d4bf0f2ff6012fd82039f2fa52739d0dd7c60c0",
+     "local_path": "/home/smirn/nexus_campaign_models_v2/hub/models--Qwen--Qwen3.8-27B/snapshots/1d4bf0f2ff6012fd82039f2fa52739d0dd7c60c0",
+     "temperature": 0.7,
+     "top_p": 0.9,
+     "max_new_tokens": 4096,
+     "max_syntax_repairs": 2,
+     "quantization": "bnb-nf4-double",
+     "thinking": "disabled"
+    },
+    "n_skills": 3,
+    "skill_names": [
+     "HighSpeedRun",
+     "StableGait",
+     "EfficientMotion"
+    ]
+   },
+   {
+    "path": "cheetah/g1/resample.generation.json",
+    "attempts": [
+     {
+      "seed": 3001,
+      "prompt": [
+       {
+        "role": "system",
+        "content": "Design a continuous-control NEXUS skillset. Return JSON only: {\"skills\": [\n {\"name\":\"...\", \"activation_rule\":\"...\", \"reward_terms\":[{\"type\":\"...\",\"weight\":1.0,\"lhs\":\"...\"}]}]}.\nEvery scalar field is the same semantic feature supplied to the hand-designed controller.\nFields and units: forward_velocity in m/s, torso_pitch in radians, joint_speed mean absolute joint\nangular speed in rad/s, and height in metres only when listed. No hidden fields or environmental\nreward are available. Use EXACTLY the requested skill count and no extra term keys.\nOne skill must have activation_rule \"True\". Others may overlap. NeSy chooses max learned meta-Q\namong allowed skills every step. Define simple complementary goals, not named copies.\nRules: numeric comparisons, and/or/not, + - *, abs(x), min(x,y), max(x,y). No division.\nRewards sum terms. All weights >0 and <=10; penalty types negate their weight internally.\nAllowed vocabulary and EXACT executable semantics:\nnegative_distance: -weight*abs(lhs-rhs), or -weight*abs(lhs-threshold), or -weight*abs(lhs).\npositive_velocity: weight*lhs.\ntarget_height: weight*clip(lhs/threshold,0,1), requires positive threshold (not rhs).\nbinary_bonus: weight*(lhs>threshold), requires lhs and threshold.\naction_penalty: -weight*sum(action**2), has neither lhs nor rhs nor threshold.\nposture_penalty: -weight*abs(lhs).\nrhs must name another available field, never a number. Constants use threshold when supported.\nA terminal penalty of 1 is subtracted from every skill. Produce between one and six terms per skill.\n"
+       },
+       {
+        "role": "user",
+        "content": "Task: cheetah. Run forward quickly while maintaining posture. Available fields: ('forward_velocity', 'torso_pitch', 'joint_speed'). Skill count: 3."
+       }
+      ],
+      "raw": "{\n  \"skills\": [\n    {\n      \"name\": \"sprint_forward\",\n      \"activation_rule\": \"True\",\n      \"reward_terms\": [\n        {\n          \"type\": \"positive_velocity\",\n          \"weight\": 5.0,\n          \"lhs\": \"forward_velocity\"\n        },\n        {\n          \"type\": \"action_penalty\",\n          \"weight\": 0.5\n        }\n      ]\n    },\n    {\n      \"name\": \"upright_posture\",\n      \"activation_rule\": \"abs(torso_pitch) > 0.2\",\n      \"reward_terms\": [\n        {\n          \"type\": \"posture_penalty\",\n          \"weight\": 2.0,\n          \"lhs\": \"torso_pitch\"\n        }\n      ]\n    },\n    {\n      \"name\": \"smooth_motion\",\n      \"activation_rule\": \"joint_speed > 10.0\",\n      \"reward_terms\": [\n        {\n          \"type\": \"posture_penalty\",\n          \"weight\": 1.0,\n          \"lhs\": \"joint_speed\"\n        }\n      ]\n    }\n  ]\n}",
+      "error": null
+     }
+    ],
+    "valid": true,
+    "model": {
+     "model": "Qwen/Qwen3.8-27B",
+     "revision": "1d4bf0f2ff6012fd82039f2fa52739d0dd7c60c0",
+     "local_path": "/home/smirn/nexus_campaign_models_v2/hub/models--Qwen--Qwen3.8-27B/snapshots/1d4bf0f2ff6012fd82039f2fa52739d0dd7c60c0",
+     "temperature": 0.7,
+     "top_p": 0.9,
+     "max_new_tokens": 4096,
+     "max_syntax_repairs": 2,
+     "quantization": "bnb-nf4-double",
+     "thinking": "disabled"
+    },
+    "n_skills": 3,
+    "skill_names": [
+     "sprint_forward",
+     "upright_posture",
+     "smooth_motion"
+    ]
+   },
+   {
+    "path": "cheetah/g0/initial.generation.json",
+    "attempts": [
+     {
+      "seed": 2000,
+      "prompt": [
+       {
+        "role": "system",
+        "content": "Design a continuous-control NEXUS skillset. Return JSON only: {\"skills\": [\n {\"name\":\"...\", \"activation_rule\":\"...\", \"reward_terms\":[{\"type\":\"...\",\"weight\":1.0,\"lhs\":\"...\"}]}]}.\nEvery scalar field is the same semantic feature supplied to the hand-designed controller.\nFields and units: forward_velocity in m/s, torso_pitch in radians, joint_speed mean absolute joint\nangular speed in rad/s, and height in metres only when listed. No hidden fields or environmental\nreward are available. Use EXACTLY the requested skill count and no extra term keys.\nOne skill must have activation_rule \"True\". Others may overlap. NeSy chooses max learned meta-Q\namong allowed skills every step. Define simple complementary goals, not named copies.\nRules: numeric comparisons, and/or/not, + - *, abs(x), min(x,y), max(x,y). No division.\nRewards sum terms. All weights >0 and <=10; penalty types negate their weight internally.\nAllowed vocabulary and EXACT executable semantics:\nnegative_distance: -weight*abs(lhs-rhs), or -weight*abs(lhs-threshold), or -weight*abs(lhs).\npositive_velocity: weight*lhs.\ntarget_height: weight*clip(lhs/threshold,0,1), requires positive threshold (not rhs).\nbinary_bonus: weight*(lhs>threshold), requires lhs and threshold.\naction_penalty: -weight*sum(action**2), has neither lhs nor rhs nor threshold.\nposture_penalty: -weight*abs(lhs).\nrhs must name another available field, never a number. Constants use threshold when supported.\nA terminal penalty of 1 is subtracted from every skill. Produce between one and six terms per skill.\n"
+       },
+       {
+        "role": "user",
+        "content": "Task: cheetah. Run forward quickly while maintaining posture. Available fields: ('forward_velocity', 'torso_pitch', 'joint_speed'). Skill count: 3."
+       }
+      ],
+      "raw": "{\n  \"skills\": [\n    {\n      \"name\": \"forward_sprint\",\n      \"activation_rule\": \"True\",\n      \"reward_terms\": [\n        {\n          \"type\": \"positive_velocity\",\n          \"weight\": 5.0,\n          \"lhs\": \"forward_velocity\"\n        },\n        {\n          \"type\": \"posture_penalty\",\n          \"weight\": 2.0,\n          \"lhs\": \"torso_pitch\"\n        }\n      ]\n    },\n    {\n      \"name\": \"posture_stabilize\",\n      \"activation_rule\": \"abs(torso_pitch) > 0.2\",\n      \"reward_terms\": [\n        {\n          \"type\": \"negative_distance\",\n          \"weight\": 4.0,\n          \"lhs\": \"torso_pitch\",\n          \"threshold\": 0.0\n        },\n        {\n          \"type\": \"positive_velocity\",\n          \"weight\": 1.0,\n          \"lhs\": \"forward_velocity\"\n        }\n      ]\n    },\n    {\n      \"name\": \"smooth_control\",\n      \"activation_rule\": \"joint_speed > 5.0\",\n      \"reward_terms\": [\n        {\n          \"type\": \"posture_penalty\",\n          \"weight\": 3.0,\n          \"lhs\": \"joint_speed\"\n        },\n        {\n          \"type\": \"positive_velocity\",\n          \"weight\": 2.0,\n          \"lhs\": \"forward_velocity\"\n        }\n      ]\n    }\n  ]\n}",
+      "error": null
+     }
+    ],
+    "valid": true,
+    "model": {
+     "model": "Qwen/Qwen3.8-27B",
+     "revision": "1d4bf0f2ff6012fd82039f2fa52739d0dd7c60c0",
+     "local_path": "/home/smirn/nexus_campaign_models_v2/hub/models--Qwen--Qwen3.8-27B/snapshots/1d4bf0f2ff6012fd82039f2fa52739d0dd7c60c0",
+     "temperature": 0.7,
+     "top_p": 0.9,
+     "max_new_tokens": 4096,
+     "max_syntax_repairs": 2,
+     "quantization": "bnb-nf4-double",
+     "thinking": "disabled"
+    },
+    "n_skills": 3,
+    "skill_names": [
+     "forward_sprint",
+     "posture_stabilize",
+     "smooth_control"
+    ]
+   },
+   {
+    "path": "cheetah/g0/refined.generation.json",
+    "attempts": [
+     {
+      "seed": 4000,
+      "prompt": [
+       {
+        "role": "system",
+        "content": "Design a continuous-control NEXUS skillset. Return JSON only: {\"skills\": [\n {\"name\":\"...\", \"activation_rule\":\"...\", \"reward_terms\":[{\"type\":\"...\",\"weight\":1.0,\"lhs\":\"...\"}]}]}.\nEvery scalar field is the same semantic feature supplied to the hand-designed controller.\nFields and units: forward_velocity in m/s, torso_pitch in radians, joint_speed mean absolute joint\nangular speed in rad/s, and height in metres only when listed. No hidden fields or environmental\nreward are available. Use EXACTLY the requested skill count and no extra term keys.\nOne skill must have activation_rule \"True\". Others may overlap. NeSy chooses max learned meta-Q\namong allowed skills every step. Define simple complementary goals, not named copies.\nRules: numeric comparisons, and/or/not, + - *, abs(x), min(x,y), max(x,y). No division.\nRewards sum terms. All weights >0 and <=10; penalty types negate their weight internally.\nAllowed vocabulary and EXACT executable semantics:\nnegative_distance: -weight*abs(lhs-rhs), or -weight*abs(lhs-threshold), or -weight*abs(lhs).\npositive_velocity: weight*lhs.\ntarget_height: weight*clip(lhs/threshold,0,1), requires positive threshold (not rhs).\nbinary_bonus: weight*(lhs>threshold), requires lhs and threshold.\naction_penalty: -weight*sum(action**2), has neither lhs nor rhs nor threshold.\nposture_penalty: -weight*abs(lhs).\nrhs must name another available field, never a number. Constants use threshold when supported.\nA terminal penalty of 1 is subtracted from every skill. Produce between one and six terms per skill.\n"
+       },
+       {
+        "role": "user",
+        "content": "Task: cheetah. Run forward quickly while maintaining posture. Available fields: ('forward_velocity', 'torso_pitch', 'joint_speed'). Skill count: 3."
+       },
+       {
+        "role": "assistant",
+        "content": "{\n  \"skills\": [\n    {\n      \"name\": \"forward_sprint\",\n      \"activation_rule\": \"True\",\n      \"reward_terms\": [\n        {\n          \"type\": \"positive_velocity\",\n          \"weight\": 5.0,\n          \"lhs\": \"forward_velocity\"\n        },\n        {\n          \"type\": \"posture_penalty\",\n          \"weight\": 2.0,\n          \"lhs\": \"torso_pitch\"\n        }\n      ]\n    },\n    {\n      \"name\": \"posture_stabilize\",\n      \"activation_rule\": \"abs(torso_pitch) > 0.2\",\n      \"reward_terms\": [\n        {\n          \"type\": \"negative_distance\",\n          \"weight\": 4.0,\n          \"lhs\": \"torso_pitch\",\n          \"threshold\": 0.0\n        },\n        {\n          \"type\": \"positive_velocity\",\n          \"weight\": 1.0,\n          \"lhs\": \"forward_velocity\"\n        }\n      ]\n    },\n    {\n      \"name\": \"smooth_control\",\n      \"activation_rule\": \"joint_speed > 5.0\",\n      \"reward_terms\": [\n        {\n          \"type\": \"posture_penalty\",\n          \"weight\": 3.0,\n          \"lhs\": \"joint_speed\"\n        },\n        {\n          \"type\": \"positive_velocity\",\n          \"weight\": 2.0,\n          \"lhs\": \"forward_velocity\"\n        }\n      ]\n    }\n  ]\n}"
+       },
+       {
+        "role": "user",
+        "content": "Revise this SAME proposal once using these pilot validation metrics. Do not add skills. All fields and reward constraints stay the same.\n{\n  \"episode_return_mean\": 422.7086486816406,\n  \"episode_return_std\": 5.580559730529785,\n  \"episode_length_mean\": 1000.0,\n  \"action_square_mean\": 0.6210182905197144,\n  \"cheetah/action_norm\": 1.9161550998687744,\n  \"cheetah/forward_velocity\": 4.233036041259766,\n  \"cheetah/forward_velocity_mean\": 4.233036041259766,\n  \"cheetah/joint_speed\": 3.631135940551758,\n  \"cheetah/posture_stable_rate\": 1.0,\n  \"cheetah/speed_success_rate\": 0.958484411239624,\n  \"cheetah/torso_pitch\": -0.036494165658950806,\n  \"common_skill_step/0_accelerate_forward\": 4.228309631347656,\n  \"common_skill_step/1_stabilize_posture\": 0.7582076787948608,\n  \"common_skill_step/2_energy_efficient_run\": 2.0968873500823975,\n  \"primary_goal_metric\": 4.233036041259766,\n  \"primary_success_rate\": 0.958484411239624,\n  \"rules/eligible_count\": 1.1174530982971191,\n  \"rules/overlap_fraction\": 0.11673437803983688,\n  \"skill_usage/0_forward_sprint\": 0.9639219045639038,\n  \"skill_usage/1_posture_stabilize\": 0.0001875000016298145,\n  \"skill_usage/2_smooth_control\": 0.03589062765240669,\n  \"common_skill_return/0_accelerate_forward\": 4228.3095703125,\n  \"common_skill_return/1_stabilize_posture\": 758.2076416015625,\n  \"common_skill_return/2_energy_efficient_run\": 2096.887451171875\n}"
+       }
+      ],
+      "raw": "{\n  \"skills\": [\n    {\n      \"name\": \"forward_sprint\",\n      \"activation_rule\": \"True\",\n      \"reward_terms\": [\n        {\n          \"type\": \"positive_velocity\",\n          \"weight\": 5.0,\n          \"lhs\": \"forward_velocity\"\n        },\n        {\n          \"type\": \"posture_penalty\",\n          \"weight\": 2.0,\n          \"lhs\": \"torso_pitch\"\n        },\n        {\n          \"type\": \"posture_penalty\",\n          \"weight\": 1.0,\n          \"lhs\": \"joint_speed\"\n        }\n      ]\n    },\n    {\n      \"name\": \"posture_stabilize\",\n      \"activation_rule\": \"abs(torso_pitch) > 0.1\",\n      \"reward_terms\": [\n        {\n          \"type\": \"negative_distance\",\n          \"weight\": 4.0,\n          \"lhs\": \"torso_pitch\",\n          \"threshold\": 0.0\n        },\n        {\n          \"type\": \"positive_velocity\",\n          \"weight\": 1.0,\n          \"lhs\": \"forward_velocity\"\n        }\n      ]\n    },\n    {\n      \"name\": \"smooth_control\",\n      \"activation_rule\": \"joint_speed > 3.0\",\n      \"reward_terms\": [\n        {\n          \"type\": \"posture_penalty\",\n          \"weight\": 3.0,\n          \"lhs\": \"joint_speed\"\n        },\n        {\n          \"type\": \"positive_velocity\",\n          \"weight\": 2.0,\n          \"lhs\": \"forward_velocity\"\n        }\n      ]\n    }\n  ]\n}",
+      "error": null
+     }
+    ],
+    "valid": true,
+    "model": {
+     "model": "Qwen/Qwen3.8-27B",
+     "revision": "1d4bf0f2ff6012fd82039f2fa52739d0dd7c60c0",
+     "local_path": "/home/smirn/nexus_campaign_models_v2/hub/models--Qwen--Qwen3.8-27B/snapshots/1d4bf0f2ff6012fd82039f2fa52739d0dd7c60c0",
+     "temperature": 0.7,
+     "top_p": 0.9,
+     "max_new_tokens": 4096,
+     "max_syntax_repairs": 2,
+     "quantization": "bnb-nf4-double",
+     "thinking": "disabled"
+    },
+    "n_skills": 3,
+    "skill_names": [
+     "forward_sprint",
+     "posture_stabilize",
+     "smooth_control"
+    ]
+   },
+   {
+    "path": "cheetah/g0/resample.generation.json",
+    "attempts": [
+     {
+      "seed": 3000,
+      "prompt": [
+       {
+        "role": "system",
+        "content": "Design a continuous-control NEXUS skillset. Return JSON only: {\"skills\": [\n {\"name\":\"...\", \"activation_rule\":\"...\", \"reward_terms\":[{\"type\":\"...\",\"weight\":1.0,\"lhs\":\"...\"}]}]}.\nEvery scalar field is the same semantic feature supplied to the hand-designed controller.\nFields and units: forward_velocity in m/s, torso_pitch in radians, joint_speed mean absolute joint\nangular speed in rad/s, and height in metres only when listed. No hidden fields or environmental\nreward are available. Use EXACTLY the requested skill count and no extra term keys.\nOne skill must have activation_rule \"True\". Others may overlap. NeSy chooses max learned meta-Q\namong allowed skills every step. Define simple complementary goals, not named copies.\nRules: numeric comparisons, and/or/not, + - *, abs(x), min(x,y), max(x,y). No division.\nRewards sum terms. All weights >0 and <=10; penalty types negate their weight internally.\nAllowed vocabulary and EXACT executable semantics:\nnegative_distance: -weight*abs(lhs-rhs), or -weight*abs(lhs-threshold), or -weight*abs(lhs).\npositive_velocity: weight*lhs.\ntarget_height: weight*clip(lhs/threshold,0,1), requires positive threshold (not rhs).\nbinary_bonus: weight*(lhs>threshold), requires lhs and threshold.\naction_penalty: -weight*sum(action**2), has neither lhs nor rhs nor threshold.\nposture_penalty: -weight*abs(lhs).\nrhs must name another available field, never a number. Constants use threshold when supported.\nA terminal penalty of 1 is subtracted from every skill. Produce between one and six terms per skill.\n"
+       },
+       {
+        "role": "user",
+        "content": "Task: cheetah. Run forward quickly while maintaining posture. Available fields: ('forward_velocity', 'torso_pitch', 'joint_speed'). Skill count: 3."
+       }
+      ],
+      "raw": "{\n  \"skills\": [\n    {\n      \"name\": \"sprint\",\n      \"activation_rule\": \"True\",\n      \"reward_terms\": [\n        {\n          \"type\": \"positive_velocity\",\n          \"weight\": 8.0,\n          \"lhs\": \"forward_velocity\"\n        },\n        {\n          \"type\": \"posture_penalty\",\n          \"weight\": 5.0,\n          \"lhs\": \"torso_pitch\"\n        },\n        {\n          \"type\": \"action_penalty\",\n          \"weight\": 0.5\n        }\n      ]\n    },\n    {\n      \"name\": \"stabilize\",\n      \"activation_rule\": \"abs(torso_pitch) > 0.5\",\n      \"reward_terms\": [\n        {\n          \"type\": \"posture_penalty\",\n          \"weight\": 10.0,\n          \"lhs\": \"torso_pitch\"\n        },\n        {\n          \"type\": \"positive_velocity\",\n          \"weight\": 2.0,\n          \"lhs\": \"forward_velocity\"\n        },\n        {\n          \"type\": \"posture_penalty\",\n          \"weight\": 1.0,\n          \"lhs\": \"joint_speed\"\n        }\n      ]\n    },\n    {\n      \"name\": \"smooth_run\",\n      \"activation_rule\": \"forward_velocity < 1.0\",\n      \"reward_terms\": [\n        {\n          \"type\": \"positive_velocity\",\n          \"weight\": 5.0,\n          \"lhs\": \"forward_velocity\"\n        },\n        {\n          \"type\": \"posture_penalty\",\n          \"weight\": 2.0,\n          \"lhs\": \"torso_pitch\"\n        },\n        {\n          \"type\": \"posture_penalty\",\n          \"weight\": 3.0,\n          \"lhs\": \"joint_speed\"\n        }\n      ]\n    }\n  ]\n}",
+      "error": null
+     }
+    ],
+    "valid": true,
+    "model": {
+     "model": "Qwen/Qwen3.8-27B",
+     "revision": "1d4bf0f2ff6012fd82039f2fa52739d0dd7c60c0",
+     "local_path": "/home/smirn/nexus_campaign_models_v2/hub/models--Qwen--Qwen3.8-27B/snapshots/1d4bf0f2ff6012fd82039f2fa52739d0dd7c60c0",
+     "temperature": 0.7,
+     "top_p": 0.9,
+     "max_new_tokens": 4096,
+     "max_syntax_repairs": 2,
+     "quantization": "bnb-nf4-double",
+     "thinking": "disabled"
+    },
+    "n_skills": 3,
+    "skill_names": [
+     "sprint",
+     "stabilize",
+     "smooth_run"
+    ]
+   },
+   {
+    "path": "walker/g2/initial.generation.json",
+    "attempts": [
+     {
+      "seed": 2002,
+      "prompt": [
+       {
+        "role": "system",
+        "content": "Design a continuous-control NEXUS skillset. Return JSON only: {\"skills\": [\n {\"name\":\"...\", \"activation_rule\":\"...\", \"reward_terms\":[{\"type\":\"...\",\"weight\":1.0,\"lhs\":\"...\"}]}]}.\nEvery scalar field is the same semantic feature supplied to the hand-designed controller.\nFields and units: forward_velocity in m/s, torso_pitch in radians, joint_speed mean absolute joint\nangular speed in rad/s, and height in metres only when listed. No hidden fields or environmental\nreward are available. Use EXACTLY the requested skill count and no extra term keys.\nOne skill must have activation_rule \"True\". Others may overlap. NeSy chooses max learned meta-Q\namong allowed skills every step. Define simple complementary goals, not named copies.\nRules: numeric comparisons, and/or/not, + - *, abs(x), min(x,y), max(x,y). No division.\nRewards sum terms. All weights >0 and <=10; penalty types negate their weight internally.\nAllowed vocabulary and EXACT executable semantics:\nnegative_distance: -weight*abs(lhs-rhs), or -weight*abs(lhs-threshold), or -weight*abs(lhs).\npositive_velocity: weight*lhs.\ntarget_height: weight*clip(lhs/threshold,0,1), requires positive threshold (not rhs).\nbinary_bonus: weight*(lhs>threshold), requires lhs and threshold.\naction_penalty: -weight*sum(action**2), has neither lhs nor rhs nor threshold.\nposture_penalty: -weight*abs(lhs).\nrhs must name another available field, never a number. Constants use threshold when supported.\nA terminal penalty of 1 is subtracted from every skill. Produce between one and six terms per skill.\n"
+       },
+       {
+        "role": "user",
+        "content": "Task: walker. Walk forward around 1 m/s while remaining upright near 1.2 m torso height. Available fields: ('height', 'torso_pitch', 'forward_velocity', 'joint_speed'). Skill count: 4."
+       }
+      ],
+      "raw": "{\n  \"skills\": [\n    {\n      \"name\": \"steady_walk\",\n      \"activation_rule\": \"True\",\n      \"reward_terms\": [\n        {\n          \"type\": \"negative_distance\",\n          \"weight\": 5.0,\n          \"lhs\": \"forward_velocity\",\n          \"threshold\": 1.0\n        },\n        {\n          \"type\": \"posture_penalty\",\n          \"weight\": 3.0,\n          \"lhs\": \"torso_pitch\"\n        },\n        {\n          \"type\": \"target_height\",\n          \"weight\": 4.0,\n          \"lhs\": \"height\",\n          \"threshold\": 1.2\n        },\n        {\n          \"type\": \"action_penalty\",\n          \"weight\": 0.1\n        }\n      ]\n    },\n    {\n      \"name\": \"upright_stabilizer\",\n      \"activation_rule\": \"abs(torso_pitch) > 0.2\",\n      \"reward_terms\": [\n        {\n          \"type\": \"posture_penalty\",\n          \"weight\": 8.0,\n          \"lhs\": \"torso_pitch\"\n        },\n        {\n          \"type\": \"target_height\",\n          \"weight\": 5.0,\n          \"lhs\": \"height\",\n          \"threshold\": 1.2\n        },\n        {\n          \"type\": \"negative_distance\",\n          \"weight\": 2.0,\n          \"lhs\": \"joint_speed\",\n          \"threshold\": 5.0\n        }\n      ]\n    },\n    {\n      \"name\": \"speed_regulator\",\n      \"activation_rule\": \"abs(forward_velocity - 1.0) > 0.3\",\n      \"reward_terms\": [\n        {\n          \"type\": \"negative_distance\",\n          \"weight\": 6.0,\n          \"lhs\": \"forward_velocity\",\n          \"threshold\": 1.0\n        },\n        {\n          \"type\": \"positive_velocity\",\n          \"weight\": 1.0,\n          \"lhs\": \"forward_velocity\"\n        },\n        {\n          \"type\": \"posture_penalty\",\n          \"weight\": 2.0,\n          \"lhs\": \"torso_pitch\"\n        }\n      ]\n    },\n    {\n      \"name\": \"smooth_motion\",\n      \"activation_rule\": \"joint_speed > 8.0\",\n      \"reward_terms\": [\n        {\n          \"type\": \"negative_distance\",\n          \"weight\": 4.0,\n          \"lhs\": \"joint_speed\",\n          \"threshold\": 5.0\n        },\n        {\n          \"type\": \"action_penalty\",\n          \"weight\": 0.5\n        },\n        {\n          \"type\": \"posture_penalty\",\n          \"weight\": 3.0,\n          \"lhs\": \"torso_pitch\"\n        }\n      ]\n    }\n  ]\n}",
+      "error": null
+     }
+    ],
+    "valid": true,
+    "model": {
+     "model": "Qwen/Qwen3.8-27B",
+     "revision": "1d4bf0f2ff6012fd82039f2fa52739d0dd7c60c0",
+     "local_path": "/home/smirn/nexus_campaign_models_v2/hub/models--Qwen--Qwen3.8-27B/snapshots/1d4bf0f2ff6012fd82039f2fa52739d0dd7c60c0",
+     "temperature": 0.7,
+     "top_p": 0.9,
+     "max_new_tokens": 4096,
+     "max_syntax_repairs": 2,
+     "quantization": "bnb-nf4-double",
+     "thinking": "disabled"
+    },
+    "n_skills": 4,
+    "skill_names": [
+     "steady_walk",
+     "upright_stabilizer",
+     "speed_regulator",
+     "smooth_motion"
+    ]
+   },
+   {
+    "path": "walker/g2/refined.generation.json",
+    "attempts": [
+     {
+      "seed": 4002,
+      "prompt": [
+       {
+        "role": "system",
+        "content": "Design a continuous-control NEXUS skillset. Return JSON only: {\"skills\": [\n {\"name\":\"...\", \"activation_rule\":\"...\", \"reward_terms\":[{\"type\":\"...\",\"weight\":1.0,\"lhs\":\"...\"}]}]}.\nEvery scalar field is the same semantic feature supplied to the hand-designed controller.\nFields and units: forward_velocity in m/s, torso_pitch in radians, joint_speed mean absolute joint\nangular speed in rad/s, and height in metres only when listed. No hidden fields or environmental\nreward are available. Use EXACTLY the requested skill count and no extra term keys.\nOne skill must have activation_rule \"True\". Others may overlap. NeSy chooses max learned meta-Q\namong allowed skills every step. Define simple complementary goals, not named copies.\nRules: numeric comparisons, and/or/not, + - *, abs(x), min(x,y), max(x,y). No division.\nRewards sum terms. All weights >0 and <=10; penalty types negate their weight internally.\nAllowed vocabulary and EXACT executable semantics:\nnegative_distance: -weight*abs(lhs-rhs), or -weight*abs(lhs-threshold), or -weight*abs(lhs).\npositive_velocity: weight*lhs.\ntarget_height: weight*clip(lhs/threshold,0,1), requires positive threshold (not rhs).\nbinary_bonus: weight*(lhs>threshold), requires lhs and threshold.\naction_penalty: -weight*sum(action**2), has neither lhs nor rhs nor threshold.\nposture_penalty: -weight*abs(lhs).\nrhs must name another available field, never a number. Constants use threshold when supported.\nA terminal penalty of 1 is subtracted from every skill. Produce between one and six terms per skill.\n"
+       },
+       {
+        "role": "user",
+        "content": "Task: walker. Walk forward around 1 m/s while remaining upright near 1.2 m torso height. Available fields: ('height', 'torso_pitch', 'forward_velocity', 'joint_speed'). Skill count: 4."
+       },
+       {
+        "role": "assistant",
+        "content": "{\n  \"skills\": [\n    {\n      \"name\": \"steady_walk\",\n      \"activation_rule\": \"True\",\n      \"reward_terms\": [\n        {\n          \"type\": \"negative_distance\",\n          \"weight\": 5.0,\n          \"lhs\": \"forward_velocity\",\n          \"threshold\": 1.0\n        },\n        {\n          \"type\": \"posture_penalty\",\n          \"weight\": 3.0,\n          \"lhs\": \"torso_pitch\"\n        },\n        {\n          \"type\": \"target_height\",\n          \"weight\": 4.0,\n          \"lhs\": \"height\",\n          \"threshold\": 1.2\n        },\n        {\n          \"type\": \"action_penalty\",\n          \"weight\": 0.1\n        }\n      ]\n    },\n    {\n      \"name\": \"upright_stabilizer\",\n      \"activation_rule\": \"abs(torso_pitch) > 0.2\",\n      \"reward_terms\": [\n        {\n          \"type\": \"posture_penalty\",\n          \"weight\": 8.0,\n          \"lhs\": \"torso_pitch\"\n        },\n        {\n          \"type\": \"target_height\",\n          \"weight\": 5.0,\n          \"lhs\": \"height\",\n          \"threshold\": 1.2\n        },\n        {\n          \"type\": \"negative_distance\",\n          \"weight\": 2.0,\n          \"lhs\": \"joint_speed\",\n          \"threshold\": 5.0\n        }\n      ]\n    },\n    {\n      \"name\": \"speed_regulator\",\n      \"activation_rule\": \"abs(forward_velocity - 1.0) > 0.3\",\n      \"reward_terms\": [\n        {\n          \"type\": \"negative_distance\",\n          \"weight\": 6.0,\n          \"lhs\": \"forward_velocity\",\n          \"threshold\": 1.0\n        },\n        {\n          \"type\": \"positive_velocity\",\n          \"weight\": 1.0,\n          \"lhs\": \"forward_velocity\"\n        },\n        {\n          \"type\": \"posture_penalty\",\n          \"weight\": 2.0,\n          \"lhs\": \"torso_pitch\"\n        }\n      ]\n    },\n    {\n      \"name\": \"smooth_motion\",\n      \"activation_rule\": \"joint_speed > 8.0\",\n      \"reward_terms\": [\n        {\n          \"type\": \"negative_distance\",\n          \"weight\": 4.0,\n          \"lhs\": \"joint_speed\",\n          \"threshold\": 5.0\n        },\n        {\n          \"type\": \"action_penalty\",\n          \"weight\": 0.5\n        },\n        {\n          \"type\": \"posture_penalty\",\n          \"weight\": 3.0,\n          \"lhs\": \"torso_pitch\"\n        }\n      ]\n    }\n  ]\n}"
+       },
+       {
+        "role": "user",
+        "content": "Revise this SAME proposal once using these pilot validation metrics. Do not add skills. All fields and reward constraints stay the same.\n{\n  \"episode_return_mean\": 386.188720703125,\n  \"episode_return_std\": 305.1355285644531,\n  \"episode_length_mean\": 1000.0,\n  \"action_square_mean\": 0.6088817119598389,\n  \"common_skill_step/0_stand_recover\": 0.8821641206741333,\n  \"common_skill_step/1_walk_forward\": 1.260835886001587,\n  \"common_skill_step/2_stabilize_gait\": 0.3495282232761383,\n  \"common_skill_step/3_energy_efficient\": 0.32750749588012695,\n  \"primary_goal_metric\": 0.6935478448867798,\n  \"primary_success_rate\": 0.5625,\n  \"rules/eligible_count\": 2.090390682220459,\n  \"rules/overlap_fraction\": 0.815109372138977,\n  \"skill_usage/0_steady_walk\": 0.5144375562667847,\n  \"skill_usage/1_upright_stabilizer\": 0.20509374141693115,\n  \"skill_usage/2_speed_regulator\": 0.2786562442779541,\n  \"skill_usage/3_smooth_motion\": 0.0018125001806765795,\n  \"walker/forward_velocity\": 0.6935478448867798,\n  \"walker/forward_velocity_mean\": 0.6935478448867798,\n  \"walker/height\": 0.6554050445556641,\n  \"walker/joint_speed\": 1.5711462497711182,\n  \"walker/net_walk_success_rate\": 0.5625,\n  \"walker/pitch\": 0.08203056454658508,\n  \"walker/stand_success_rate\": 0.36381250619888306,\n  \"walker/walk_success_rate\": 0.3495469093322754,\n  \"common_skill_return/0_stand_recover\": 882.1641845703125,\n  \"common_skill_return/1_walk_forward\": 1260.8358154296875,\n  \"common_skill_return/2_stabilize_gait\": 349.5282287597656,\n  \"common_skill_return/3_energy_efficient\": 327.50750732421875\n}"
+       }
+      ],
+      "raw": "{\n  \"skills\": [\n    {\n      \"name\": \"steady_walk\",\n      \"activation_rule\": \"True\",\n      \"reward_terms\": [\n        {\n          \"type\": \"negative_distance\",\n          \"weight\": 8.0,\n          \"lhs\": \"forward_velocity\",\n          \"threshold\": 1.0\n        },\n        {\n          \"type\": \"posture_penalty\",\n          \"weight\": 5.0,\n          \"lhs\": \"torso_pitch\"\n        },\n        {\n          \"type\": \"target_height\",\n          \"weight\": 6.0,\n          \"lhs\": \"height\",\n          \"threshold\": 1.2\n        },\n        {\n          \"type\": \"action_penalty\",\n          \"weight\": 0.5\n        }\n      ]\n    },\n    {\n      \"name\": \"upright_stabilizer\",\n      \"activation_rule\": \"abs(torso_pitch) > 0.1\",\n      \"reward_terms\": [\n        {\n          \"type\": \"posture_penalty\",\n          \"weight\": 10.0,\n          \"lhs\": \"torso_pitch\"\n        },\n        {\n          \"type\": \"target_height\",\n          \"weight\": 8.0,\n          \"lhs\": \"height\",\n          \"threshold\": 1.2\n        },\n        {\n          \"type\": \"negative_distance\",\n          \"weight\": 3.0,\n          \"lhs\": \"joint_speed\",\n          \"threshold\": 5.0\n        }\n      ]\n    },\n    {\n      \"name\": \"speed_regulator\",\n      \"activation_rule\": \"abs(forward_velocity - 1.0) > 0.2\",\n      \"reward_terms\": [\n        {\n          \"type\": \"negative_distance\",\n          \"weight\": 10.0,\n          \"lhs\": \"forward_velocity\",\n          \"threshold\": 1.0\n        },\n        {\n          \"type\": \"positive_velocity\",\n          \"weight\": 2.0,\n          \"lhs\": \"forward_velocity\"\n        },\n        {\n          \"type\": \"posture_penalty\",\n          \"weight\": 3.0,\n          \"lhs\": \"torso_pitch\"\n        }\n      ]\n    },\n    {\n      \"name\": \"smooth_motion\",\n      \"activation_rule\": \"joint_speed > 5.0\",\n      \"reward_terms\": [\n        {\n          \"type\": \"negative_distance\",\n          \"weight\": 5.0,\n          \"lhs\": \"joint_speed\",\n          \"threshold\": 5.0\n        },\n        {\n          \"type\": \"action_penalty\",\n          \"weight\": 1.0\n        },\n        {\n          \"type\": \"posture_penalty\",\n          \"weight\": 4.0,\n          \"lhs\": \"torso_pitch\"\n        }\n      ]\n    }\n  ]\n}",
+      "error": null
+     }
+    ],
+    "valid": true,
+    "model": {
+     "model": "Qwen/Qwen3.8-27B",
+     "revision": "1d4bf0f2ff6012fd82039f2fa52739d0dd7c60c0",
+     "local_path": "/home/smirn/nexus_campaign_models_v2/hub/models--Qwen--Qwen3.8-27B/snapshots/1d4bf0f2ff6012fd82039f2fa52739d0dd7c60c0",
+     "temperature": 0.7,
+     "top_p": 0.9,
+     "max_new_tokens": 4096,
+     "max_syntax_repairs": 2,
+     "quantization": "bnb-nf4-double",
+     "thinking": "disabled"
+    },
+    "n_skills": 4,
+    "skill_names": [
+     "steady_walk",
+     "upright_stabilizer",
+     "speed_regulator",
+     "smooth_motion"
+    ]
+   },
+   {
+    "path": "walker/g2/resample.generation.json",
+    "attempts": [
+     {
+      "seed": 3002,
+      "prompt": [
+       {
+        "role": "system",
+        "content": "Design a continuous-control NEXUS skillset. Return JSON only: {\"skills\": [\n {\"name\":\"...\", \"activation_rule\":\"...\", \"reward_terms\":[{\"type\":\"...\",\"weight\":1.0,\"lhs\":\"...\"}]}]}.\nEvery scalar field is the same semantic feature supplied to the hand-designed controller.\nFields and units: forward_velocity in m/s, torso_pitch in radians, joint_speed mean absolute joint\nangular speed in rad/s, and height in metres only when listed. No hidden fields or environmental\nreward are available. Use EXACTLY the requested skill count and no extra term keys.\nOne skill must have activation_rule \"True\". Others may overlap. NeSy chooses max learned meta-Q\namong allowed skills every step. Define simple complementary goals, not named copies.\nRules: numeric comparisons, and/or/not, + - *, abs(x), min(x,y), max(x,y). No division.\nRewards sum terms. All weights >0 and <=10; penalty types negate their weight internally.\nAllowed vocabulary and EXACT executable semantics:\nnegative_distance: -weight*abs(lhs-rhs), or -weight*abs(lhs-threshold), or -weight*abs(lhs).\npositive_velocity: weight*lhs.\ntarget_height: weight*clip(lhs/threshold,0,1), requires positive threshold (not rhs).\nbinary_bonus: weight*(lhs>threshold), requires lhs and threshold.\naction_penalty: -weight*sum(action**2), has neither lhs nor rhs nor threshold.\nposture_penalty: -weight*abs(lhs).\nrhs must name another available field, never a number. Constants use threshold when supported.\nA terminal penalty of 1 is subtracted from every skill. Produce between one and six terms per skill.\n"
+       },
+       {
+        "role": "user",
+        "content": "Task: walker. Walk forward around 1 m/s while remaining upright near 1.2 m torso height. Available fields: ('height', 'torso_pitch', 'forward_velocity', 'joint_speed'). Skill count: 4."
+       }
+      ],
+      "raw": "{\n  \"skills\": [\n    {\n      \"name\": \"steady_forward\",\n      \"activation_rule\": \"True\",\n      \"reward_terms\": [\n        {\n          \"type\": \"negative_distance\",\n          \"weight\": 5.0,\n          \"lhs\": \"forward_velocity\",\n          \"threshold\": 1.0\n        },\n        {\n          \"type\": \"posture_penalty\",\n          \"weight\": 2.0,\n          \"lhs\": \"torso_pitch\"\n        },\n        {\n          \"type\": \"action_penalty\",\n          \"weight\": 0.5\n        }\n      ]\n    },\n    {\n      \"name\": \"height_stability\",\n      \"activation_rule\": \"abs(torso_pitch) > 0.2\",\n      \"reward_terms\": [\n        {\n          \"type\": \"target_height\",\n          \"weight\": 4.0,\n          \"lhs\": \"height\",\n          \"threshold\": 1.2\n        },\n        {\n          \"type\": \"posture_penalty\",\n          \"weight\": 3.0,\n          \"lhs\": \"torso_pitch\"\n        }\n      ]\n    },\n    {\n      \"name\": \"speed_correction\",\n      \"activation_rule\": \"forward_velocity < 0.5 or forward_velocity > 1.5\",\n      \"reward_terms\": [\n        {\n          \"type\": \"negative_distance\",\n          \"weight\": 6.0,\n          \"lhs\": \"forward_velocity\",\n          \"threshold\": 1.0\n        },\n        {\n          \"type\": \"posture_penalty\",\n          \"weight\": 1.0,\n          \"lhs\": \"joint_speed\"\n        }\n      ]\n    },\n    {\n      \"name\": \"upright_balance\",\n      \"activation_rule\": \"abs(torso_pitch) > 0.3\",\n      \"reward_terms\": [\n        {\n          \"type\": \"posture_penalty\",\n          \"weight\": 5.0,\n          \"lhs\": \"torso_pitch\"\n        },\n        {\n          \"type\": \"target_height\",\n          \"weight\": 2.0,\n          \"lhs\": \"height\",\n          \"threshold\": 1.2\n        },\n        {\n          \"type\": \"action_penalty\",\n          \"weight\": 1.0\n        }\n      ]\n    }\n  ]\n}",
+      "error": null
+     }
+    ],
+    "valid": true,
+    "model": {
+     "model": "Qwen/Qwen3.8-27B",
+     "revision": "1d4bf0f2ff6012fd82039f2fa52739d0dd7c60c0",
+     "local_path": "/home/smirn/nexus_campaign_models_v2/hub/models--Qwen--Qwen3.8-27B/snapshots/1d4bf0f2ff6012fd82039f2fa52739d0dd7c60c0",
+     "temperature": 0.7,
+     "top_p": 0.9,
+     "max_new_tokens": 4096,
+     "max_syntax_repairs": 2,
+     "quantization": "bnb-nf4-double",
+     "thinking": "disabled"
+    },
+    "n_skills": 4,
+    "skill_names": [
+     "steady_forward",
+     "height_stability",
+     "speed_correction",
+     "upright_balance"
+    ]
+   },
+   {
+    "path": "walker/g1/initial.generation.json",
+    "attempts": [
+     {
+      "seed": 2001,
+      "prompt": [
+       {
+        "role": "system",
+        "content": "Design a continuous-control NEXUS skillset. Return JSON only: {\"skills\": [\n {\"name\":\"...\", \"activation_rule\":\"...\", \"reward_terms\":[{\"type\":\"...\",\"weight\":1.0,\"lhs\":\"...\"}]}]}.\nEvery scalar field is the same semantic feature supplied to the hand-designed controller.\nFields and units: forward_velocity in m/s, torso_pitch in radians, joint_speed mean absolute joint\nangular speed in rad/s, and height in metres only when listed. No hidden fields or environmental\nreward are available. Use EXACTLY the requested skill count and no extra term keys.\nOne skill must have activation_rule \"True\". Others may overlap. NeSy chooses max learned meta-Q\namong allowed skills every step. Define simple complementary goals, not named copies.\nRules: numeric comparisons, and/or/not, + - *, abs(x), min(x,y), max(x,y). No division.\nRewards sum terms. All weights >0 and <=10; penalty types negate their weight internally.\nAllowed vocabulary and EXACT executable semantics:\nnegative_distance: -weight*abs(lhs-rhs), or -weight*abs(lhs-threshold), or -weight*abs(lhs).\npositive_velocity: weight*lhs.\ntarget_height: weight*clip(lhs/threshold,0,1), requires positive threshold (not rhs).\nbinary_bonus: weight*(lhs>threshold), requires lhs and threshold.\naction_penalty: -weight*sum(action**2), has neither lhs nor rhs nor threshold.\nposture_penalty: -weight*abs(lhs).\nrhs must name another available field, never a number. Constants use threshold when supported.\nA terminal penalty of 1 is subtracted from every skill. Produce between one and six terms per skill.\n"
+       },
+       {
+        "role": "user",
+        "content": "Task: walker. Walk forward around 1 m/s while remaining upright near 1.2 m torso height. Available fields: ('height', 'torso_pitch', 'forward_velocity', 'joint_speed'). Skill count: 4."
+       }
+      ],
+      "raw": "{\n  \"skills\": [\n    {\n      \"name\": \"steady_walking\",\n      \"activation_rule\": \"True\",\n      \"reward_terms\": [\n        {\n          \"type\": \"negative_distance\",\n          \"weight\": 5.0,\n          \"lhs\": \"forward_velocity\",\n          \"rhs\": \"1.0\"\n        },\n        {\n          \"type\": \"negative_distance\",\n          \"weight\": 5.0,\n          \"lhs\": \"height\",\n          \"rhs\": \"1.2\"\n        },\n        {\n          \"type\": \"posture_penalty\",\n          \"weight\": 2.0,\n          \"lhs\": \"torso_pitch\"\n        }\n      ]\n    },\n    {\n      \"name\": \"upright_correction\",\n      \"activation_rule\": \"abs(torso_pitch) > 0.1\",\n      \"reward_terms\": [\n        {\n          \"type\": \"posture_penalty\",\n          \"weight\": 8.0,\n          \"lhs\": \"torso_pitch\"\n        },\n        {\n          \"type\": \"negative_distance\",\n          \"weight\": 2.0,\n          \"lhs\": \"height\",\n          \"rhs\": \"1.2\"\n        }\n      ]\n    },\n    {\n      \"name\": \"smooth_motion\",\n      \"activation_rule\": \"joint_speed > 1.5\",\n      \"reward_terms\": [\n        {\n          \"type\": \"posture_penalty\",\n          \"weight\": 4.0,\n          \"lhs\": \"joint_speed\"\n        },\n        {\n          \"type\": \"negative_distance\",\n          \"weight\": 3.0,\n          \"lhs\": \"forward_velocity\",\n          \"rhs\": \"1.0\"\n        }\n      ]\n    },\n    {\n      \"name\": \"height_stabilization\",\n      \"activation_rule\": \"abs(height - 1.2) > 0.1\",\n      \"reward_terms\": [\n        {\n          \"type\": \"negative_distance\",\n          \"weight\": 6.0,\n          \"lhs\": \"height\",\n          \"rhs\": \"1.2\"\n        },\n        {\n          \"type\": \"posture_penalty\",\n          \"weight\": 1.0,\n          \"lhs\": \"torso_pitch\"\n        }\n      ]\n    }\n  ]\n}",
+      "error": "ValueError: rhs must be a known field; constants use threshold"
+     },
+     {
+      "seed": 12001,
+      "prompt": [
+       {
+        "role": "system",
+        "content": "Design a continuous-control NEXUS skillset. Return JSON only: {\"skills\": [\n {\"name\":\"...\", \"activation_rule\":\"...\", \"reward_terms\":[{\"type\":\"...\",\"weight\":1.0,\"lhs\":\"...\"}]}]}.\nEvery scalar field is the same semantic feature supplied to the hand-designed controller.\nFields and units: forward_velocity in m/s, torso_pitch in radians, joint_speed mean absolute joint\nangular speed in rad/s, and height in metres only when listed. No hidden fields or environmental\nreward are available. Use EXACTLY the requested skill count and no extra term keys.\nOne skill must have activation_rule \"True\". Others may overlap. NeSy chooses max learned meta-Q\namong allowed skills every step. Define simple complementary goals, not named copies.\nRules: numeric comparisons, and/or/not, + - *, abs(x), min(x,y), max(x,y). No division.\nRewards sum terms. All weights >0 and <=10; penalty types negate their weight internally.\nAllowed vocabulary and EXACT executable semantics:\nnegative_distance: -weight*abs(lhs-rhs), or -weight*abs(lhs-threshold), or -weight*abs(lhs).\npositive_velocity: weight*lhs.\ntarget_height: weight*clip(lhs/threshold,0,1), requires positive threshold (not rhs).\nbinary_bonus: weight*(lhs>threshold), requires lhs and threshold.\naction_penalty: -weight*sum(action**2), has neither lhs nor rhs nor threshold.\nposture_penalty: -weight*abs(lhs).\nrhs must name another available field, never a number. Constants use threshold when supported.\nA terminal penalty of 1 is subtracted from every skill. Produce between one and six terms per skill.\n"
+       },
+       {
+        "role": "user",
+        "content": "Task: walker. Walk forward around 1 m/s while remaining upright near 1.2 m torso height. Available fields: ('height', 'torso_pitch', 'forward_velocity', 'joint_speed'). Skill count: 4."
+       },
+       {
+        "role": "assistant",
+        "content": "{\n  \"skills\": [\n    {\n      \"name\": \"steady_walking\",\n      \"activation_rule\": \"True\",\n      \"reward_terms\": [\n        {\n          \"type\": \"negative_distance\",\n          \"weight\": 5.0,\n          \"lhs\": \"forward_velocity\",\n          \"rhs\": \"1.0\"\n        },\n        {\n          \"type\": \"negative_distance\",\n          \"weight\": 5.0,\n          \"lhs\": \"height\",\n          \"rhs\": \"1.2\"\n        },\n        {\n          \"type\": \"posture_penalty\",\n          \"weight\": 2.0,\n          \"lhs\": \"torso_pitch\"\n        }\n      ]\n    },\n    {\n      \"name\": \"upright_correction\",\n      \"activation_rule\": \"abs(torso_pitch) > 0.1\",\n      \"reward_terms\": [\n        {\n          \"type\": \"posture_penalty\",\n          \"weight\": 8.0,\n          \"lhs\": \"torso_pitch\"\n        },\n        {\n          \"type\": \"negative_distance\",\n          \"weight\": 2.0,\n          \"lhs\": \"height\",\n          \"rhs\": \"1.2\"\n        }\n      ]\n    },\n    {\n      \"name\": \"smooth_motion\",\n      \"activation_rule\": \"joint_speed > 1.5\",\n      \"reward_terms\": [\n        {\n          \"type\": \"posture_penalty\",\n          \"weight\": 4.0,\n          \"lhs\": \"joint_speed\"\n        },\n        {\n          \"type\": \"negative_distance\",\n          \"weight\": 3.0,\n          \"lhs\": \"forward_velocity\",\n          \"rhs\": \"1.0\"\n        }\n      ]\n    },\n    {\n      \"name\": \"height_stabilization\",\n      \"activation_rule\": \"abs(height - 1.2) > 0.1\",\n      \"reward_terms\": [\n        {\n          \"type\": \"negative_distance\",\n          \"weight\": 6.0,\n          \"lhs\": \"height\",\n          \"rhs\": \"1.2\"\n        },\n        {\n          \"type\": \"posture_penalty\",\n          \"weight\": 1.0,\n          \"lhs\": \"torso_pitch\"\n        }\n      ]\n    }\n  ]\n}"
+       },
+       {
+        "role": "user",
+        "content": "Syntax/type validation failed: ValueError: rhs must be a known field; constants use threshold. Repair only schema/type errors; keep your proposed goals."
+       }
+      ],
+      "raw": "{\n  \"skills\": [\n    {\n      \"name\": \"steady_walking\",\n      \"activation_rule\": \"True\",\n      \"reward_terms\": [\n        {\n          \"type\": \"negative_distance\",\n          \"weight\": 5.0,\n          \"lhs\": \"forward_velocity\",\n          \"threshold\": 1.0\n        },\n        {\n          \"type\": \"negative_distance\",\n          \"weight\": 5.0,\n          \"lhs\": \"height\",\n          \"threshold\": 1.2\n        },\n        {\n          \"type\": \"posture_penalty\",\n          \"weight\": 2.0,\n          \"lhs\": \"torso_pitch\"\n        }\n      ]\n    },\n    {\n      \"name\": \"upright_correction\",\n      \"activation_rule\": \"abs(torso_pitch) > 0.1\",\n      \"reward_terms\": [\n        {\n          \"type\": \"posture_penalty\",\n          \"weight\": 8.0,\n          \"lhs\": \"torso_pitch\"\n        },\n        {\n          \"type\": \"negative_distance\",\n          \"weight\": 2.0,\n          \"lhs\": \"height\",\n          \"threshold\": 1.2\n        }\n      ]\n    },\n    {\n      \"name\": \"smooth_motion\",\n      \"activation_rule\": \"joint_speed > 1.5\",\n      \"reward_terms\": [\n        {\n          \"type\": \"posture_penalty\",\n          \"weight\": 4.0,\n          \"lhs\": \"joint_speed\"\n        },\n        {\n          \"type\": \"negative_distance\",\n          \"weight\": 3.0,\n          \"lhs\": \"forward_velocity\",\n          \"threshold\": 1.0\n        }\n      ]\n    },\n    {\n      \"name\": \"height_stabilization\",\n      \"activation_rule\": \"abs(height - 1.2) > 0.1\",\n      \"reward_terms\": [\n        {\n          \"type\": \"negative_distance\",\n          \"weight\": 6.0,\n          \"lhs\": \"height\",\n          \"threshold\": 1.2\n        },\n        {\n          \"type\": \"posture_penalty\",\n          \"weight\": 1.0,\n          \"lhs\": \"torso_pitch\"\n        }\n      ]\n    }\n  ]\n}",
+      "error": null
+     }
+    ],
+    "valid": true,
+    "model": {
+     "model": "Qwen/Qwen3.8-27B",
+     "revision": "1d4bf0f2ff6012fd82039f2fa52739d0dd7c60c0",
+     "local_path": "/home/smirn/nexus_campaign_models_v2/hub/models--Qwen--Qwen3.8-27B/snapshots/1d4bf0f2ff6012fd82039f2fa52739d0dd7c60c0",
+     "temperature": 0.7,
+     "top_p": 0.9,
+     "max_new_tokens": 4096,
+     "max_syntax_repairs": 2,
+     "quantization": "bnb-nf4-double",
+     "thinking": "disabled"
+    },
+    "n_skills": 4,
+    "skill_names": [
+     "steady_walking",
+     "upright_correction",
+     "smooth_motion",
+     "height_stabilization"
+    ]
+   },
+   {
+    "path": "walker/g1/refined.generation.json",
+    "attempts": [
+     {
+      "seed": 4001,
+      "prompt": [
+       {
+        "role": "system",
+        "content": "Design a continuous-control NEXUS skillset. Return JSON only: {\"skills\": [\n {\"name\":\"...\", \"activation_rule\":\"...\", \"reward_terms\":[{\"type\":\"...\",\"weight\":1.0,\"lhs\":\"...\"}]}]}.\nEvery scalar field is the same semantic feature supplied to the hand-designed controller.\nFields and units: forward_velocity in m/s, torso_pitch in radians, joint_speed mean absolute joint\nangular speed in rad/s, and height in metres only when listed. No hidden fields or environmental\nreward are available. Use EXACTLY the requested skill count and no extra term keys.\nOne skill must have activation_rule \"True\". Others may overlap. NeSy chooses max learned meta-Q\namong allowed skills every step. Define simple complementary goals, not named copies.\nRules: numeric comparisons, and/or/not, + - *, abs(x), min(x,y), max(x,y). No division.\nRewards sum terms. All weights >0 and <=10; penalty types negate their weight internally.\nAllowed vocabulary and EXACT executable semantics:\nnegative_distance: -weight*abs(lhs-rhs), or -weight*abs(lhs-threshold), or -weight*abs(lhs).\npositive_velocity: weight*lhs.\ntarget_height: weight*clip(lhs/threshold,0,1), requires positive threshold (not rhs).\nbinary_bonus: weight*(lhs>threshold), requires lhs and threshold.\naction_penalty: -weight*sum(action**2), has neither lhs nor rhs nor threshold.\nposture_penalty: -weight*abs(lhs).\nrhs must name another available field, never a number. Constants use threshold when supported.\nA terminal penalty of 1 is subtracted from every skill. Produce between one and six terms per skill.\n"
+       },
+       {
+        "role": "user",
+        "content": "Task: walker. Walk forward around 1 m/s while remaining upright near 1.2 m torso height. Available fields: ('height', 'torso_pitch', 'forward_velocity', 'joint_speed'). Skill count: 4."
+       },
+       {
+        "role": "assistant",
+        "content": "{\n  \"skills\": [\n    {\n      \"name\": \"steady_walking\",\n      \"activation_rule\": \"True\",\n      \"reward_terms\": [\n        {\n          \"type\": \"negative_distance\",\n          \"weight\": 5.0,\n          \"lhs\": \"forward_velocity\",\n          \"threshold\": 1.0\n        },\n        {\n          \"type\": \"negative_distance\",\n          \"weight\": 5.0,\n          \"lhs\": \"height\",\n          \"threshold\": 1.2\n        },\n        {\n          \"type\": \"posture_penalty\",\n          \"weight\": 2.0,\n          \"lhs\": \"torso_pitch\"\n        }\n      ]\n    },\n    {\n      \"name\": \"upright_correction\",\n      \"activation_rule\": \"abs(torso_pitch) > 0.1\",\n      \"reward_terms\": [\n        {\n          \"type\": \"posture_penalty\",\n          \"weight\": 8.0,\n          \"lhs\": \"torso_pitch\"\n        },\n        {\n          \"type\": \"negative_distance\",\n          \"weight\": 2.0,\n          \"lhs\": \"height\",\n          \"threshold\": 1.2\n        }\n      ]\n    },\n    {\n      \"name\": \"smooth_motion\",\n      \"activation_rule\": \"joint_speed > 1.5\",\n      \"reward_terms\": [\n        {\n          \"type\": \"posture_penalty\",\n          \"weight\": 4.0,\n          \"lhs\": \"joint_speed\"\n        },\n        {\n          \"type\": \"negative_distance\",\n          \"weight\": 3.0,\n          \"lhs\": \"forward_velocity\",\n          \"threshold\": 1.0\n        }\n      ]\n    },\n    {\n      \"name\": \"height_stabilization\",\n      \"activation_rule\": \"abs(height - 1.2) > 0.1\",\n      \"reward_terms\": [\n        {\n          \"type\": \"negative_distance\",\n          \"weight\": 6.0,\n          \"lhs\": \"height\",\n          \"threshold\": 1.2\n        },\n        {\n          \"type\": \"posture_penalty\",\n          \"weight\": 1.0,\n          \"lhs\": \"torso_pitch\"\n        }\n      ]\n    }\n  ]\n}"
+       },
+       {
+        "role": "user",
+        "content": "Revise this SAME proposal once using these pilot validation metrics. Do not add skills. All fields and reward constraints stay the same.\n{\n  \"episode_return_mean\": 588.737548828125,\n  \"episode_return_std\": 331.37762451171875,\n  \"episode_length_mean\": 1000.0,\n  \"action_square_mean\": 0.6822741031646729,\n  \"common_skill_step/0_stand_recover\": 1.3837230205535889,\n  \"common_skill_step/1_walk_forward\": 1.9869251251220703,\n  \"common_skill_step/2_stabilize_gait\": 0.6192805171012878,\n  \"common_skill_step/3_energy_efficient\": 0.4536454677581787,\n  \"primary_goal_metric\": 0.9502274990081787,\n  \"primary_success_rate\": 0.53125,\n  \"rules/eligible_count\": 2.485656499862671,\n  \"rules/overlap_fraction\": 0.8909687399864197,\n  \"skill_usage/0_steady_walking\": 0.9069375395774841,\n  \"skill_usage/1_upright_correction\": 0.009515625424683094,\n  \"skill_usage/2_smooth_motion\": 0.0475468784570694,\n  \"skill_usage/3_height_stabilization\": 0.036000002175569534,\n  \"walker/forward_velocity\": 0.9502274990081787,\n  \"walker/forward_velocity_mean\": 0.9502274990081787,\n  \"walker/height\": 0.7832012176513672,\n  \"walker/joint_speed\": 3.6533093452453613,\n  \"walker/net_walk_success_rate\": 0.53125,\n  \"walker/pitch\": -0.12805655598640442,\n  \"walker/stand_success_rate\": 0.5199062824249268,\n  \"walker/walk_success_rate\": 0.5077656507492065,\n  \"common_skill_return/0_stand_recover\": 1383.7230224609375,\n  \"common_skill_return/1_walk_forward\": 1986.9249267578125,\n  \"common_skill_return/2_stabilize_gait\": 619.280517578125,\n  \"common_skill_return/3_energy_efficient\": 453.6455078125\n}"
+       }
+      ],
+      "raw": "{\n  \"skills\": [\n    {\n      \"name\": \"steady_walking\",\n      \"activation_rule\": \"True\",\n      \"reward_terms\": [\n        {\n          \"type\": \"negative_distance\",\n          \"weight\": 5.0,\n          \"lhs\": \"forward_velocity\",\n          \"threshold\": 1.0\n        },\n        {\n          \"type\": \"negative_distance\",\n          \"weight\": 8.0,\n          \"lhs\": \"height\",\n          \"threshold\": 1.2\n        },\n        {\n          \"type\": \"posture_penalty\",\n          \"weight\": 3.0,\n          \"lhs\": \"torso_pitch\"\n        },\n        {\n          \"type\": \"posture_penalty\",\n          \"weight\": 2.0,\n          \"lhs\": \"joint_speed\"\n        }\n      ]\n    },\n    {\n      \"name\": \"upright_correction\",\n      \"activation_rule\": \"abs(torso_pitch) > 0.05\",\n      \"reward_terms\": [\n        {\n          \"type\": \"posture_penalty\",\n          \"weight\": 10.0,\n          \"lhs\": \"torso_pitch\"\n        },\n        {\n          \"type\": \"negative_distance\",\n          \"weight\": 4.0,\n          \"lhs\": \"height\",\n          \"threshold\": 1.2\n        }\n      ]\n    },\n    {\n      \"name\": \"smooth_motion\",\n      \"activation_rule\": \"joint_speed > 1.0\",\n      \"reward_terms\": [\n        {\n          \"type\": \"posture_penalty\",\n          \"weight\": 6.0,\n          \"lhs\": \"joint_speed\"\n        },\n        {\n          \"type\": \"negative_distance\",\n          \"weight\": 3.0,\n          \"lhs\": \"forward_velocity\",\n          \"threshold\": 1.0\n        }\n      ]\n    },\n    {\n      \"name\": \"height_stabilization\",\n      \"activation_rule\": \"abs(height - 1.2) > 0.05\",\n      \"reward_terms\": [\n        {\n          \"type\": \"negative_distance\",\n          \"weight\": 10.0,\n          \"lhs\": \"height\",\n          \"threshold\": 1.2\n        },\n        {\n          \"type\": \"posture_penalty\",\n          \"weight\": 2.0,\n          \"lhs\": \"torso_pitch\"\n        }\n      ]\n    }\n  ]\n}",
+      "error": null
+     }
+    ],
+    "valid": true,
+    "model": {
+     "model": "Qwen/Qwen3.8-27B",
+     "revision": "1d4bf0f2ff6012fd82039f2fa52739d0dd7c60c0",
+     "local_path": "/home/smirn/nexus_campaign_models_v2/hub/models--Qwen--Qwen3.8-27B/snapshots/1d4bf0f2ff6012fd82039f2fa52739d0dd7c60c0",
+     "temperature": 0.7,
+     "top_p": 0.9,
+     "max_new_tokens": 4096,
+     "max_syntax_repairs": 2,
+     "quantization": "bnb-nf4-double",
+     "thinking": "disabled"
+    },
+    "n_skills": 4,
+    "skill_names": [
+     "steady_walking",
+     "upright_correction",
+     "smooth_motion",
+     "height_stabilization"
+    ]
+   },
+   {
+    "path": "walker/g1/resample.generation.json",
+    "attempts": [
+     {
+      "seed": 3001,
+      "prompt": [
+       {
+        "role": "system",
+        "content": "Design a continuous-control NEXUS skillset. Return JSON only: {\"skills\": [\n {\"name\":\"...\", \"activation_rule\":\"...\", \"reward_terms\":[{\"type\":\"...\",\"weight\":1.0,\"lhs\":\"...\"}]}]}.\nEvery scalar field is the same semantic feature supplied to the hand-designed controller.\nFields and units: forward_velocity in m/s, torso_pitch in radians, joint_speed mean absolute joint\nangular speed in rad/s, and height in metres only when listed. No hidden fields or environmental\nreward are available. Use EXACTLY the requested skill count and no extra term keys.\nOne skill must have activation_rule \"True\". Others may overlap. NeSy chooses max learned meta-Q\namong allowed skills every step. Define simple complementary goals, not named copies.\nRules: numeric comparisons, and/or/not, + - *, abs(x), min(x,y), max(x,y). No division.\nRewards sum terms. All weights >0 and <=10; penalty types negate their weight internally.\nAllowed vocabulary and EXACT executable semantics:\nnegative_distance: -weight*abs(lhs-rhs), or -weight*abs(lhs-threshold), or -weight*abs(lhs).\npositive_velocity: weight*lhs.\ntarget_height: weight*clip(lhs/threshold,0,1), requires positive threshold (not rhs).\nbinary_bonus: weight*(lhs>threshold), requires lhs and threshold.\naction_penalty: -weight*sum(action**2), has neither lhs nor rhs nor threshold.\nposture_penalty: -weight*abs(lhs).\nrhs must name another available field, never a number. Constants use threshold when supported.\nA terminal penalty of 1 is subtracted from every skill. Produce between one and six terms per skill.\n"
+       },
+       {
+        "role": "user",
+        "content": "Task: walker. Walk forward around 1 m/s while remaining upright near 1.2 m torso height. Available fields: ('height', 'torso_pitch', 'forward_velocity', 'joint_speed'). Skill count: 4."
+       }
+      ],
+      "raw": "{\n  \"skills\": [\n    {\n      \"name\": \"walk_forward\",\n      \"activation_rule\": \"True\",\n      \"reward_terms\": [\n        {\n          \"type\": \"negative_distance\",\n          \"weight\": 2.0,\n          \"lhs\": \"forward_velocity\"\n        },\n        {\n          \"type\": \"posture_penalty\",\n          \"weight\": 1.5,\n          \"lhs\": \"torso_pitch\"\n        }\n      ]\n    },\n    {\n      \"name\": \"maintain_height\",\n      \"activation_rule\": \"abs(torso_pitch) > 0.1\",\n      \"reward_terms\": [\n        {\n          \"type\": \"target_height\",\n          \"weight\": 3.0,\n          \"lhs\": \"height\",\n          \"threshold\": 1.2\n        },\n        {\n          \"type\": \"posture_penalty\",\n          \"weight\": 2.0,\n          \"lhs\": \"torso_pitch\"\n        }\n      ]\n    },\n    {\n      \"name\": \"smooth_motion\",\n      \"activation_rule\": \"joint_speed > 2.0\",\n      \"reward_terms\": [\n        {\n          \"type\": \"posture_penalty\",\n          \"weight\": 1.0,\n          \"lhs\": \"joint_speed\"\n        },\n        {\n          \"type\": \"negative_distance\",\n          \"weight\": 1.0,\n          \"lhs\": \"forward_velocity\"\n        }\n      ]\n    },\n    {\n      \"name\": \"stabilize_pitch\",\n      \"activation_rule\": \"abs(torso_pitch) > 0.2\",\n      \"reward_terms\": [\n        {\n          \"type\": \"posture_penalty\",\n          \"weight\": 4.0,\n          \"lhs\": \"torso_pitch\"\n        },\n        {\n          \"type\": \"target_height\",\n          \"weight\": 2.0,\n          \"lhs\": \"height\",\n          \"threshold\": 1.2\n        }\n      ]\n    }\n  ]\n}",
+      "error": null
+     }
+    ],
+    "valid": true,
+    "model": {
+     "model": "Qwen/Qwen3.8-27B",
+     "revision": "1d4bf0f2ff6012fd82039f2fa52739d0dd7c60c0",
+     "local_path": "/home/smirn/nexus_campaign_models_v2/hub/models--Qwen--Qwen3.8-27B/snapshots/1d4bf0f2ff6012fd82039f2fa52739d0dd7c60c0",
+     "temperature": 0.7,
+     "top_p": 0.9,
+     "max_new_tokens": 4096,
+     "max_syntax_repairs": 2,
+     "quantization": "bnb-nf4-double",
+     "thinking": "disabled"
+    },
+    "n_skills": 4,
+    "skill_names": [
+     "walk_forward",
+     "maintain_height",
+     "smooth_motion",
+     "stabilize_pitch"
+    ]
+   },
+   {
+    "path": "walker/g0/initial.generation.json",
+    "attempts": [
+     {
+      "seed": 2000,
+      "prompt": [
+       {
+        "role": "system",
+        "content": "Design a continuous-control NEXUS skillset. Return JSON only: {\"skills\": [\n {\"name\":\"...\", \"activation_rule\":\"...\", \"reward_terms\":[{\"type\":\"...\",\"weight\":1.0,\"lhs\":\"...\"}]}]}.\nEvery scalar field is the same semantic feature supplied to the hand-designed controller.\nFields and units: forward_velocity in m/s, torso_pitch in radians, joint_speed mean absolute joint\nangular speed in rad/s, and height in metres only when listed. No hidden fields or environmental\nreward are available. Use EXACTLY the requested skill count and no extra term keys.\nOne skill must have activation_rule \"True\". Others may overlap. NeSy chooses max learned meta-Q\namong allowed skills every step. Define simple complementary goals, not named copies.\nRules: numeric comparisons, and/or/not, + - *, abs(x), min(x,y), max(x,y). No division.\nRewards sum terms. All weights >0 and <=10; penalty types negate their weight internally.\nAllowed vocabulary and EXACT executable semantics:\nnegative_distance: -weight*abs(lhs-rhs), or -weight*abs(lhs-threshold), or -weight*abs(lhs).\npositive_velocity: weight*lhs.\ntarget_height: weight*clip(lhs/threshold,0,1), requires positive threshold (not rhs).\nbinary_bonus: weight*(lhs>threshold), requires lhs and threshold.\naction_penalty: -weight*sum(action**2), has neither lhs nor rhs nor threshold.\nposture_penalty: -weight*abs(lhs).\nrhs must name another available field, never a number. Constants use threshold when supported.\nA terminal penalty of 1 is subtracted from every skill. Produce between one and six terms per skill.\n"
+       },
+       {
+        "role": "user",
+        "content": "Task: walker. Walk forward around 1 m/s while remaining upright near 1.2 m torso height. Available fields: ('height', 'torso_pitch', 'forward_velocity', 'joint_speed'). Skill count: 4."
+       }
+      ],
+      "raw": "{\n  \"skills\": [\n    {\n      \"name\": \"forward_cruise\",\n      \"activation_rule\": \"True\",\n      \"reward_terms\": [\n        {\n          \"type\": \"negative_distance\",\n          \"weight\": 5.0,\n          \"lhs\": \"forward_velocity\",\n          \"rhs\": 1.0\n        },\n        {\n          \"type\": \"posture_penalty\",\n          \"weight\": 2.0,\n          \"lhs\": \"torso_pitch\"\n        },\n        {\n          \"type\": \"posture_penalty\",\n          \"weight\": 1.0,\n          \"lhs\": \"joint_speed\"\n        }\n      ]\n    },\n    {\n      \"name\": \"upright_stabilize\",\n      \"activation_rule\": \"abs(torso_pitch) > 0.2\",\n      \"reward_terms\": [\n        {\n          \"type\": \"posture_penalty\",\n          \"weight\": 8.0,\n          \"lhs\": \"torso_pitch\"\n        },\n        {\n          \"type\": \"negative_distance\",\n          \"weight\": 2.0,\n          \"lhs\": \"forward_velocity\",\n          \"rhs\": 0.5\n        }\n      ]\n    },\n    {\n      \"name\": \"height_maintain\",\n      \"activation_rule\": \"height < 1.1 or height > 1.3\",\n      \"reward_terms\": [\n        {\n          \"type\": \"target_height\",\n          \"weight\": 5.0,\n          \"lhs\": \"height\",\n          \"threshold\": 1.2\n        },\n        {\n          \"type\": \"posture_penalty\",\n          \"weight\": 1.5,\n          \"lhs\": \"torso_pitch\"\n        }\n      ]\n    },\n    {\n      \"name\": \"slow_down\",\n      \"activation_rule\": \"forward_velocity > 1.5\",\n      \"reward_terms\": [\n        {\n          \"type\": \"negative_distance\",\n          \"weight\": 6.0,\n          \"lhs\": \"forward_velocity\",\n          \"rhs\": 1.0\n        },\n        {\n          \"type\": \"posture_penalty\",\n          \"weight\": 2.0,\n          \"lhs\": \"joint_speed\"\n        }\n      ]\n    }\n  ]\n}",
+      "error": "ValueError: rhs must be a known field; constants use threshold"
+     },
+     {
+      "seed": 12000,
+      "prompt": [
+       {
+        "role": "system",
+        "content": "Design a continuous-control NEXUS skillset. Return JSON only: {\"skills\": [\n {\"name\":\"...\", \"activation_rule\":\"...\", \"reward_terms\":[{\"type\":\"...\",\"weight\":1.0,\"lhs\":\"...\"}]}]}.\nEvery scalar field is the same semantic feature supplied to the hand-designed controller.\nFields and units: forward_velocity in m/s, torso_pitch in radians, joint_speed mean absolute joint\nangular speed in rad/s, and height in metres only when listed. No hidden fields or environmental\nreward are available. Use EXACTLY the requested skill count and no extra term keys.\nOne skill must have activation_rule \"True\". Others may overlap. NeSy chooses max learned meta-Q\namong allowed skills every step. Define simple complementary goals, not named copies.\nRules: numeric comparisons, and/or/not, + - *, abs(x), min(x,y), max(x,y). No division.\nRewards sum terms. All weights >0 and <=10; penalty types negate their weight internally.\nAllowed vocabulary and EXACT executable semantics:\nnegative_distance: -weight*abs(lhs-rhs), or -weight*abs(lhs-threshold), or -weight*abs(lhs).\npositive_velocity: weight*lhs.\ntarget_height: weight*clip(lhs/threshold,0,1), requires positive threshold (not rhs).\nbinary_bonus: weight*(lhs>threshold), requires lhs and threshold.\naction_penalty: -weight*sum(action**2), has neither lhs nor rhs nor threshold.\nposture_penalty: -weight*abs(lhs).\nrhs must name another available field, never a number. Constants use threshold when supported.\nA terminal penalty of 1 is subtracted from every skill. Produce between one and six terms per skill.\n"
+       },
+       {
+        "role": "user",
+        "content": "Task: walker. Walk forward around 1 m/s while remaining upright near 1.2 m torso height. Available fields: ('height', 'torso_pitch', 'forward_velocity', 'joint_speed'). Skill count: 4."
+       },
+       {
+        "role": "assistant",
+        "content": "{\n  \"skills\": [\n    {\n      \"name\": \"forward_cruise\",\n      \"activation_rule\": \"True\",\n      \"reward_terms\": [\n        {\n          \"type\": \"negative_distance\",\n          \"weight\": 5.0,\n          \"lhs\": \"forward_velocity\",\n          \"rhs\": 1.0\n        },\n        {\n          \"type\": \"posture_penalty\",\n          \"weight\": 2.0,\n          \"lhs\": \"torso_pitch\"\n        },\n        {\n          \"type\": \"posture_penalty\",\n          \"weight\": 1.0,\n          \"lhs\": \"joint_speed\"\n        }\n      ]\n    },\n    {\n      \"name\": \"upright_stabilize\",\n      \"activation_rule\": \"abs(torso_pitch) > 0.2\",\n      \"reward_terms\": [\n        {\n          \"type\": \"posture_penalty\",\n          \"weight\": 8.0,\n          \"lhs\": \"torso_pitch\"\n        },\n        {\n          \"type\": \"negative_distance\",\n          \"weight\": 2.0,\n          \"lhs\": \"forward_velocity\",\n          \"rhs\": 0.5\n        }\n      ]\n    },\n    {\n      \"name\": \"height_maintain\",\n      \"activation_rule\": \"height < 1.1 or height > 1.3\",\n      \"reward_terms\": [\n        {\n          \"type\": \"target_height\",\n          \"weight\": 5.0,\n          \"lhs\": \"height\",\n          \"threshold\": 1.2\n        },\n        {\n          \"type\": \"posture_penalty\",\n          \"weight\": 1.5,\n          \"lhs\": \"torso_pitch\"\n        }\n      ]\n    },\n    {\n      \"name\": \"slow_down\",\n      \"activation_rule\": \"forward_velocity > 1.5\",\n      \"reward_terms\": [\n        {\n          \"type\": \"negative_distance\",\n          \"weight\": 6.0,\n          \"lhs\": \"forward_velocity\",\n          \"rhs\": 1.0\n        },\n        {\n          \"type\": \"posture_penalty\",\n          \"weight\": 2.0,\n          \"lhs\": \"joint_speed\"\n        }\n      ]\n    }\n  ]\n}"
+       },
+       {
+        "role": "user",
+        "content": "Syntax/type validation failed: ValueError: rhs must be a known field; constants use threshold. Repair only schema/type errors; keep your proposed goals."
+       }
+      ],
+      "raw": "{\n  \"skills\": [\n    {\n      \"name\": \"forward_cruise\",\n      \"activation_rule\": \"True\",\n      \"reward_terms\": [\n        {\n          \"type\": \"negative_distance\",\n          \"weight\": 5.0,\n          \"lhs\": \"forward_velocity\",\n          \"threshold\": 1.0\n        },\n        {\n          \"type\": \"posture_penalty\",\n          \"weight\": 2.0,\n          \"lhs\": \"torso_pitch\"\n        },\n        {\n          \"type\": \"posture_penalty\",\n          \"weight\": 1.0,\n          \"lhs\": \"joint_speed\"\n        }\n      ]\n    },\n    {\n      \"name\": \"upright_stabilize\",\n      \"activation_rule\": \"abs(torso_pitch) > 0.2\",\n      \"reward_terms\": [\n        {\n          \"type\": \"posture_penalty\",\n          \"weight\": 8.0,\n          \"lhs\": \"torso_pitch\"\n        },\n        {\n          \"type\": \"negative_distance\",\n          \"weight\": 2.0,\n          \"lhs\": \"forward_velocity\",\n          \"threshold\": 0.5\n        }\n      ]\n    },\n    {\n      \"name\": \"height_maintain\",\n      \"activation_rule\": \"height < 1.1 or height > 1.3\",\n      \"reward_terms\": [\n        {\n          \"type\": \"target_height\",\n          \"weight\": 5.0,\n          \"lhs\": \"height\",\n          \"threshold\": 1.2\n        },\n        {\n          \"type\": \"posture_penalty\",\n          \"weight\": 1.5,\n          \"lhs\": \"torso_pitch\"\n        }\n      ]\n    },\n    {\n      \"name\": \"slow_down\",\n      \"activation_rule\": \"forward_velocity > 1.5\",\n      \"reward_terms\": [\n        {\n          \"type\": \"negative_distance\",\n          \"weight\": 6.0,\n          \"lhs\": \"forward_velocity\",\n          \"threshold\": 1.0\n        },\n        {\n          \"type\": \"posture_penalty\",\n          \"weight\": 2.0,\n          \"lhs\": \"joint_speed\"\n        }\n      ]\n    }\n  ]\n}",
+      "error": null
+     }
+    ],
+    "valid": true,
+    "model": {
+     "model": "Qwen/Qwen3.8-27B",
+     "revision": "1d4bf0f2ff6012fd82039f2fa52739d0dd7c60c0",
+     "local_path": "/home/smirn/nexus_campaign_models_v2/hub/models--Qwen--Qwen3.8-27B/snapshots/1d4bf0f2ff6012fd82039f2fa52739d0dd7c60c0",
+     "temperature": 0.7,
+     "top_p": 0.9,
+     "max_new_tokens": 4096,
+     "max_syntax_repairs": 2,
+     "quantization": "bnb-nf4-double",
+     "thinking": "disabled"
+    },
+    "n_skills": 4,
+    "skill_names": [
+     "forward_cruise",
+     "upright_stabilize",
+     "height_maintain",
+     "slow_down"
+    ]
+   },
+   {
+    "path": "walker/g0/refined.generation.json",
+    "attempts": [
+     {
+      "seed": 4000,
+      "prompt": [
+       {
+        "role": "system",
+        "content": "Design a continuous-control NEXUS skillset. Return JSON only: {\"skills\": [\n {\"name\":\"...\", \"activation_rule\":\"...\", \"reward_terms\":[{\"type\":\"...\",\"weight\":1.0,\"lhs\":\"...\"}]}]}.\nEvery scalar field is the same semantic feature supplied to the hand-designed controller.\nFields and units: forward_velocity in m/s, torso_pitch in radians, joint_speed mean absolute joint\nangular speed in rad/s, and height in metres only when listed. No hidden fields or environmental\nreward are available. Use EXACTLY the requested skill count and no extra term keys.\nOne skill must have activation_rule \"True\". Others may overlap. NeSy chooses max learned meta-Q\namong allowed skills every step. Define simple complementary goals, not named copies.\nRules: numeric comparisons, and/or/not, + - *, abs(x), min(x,y), max(x,y). No division.\nRewards sum terms. All weights >0 and <=10; penalty types negate their weight internally.\nAllowed vocabulary and EXACT executable semantics:\nnegative_distance: -weight*abs(lhs-rhs), or -weight*abs(lhs-threshold), or -weight*abs(lhs).\npositive_velocity: weight*lhs.\ntarget_height: weight*clip(lhs/threshold,0,1), requires positive threshold (not rhs).\nbinary_bonus: weight*(lhs>threshold), requires lhs and threshold.\naction_penalty: -weight*sum(action**2), has neither lhs nor rhs nor threshold.\nposture_penalty: -weight*abs(lhs).\nrhs must name another available field, never a number. Constants use threshold when supported.\nA terminal penalty of 1 is subtracted from every skill. Produce between one and six terms per skill.\n"
+       },
+       {
+        "role": "user",
+        "content": "Task: walker. Walk forward around 1 m/s while remaining upright near 1.2 m torso height. Available fields: ('height', 'torso_pitch', 'forward_velocity', 'joint_speed'). Skill count: 4."
+       },
+       {
+        "role": "assistant",
+        "content": "{\n  \"skills\": [\n    {\n      \"name\": \"forward_cruise\",\n      \"activation_rule\": \"True\",\n      \"reward_terms\": [\n        {\n          \"type\": \"negative_distance\",\n          \"weight\": 5.0,\n          \"lhs\": \"forward_velocity\",\n          \"threshold\": 1.0\n        },\n        {\n          \"type\": \"posture_penalty\",\n          \"weight\": 2.0,\n          \"lhs\": \"torso_pitch\"\n        },\n        {\n          \"type\": \"posture_penalty\",\n          \"weight\": 1.0,\n          \"lhs\": \"joint_speed\"\n        }\n      ]\n    },\n    {\n      \"name\": \"upright_stabilize\",\n      \"activation_rule\": \"abs(torso_pitch) > 0.2\",\n      \"reward_terms\": [\n        {\n          \"type\": \"posture_penalty\",\n          \"weight\": 8.0,\n          \"lhs\": \"torso_pitch\"\n        },\n        {\n          \"type\": \"negative_distance\",\n          \"weight\": 2.0,\n          \"lhs\": \"forward_velocity\",\n          \"threshold\": 0.5\n        }\n      ]\n    },\n    {\n      \"name\": \"height_maintain\",\n      \"activation_rule\": \"height < 1.1 or height > 1.3\",\n      \"reward_terms\": [\n        {\n          \"type\": \"target_height\",\n          \"weight\": 5.0,\n          \"lhs\": \"height\",\n          \"threshold\": 1.2\n        },\n        {\n          \"type\": \"posture_penalty\",\n          \"weight\": 1.5,\n          \"lhs\": \"torso_pitch\"\n        }\n      ]\n    },\n    {\n      \"name\": \"slow_down\",\n      \"activation_rule\": \"forward_velocity > 1.5\",\n      \"reward_terms\": [\n        {\n          \"type\": \"negative_distance\",\n          \"weight\": 6.0,\n          \"lhs\": \"forward_velocity\",\n          \"threshold\": 1.0\n        },\n        {\n          \"type\": \"posture_penalty\",\n          \"weight\": 2.0,\n          \"lhs\": \"joint_speed\"\n        }\n      ]\n    }\n  ]\n}"
+       },
+       {
+        "role": "user",
+        "content": "Revise this SAME proposal once using these pilot validation metrics. Do not add skills. All fields and reward constraints stay the same.\n{\n  \"episode_return_mean\": 480.1777038574219,\n  \"episode_return_std\": 408.9744873046875,\n  \"episode_length_mean\": 1000.0,\n  \"action_square_mean\": 0.5449355244636536,\n  \"common_skill_step/0_stand_recover\": 1.2715919017791748,\n  \"common_skill_step/1_walk_forward\": 1.2496874332427979,\n  \"common_skill_step/2_stabilize_gait\": 0.6496244668960571,\n  \"common_skill_step/3_energy_efficient\": 0.22257447242736816,\n  \"primary_goal_metric\": 0.47984516620635986,\n  \"primary_success_rate\": 0.53125,\n  \"rules/eligible_count\": 1.9279532432556152,\n  \"rules/overlap_fraction\": 0.5899531841278076,\n  \"skill_usage/0_forward_cruise\": 0.8062188029289246,\n  \"skill_usage/1_upright_stabilize\": 0.01034375000745058,\n  \"skill_usage/2_height_maintain\": 0.183343768119812,\n  \"skill_usage/3_slow_down\": 9.375000081490725e-05,\n  \"walker/forward_velocity\": 0.47984516620635986,\n  \"walker/forward_velocity_mean\": 0.47984516620635986,\n  \"walker/height\": 0.7556341886520386,\n  \"walker/joint_speed\": 1.3578064441680908,\n  \"walker/net_walk_success_rate\": 0.53125,\n  \"walker/pitch\": -0.20105448365211487,\n  \"walker/stand_success_rate\": 0.5167343616485596,\n  \"walker/walk_success_rate\": 0.5044063329696655,\n  \"common_skill_return/0_stand_recover\": 1271.5919189453125,\n  \"common_skill_return/1_walk_forward\": 1249.6875,\n  \"common_skill_return/2_stabilize_gait\": 649.6244506835938,\n  \"common_skill_return/3_energy_efficient\": 222.574462890625\n}"
+       }
+      ],
+      "raw": "{\n  \"skills\": [\n    {\n      \"name\": \"forward_cruise\",\n      \"activation_rule\": \"True\",\n      \"reward_terms\": [\n        {\n          \"type\": \"negative_distance\",\n          \"weight\": 5.0,\n          \"lhs\": \"forward_velocity\",\n          \"threshold\": 1.0\n        },\n        {\n          \"type\": \"target_height\",\n          \"weight\": 5.0,\n          \"lhs\": \"height\",\n          \"threshold\": 1.2\n        },\n        {\n          \"type\": \"posture_penalty\",\n          \"weight\": 2.0,\n          \"lhs\": \"torso_pitch\"\n        },\n        {\n          \"type\": \"posture_penalty\",\n          \"weight\": 1.0,\n          \"lhs\": \"joint_speed\"\n        }\n      ]\n    },\n    {\n      \"name\": \"upright_stabilize\",\n      \"activation_rule\": \"abs(torso_pitch) > 0.1\",\n      \"reward_terms\": [\n        {\n          \"type\": \"posture_penalty\",\n          \"weight\": 8.0,\n          \"lhs\": \"torso_pitch\"\n        },\n        {\n          \"type\": \"negative_distance\",\n          \"weight\": 2.0,\n          \"lhs\": \"forward_velocity\",\n          \"threshold\": 0.5\n        }\n      ]\n    },\n    {\n      \"name\": \"height_maintain\",\n      \"activation_rule\": \"height < 1.1 or height > 1.3\",\n      \"reward_terms\": [\n        {\n          \"type\": \"target_height\",\n          \"weight\": 5.0,\n          \"lhs\": \"height\",\n          \"threshold\": 1.2\n        },\n        {\n          \"type\": \"posture_penalty\",\n          \"weight\": 1.5,\n          \"lhs\": \"torso_pitch\"\n        }\n      ]\n    },\n    {\n      \"name\": \"slow_down\",\n      \"activation_rule\": \"forward_velocity > 1.5\",\n      \"reward_terms\": [\n        {\n          \"type\": \"negative_distance\",\n          \"weight\": 6.0,\n          \"lhs\": \"forward_velocity\",\n          \"threshold\": 1.0\n        },\n        {\n          \"type\": \"posture_penalty\",\n          \"weight\": 2.0,\n          \"lhs\": \"joint_speed\"\n        }\n      ]\n    }\n  ]\n}",
+      "error": null
+     }
+    ],
+    "valid": true,
+    "model": {
+     "model": "Qwen/Qwen3.8-27B",
+     "revision": "1d4bf0f2ff6012fd82039f2fa52739d0dd7c60c0",
+     "local_path": "/home/smirn/nexus_campaign_models_v2/hub/models--Qwen--Qwen3.8-27B/snapshots/1d4bf0f2ff6012fd82039f2fa52739d0dd7c60c0",
+     "temperature": 0.7,
+     "top_p": 0.9,
+     "max_new_tokens": 4096,
+     "max_syntax_repairs": 2,
+     "quantization": "bnb-nf4-double",
+     "thinking": "disabled"
+    },
+    "n_skills": 4,
+    "skill_names": [
+     "forward_cruise",
+     "upright_stabilize",
+     "height_maintain",
+     "slow_down"
+    ]
+   },
+   {
+    "path": "walker/g0/resample.generation.json",
+    "attempts": [
+     {
+      "seed": 3000,
+      "prompt": [
+       {
+        "role": "system",
+        "content": "Design a continuous-control NEXUS skillset. Return JSON only: {\"skills\": [\n {\"name\":\"...\", \"activation_rule\":\"...\", \"reward_terms\":[{\"type\":\"...\",\"weight\":1.0,\"lhs\":\"...\"}]}]}.\nEvery scalar field is the same semantic feature supplied to the hand-designed controller.\nFields and units: forward_velocity in m/s, torso_pitch in radians, joint_speed mean absolute joint\nangular speed in rad/s, and height in metres only when listed. No hidden fields or environmental\nreward are available. Use EXACTLY the requested skill count and no extra term keys.\nOne skill must have activation_rule \"True\". Others may overlap. NeSy chooses max learned meta-Q\namong allowed skills every step. Define simple complementary goals, not named copies.\nRules: numeric comparisons, and/or/not, + - *, abs(x), min(x,y), max(x,y). No division.\nRewards sum terms. All weights >0 and <=10; penalty types negate their weight internally.\nAllowed vocabulary and EXACT executable semantics:\nnegative_distance: -weight*abs(lhs-rhs), or -weight*abs(lhs-threshold), or -weight*abs(lhs).\npositive_velocity: weight*lhs.\ntarget_height: weight*clip(lhs/threshold,0,1), requires positive threshold (not rhs).\nbinary_bonus: weight*(lhs>threshold), requires lhs and threshold.\naction_penalty: -weight*sum(action**2), has neither lhs nor rhs nor threshold.\nposture_penalty: -weight*abs(lhs).\nrhs must name another available field, never a number. Constants use threshold when supported.\nA terminal penalty of 1 is subtracted from every skill. Produce between one and six terms per skill.\n"
+       },
+       {
+        "role": "user",
+        "content": "Task: walker. Walk forward around 1 m/s while remaining upright near 1.2 m torso height. Available fields: ('height', 'torso_pitch', 'forward_velocity', 'joint_speed'). Skill count: 4."
+       }
+      ],
+      "raw": "{\n  \"skills\": [\n    {\n      \"name\": \"base_forward\",\n      \"activation_rule\": \"True\",\n      \"reward_terms\": [\n        {\n          \"type\": \"negative_distance\",\n          \"weight\": 2.0,\n          \"lhs\": \"forward_velocity\"\n        },\n        {\n          \"type\": \"posture_penalty\",\n          \"weight\": 1.0,\n          \"lhs\": \"torso_pitch\"\n        }\n      ]\n    },\n    {\n      \"name\": \"upright_stability\",\n      \"activation_rule\": \"abs(torso_pitch) > 0.1\",\n      \"reward_terms\": [\n        {\n          \"type\": \"posture_penalty\",\n          \"weight\": 5.0,\n          \"lhs\": \"torso_pitch\"\n        },\n        {\n          \"type\": \"posture_penalty\",\n          \"weight\": 2.0,\n          \"lhs\": \"joint_speed\"\n        }\n      ]\n    },\n    {\n      \"name\": \"height_regulation\",\n      \"activation_rule\": \"abs(height - 1.2) > 0.1\",\n      \"reward_terms\": [\n        {\n          \"type\": \"negative_distance\",\n          \"weight\": 3.0,\n          \"lhs\": \"height\"\n        },\n        {\n          \"type\": \"posture_penalty\",\n          \"weight\": 1.0,\n          \"lhs\": \"torso_pitch\"\n        }\n      ]\n    },\n    {\n      \"name\": \"smooth_motion\",\n      \"activation_rule\": \"joint_speed > 5.0\",\n      \"reward_terms\": [\n        {\n          \"type\": \"posture_penalty\",\n          \"weight\": 4.0,\n          \"lhs\": \"joint_speed\"\n        },\n        {\n          \"type\": \"negative_distance\",\n          \"weight\": 1.0,\n          \"lhs\": \"forward_velocity\"\n        }\n      ]\n    }\n  ]\n}",
+      "error": null
+     }
+    ],
+    "valid": true,
+    "model": {
+     "model": "Qwen/Qwen3.8-27B",
+     "revision": "1d4bf0f2ff6012fd82039f2fa52739d0dd7c60c0",
+     "local_path": "/home/smirn/nexus_campaign_models_v2/hub/models--Qwen--Qwen3.8-27B/snapshots/1d4bf0f2ff6012fd82039f2fa52739d0dd7c60c0",
+     "temperature": 0.7,
+     "top_p": 0.9,
+     "max_new_tokens": 4096,
+     "max_syntax_repairs": 2,
+     "quantization": "bnb-nf4-double",
+     "thinking": "disabled"
+    },
+    "n_skills": 4,
+    "skill_names": [
+     "base_forward",
+     "upright_stability",
+     "height_regulation",
+     "smooth_motion"
+    ]
+   }
+  ],
+  "model_lock": {
+   "model": "Qwen/Qwen3.8-27B",
+   "revision": "1d4bf0f2ff6012fd82039f2fa52739d0dd7c60c0",
+   "local_path": "/home/smirn/nexus_campaign_models_v2/hub/models--Qwen--Qwen3.8-27B/snapshots/1d4bf0f2ff6012fd82039f2fa52739d0dd7c60c0",
+   "temperature": 0.7,
+   "top_p": 0.9,
+   "max_new_tokens": 4096,
+   "max_syntax_repairs": 2,
+   "quantization": "bnb-nf4-double",
+   "thinking": "disabled"
+  },
+  "completed_runs": [
+   "llm_final__cheetah__initial__g0__s0",
+   "llm_final__cheetah__initial__g0__s1",
+   "llm_final__cheetah__initial__g1__s0",
+   "llm_final__cheetah__initial__g1__s1",
+   "llm_final__cheetah__initial__g2__s0",
+   "llm_final__cheetah__initial__g2__s1",
+   "llm_final__cheetah__refined__g0__s0",
+   "llm_final__cheetah__refined__g0__s1",
+   "llm_final__cheetah__refined__g1__s0",
+   "llm_final__cheetah__refined__g1__s1",
+   "llm_final__cheetah__refined__g2__s0",
+   "llm_final__cheetah__refined__g2__s1",
+   "llm_final__cheetah__resample__g0__s0",
+   "llm_final__cheetah__resample__g0__s1",
+   "llm_final__cheetah__resample__g1__s0",
+   "llm_final__cheetah__resample__g1__s1",
+   "llm_final__cheetah__resample__g2__s0",
+   "llm_final__cheetah__resample__g2__s1",
+   "llm_final__walker__initial__g0__s0",
+   "llm_final__walker__initial__g0__s1",
+   "llm_final__walker__initial__g1__s0",
+   "llm_final__walker__initial__g1__s1",
+   "llm_final__walker__initial__g2__s0",
+   "llm_final__walker__initial__g2__s1",
+   "llm_final__walker__refined__g0__s0",
+   "llm_final__walker__refined__g0__s1",
+   "llm_final__walker__refined__g1__s0",
+   "llm_final__walker__refined__g1__s1",
+   "llm_final__walker__refined__g2__s0",
+   "llm_final__walker__refined__g2__s1",
+   "llm_final__walker__resample__g0__s0",
+   "llm_final__walker__resample__g0__s1",
+   "llm_final__walker__resample__g1__s0",
+   "llm_final__walker__resample__g1__s1",
+   "llm_final__walker__resample__g2__s0",
+   "llm_final__walker__resample__g2__s1",
+   "llm_pilot__cheetah__initial__g0__s900",
+   "llm_pilot__cheetah__initial__g1__s901",
+   "llm_pilot__cheetah__initial__g2__s902",
+   "llm_pilot__walker__initial__g0__s900",
+   "llm_pilot__walker__initial__g1__s901",
+   "llm_pilot__walker__initial__g2__s902"
+  ]
+ }
+}

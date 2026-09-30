@@ -1,0 +1,2 @@
+arm,env,episode_length_mean,episode_return_mean,episode_return_std,meta,mode,num_timesteps,perturbation,ppo_shipped_timesteps,primary_goal_metric,primary_success_rate,seed,train_env
+ppo,PandaPickCube,150.0,1411.7840576171875,191.73065185546875,ppo,in_distribution,26214400,0.0,20000000,9.411892890930176,0.9999999403953552,2,PandaPickCube

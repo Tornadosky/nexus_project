@@ -1,0 +1,2 @@
+env,episode_length_mean,episode_return_mean,episode_return_std,go1/no_fall_rate,go1/tracking_success_rate,go1/velocity_tracking_error_mean,go1/yaw_tracking_error_mean,meta,mode,perturbation,primary_goal_metric,primary_success_rate,skill_usage/0_flat_actor,train_env
+Go1JoystickRoughTerrain,758.0,3.7218551635742188,3.4724652767181396,0.17032387852668762,0.0007039473857730627,1.7827110290527344,0.9808964729309082,flat,action_noise,0.0,-2.2731595039367676,0.0007039473857730627,1.0,Go1JoystickRoughTerrain

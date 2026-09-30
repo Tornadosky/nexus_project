@@ -1,0 +1,6 @@
+arm,env,episode_length_mean,episode_return_mean,episode_return_std,meta,mode,num_timesteps,perturbation,primary_goal_metric,primary_success_rate,seed,train_env
+ppo,WalkerWalk,1000.0,973.8359375,12.197473526000977,ppo,action_noise,52428800,0.0,0.973835825920105,1.0,0,WalkerWalk
+ppo,WalkerWalk,1000.0,974.7811279296875,10.904424667358398,ppo,action_noise,52428800,0.05,0.9747811555862427,1.0,0,WalkerWalk
+ppo,WalkerWalk,1000.0,974.0288696289062,11.667546272277832,ppo,action_noise,52428800,0.1,0.9740288257598877,1.0,0,WalkerWalk
+ppo,WalkerWalk,1000.0,972.922119140625,13.109627723693848,ppo,action_noise,52428800,0.2,0.9729222059249878,1.0,0,WalkerWalk
+ppo,WalkerWalk,1000.0,972.462890625,12.318425178527832,ppo,action_noise,52428800,0.3,0.9724628925323486,1.0,0,WalkerWalk

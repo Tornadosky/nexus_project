@@ -1,0 +1,6 @@
+arm,env,episode_length_mean,episode_return_mean,episode_return_std,meta,mode,num_timesteps,perturbation,primary_goal_metric,primary_success_rate,seed,train_env
+ppo,CartpoleBalance,1000.0,999.6901245117188,0.296484112739563,ppo,action_noise,9830400,0.0,0.9996901750564575,1.0,1,CartpoleBalance
+ppo,CartpoleBalance,1000.0,999.0872802734375,0.2959544062614441,ppo,action_noise,9830400,0.05,0.9990873336791992,1.0,1,CartpoleBalance
+ppo,CartpoleBalance,1000.0,997.2833251953125,0.3198387026786804,ppo,action_noise,9830400,0.1,0.9972833395004272,1.0,1,CartpoleBalance
+ppo,CartpoleBalance,1000.0,990.0985717773438,0.5597566366195679,ppo,action_noise,9830400,0.2,0.9900985956192017,1.0,1,CartpoleBalance
+ppo,CartpoleBalance,1000.0,978.298828125,1.0641605854034424,ppo,action_noise,9830400,0.3,0.9782989025115967,1.0,1,CartpoleBalance

@@ -1,0 +1,2 @@
+arm,env,episode_length_mean,episode_return_mean,episode_return_std,meta,mode,num_timesteps,perturbation,ppo_shipped_timesteps,primary_goal_metric,primary_success_rate,seed,train_env
+ppo,Go1JoystickRoughTerrain,990.40625,20.0079402923584,4.130710124969482,ppo,in_distribution,20000000,0.0,200000000,0.020166637375950813,0.9991023540496826,1,Go1JoystickRoughTerrain

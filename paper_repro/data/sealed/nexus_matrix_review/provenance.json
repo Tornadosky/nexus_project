@@ -1,0 +1,1321 @@
+{
+ "packed_utc": "2026-09-08T18:28:50+00:00",
+ "host": "melody-pc",
+ "campaign_root": "/home/smirn/nexus_final_campaign_2026-09-05",
+ "kit_root": "/home/smirn/nexus_project_final/nexus_continuous_control/experiments/final_campaign_2026-09-05_handoff",
+ "rgb_root": "/home/smirn/nexus_campaign_verified_v2/rgb_release",
+ "ready": {
+  "production_ready": true,
+  "scope": "Inspected NVIDIA machine; Viper primary training is disabled",
+  "source_fingerprint": "42cd15023387070bb369cdac82ca4790ee5cb84be584f9f3399ffd7ded3fe387",
+  "primary_matrix_training_started": false,
+  "maximum_primary_training_runs": 142,
+  "smoke_training_families": 22,
+  "production_shape_capacity_tests": 6,
+  "saved_core_evaluation_cases": 50,
+  "saved_rgb_policy_reload_tests": 6,
+  "real_simulation_media_tests": 2,
+  "proof_sha256": {
+   "verification/wsl_core.json": "019049eeca49c78df550cc7de70172101c45a86ea34b65edbb0be2d4d85c94e2",
+   "verification/wsl_rgb.json": "09716bc02b5479f3e2a8a48a0454671876e52f9bf5b19124a4949a40588cdff3",
+   "verification/rgb_saved_restore.json": "5a3e3e55dace591f95d080aa799426e7cc9548f7da257fad8bfc404406f7cb6c",
+   "verification/media_smoke.json": "0333d79eb1c981587a9ce129001463f75719b49501164ba11248b38076984bb9"
+  },
+  "created_utc": "2026-09-07T08:03:08.303489+00:00"
+ },
+ "validation": {
+  "timestamp_utc": "2026-09-05T17:00:09.943218+00:00",
+  "context": "assistant sandbox; not user WSL/Viper runtime",
+  "gpu_training_run": false,
+  "gpu_rendering_run": false,
+  "remote_deployment_complete": false,
+  "unit_tests": "5 passed",
+  "shell_syntax": "all shell and sbatch files pass bash -n",
+  "six_recorded_live_hashes_match_uploaded_core_reference": true,
+  "matrix_regeneration_against_uploaded_reference": "142 row objects and all 142 parsed YAMLs identical",
+  "post_freeze_installer_selftest": {
+   "pass": true,
+   "test_source": "uploaded reference, not a fresh remote copy",
+   "source_files": 235,
+   "original_guard_archived": true
+  },
+  "portable_install_guard": "verified to block agent before source access/runtime execution"
+ },
+ "verification": {
+  "media_smoke.json": {
+   "tests": [
+    {
+     "task": "hopper",
+     "evidence_path": "/home/smirn/nexus_final_campaign_2026-09-05/media_smoke/core__hopper__nesy__s0",
+     "receipt": {
+      "identity": {
+       "checkpoint_sha256": "904a736b4d7a965321db2ae8e82501216d138edeb405aaea07c070a1c3820fdb",
+       "seed": 41000,
+       "requested_steps": 4,
+       "smoke": true
+      },
+      "frames_recorded": 4,
+      "selected_frame_steps": [
+       0
+      ],
+      "image_selection": "first frame, then first ambiguous decisions at least 60 steps apart, at most four",
+      "rendered_state_timing": "after the recorded selected action",
+      "training_executed": false,
+      "files": {
+       "rollout.mp4": "0252dd0cd11e13b5d9477eea2065bd4023be816fec53ebdb6ecfb295b3420250",
+       "frame_0000.png": "c8de67fdb8c7ab532ea16c78c704d172f90f848e05b15c0d2ab5e0268978d056",
+       "decisions.json": "b02930e954370c78f3e1653f00a4885d85a267b65f1cba989cc09bc203cdb3cf",
+       "rollout.json": "c3d36f62ed5d9d27056b9deb60ca7bbb763c0c48a36608f074e960b83e79a7fb",
+       "rollout_skills.png": "036d70f6647a633e9bac820b41af644433e8a58b4c15e479b1df2b4d50f6297f"
+      }
+     }
+    },
+    {
+     "task": "go1",
+     "evidence_path": "/home/smirn/nexus_final_campaign_2026-09-05/media_smoke/core__go1__nesy__s0",
+     "receipt": {
+      "identity": {
+       "checkpoint_sha256": "2bfea2ff15512e10a1373952641d6d47fa4bca72dc9ada1c55c6d037e8279833",
+       "seed": 41000,
+       "requested_steps": 4,
+       "smoke": true
+      },
+      "frames_recorded": 4,
+      "selected_frame_steps": [
+       0
+      ],
+      "image_selection": "first frame, then first ambiguous decisions at least 60 steps apart, at most four",
+      "rendered_state_timing": "after the recorded selected action",
+      "training_executed": false,
+      "files": {
+       "rollout.mp4": "6b2f3c1f56a7cb2c798acdd916d68a210247de882895ad2be2cff56972895cd2",
+       "frame_0000.png": "a8193c127a349526614a679951e8f5ab4da63e848f09dea6df247568d4dd5e19",
+       "decisions.json": "9670a3b40f905995944e9bc80b69b7e058785681e89036a37855d12f7011c9cf",
+       "rollout.json": "e0cfd894fee546d2b95fccfbe95bff59f26516804771fce56ea7dad8e394b566",
+       "rollout_skills.png": "18bf8e3aa5f488f962728ba646a5ee2811a8821f65c4589bc2a0de465e45ab3f"
+      }
+     }
+    }
+   ],
+   "training_executed": false
+  },
+  "rgb_saved_restore.json": {
+   "tests": [
+    {
+     "run_id": "rgb__cartpole__state__s0",
+     "checkpoint_sha256": "0c73abd336e6a4fed891870c939bae5520c566e8d4ef81cf1532eba5ad35a9a5",
+     "evaluation_sha256": "709c7d2a668df1e22d44f1f5b94008b9397f038ad48ffde28c70c0a02ed0b882",
+     "saved_policy_restored": true,
+     "training_executed": false
+    },
+    {
+     "run_id": "rgb__cartpole__pixels__s0",
+     "checkpoint_sha256": "760213fe3ea8ed1966f4428bcd311ab9766401165c12a44af56cc14a1fc560e7",
+     "evaluation_sha256": "744ef3b3916dc91ccfec2e5deeba369fc3394b2c26dbfc7177763fc91279165e",
+     "saved_policy_restored": true,
+     "training_executed": false
+    },
+    {
+     "run_id": "rgb__cartpole__constant__s0",
+     "checkpoint_sha256": "7764fd06ef023f326d4972bb2180995e099020cd4ab198cf2c4708c1dba0bde5",
+     "evaluation_sha256": "61ac28e4309906a8800637adb8936c832b8fd207edc9bbf8316df585c70c4863",
+     "saved_policy_restored": true,
+     "training_executed": false
+    },
+    {
+     "run_id": "rgb__walker__state__s0",
+     "checkpoint_sha256": "6195f27c19e7f2b056468536bf64fa5fd2b84139675e6ef9bf97b847742bb503",
+     "evaluation_sha256": "e7cbb202d0c8bf60f104063baa4def1e953f3344379ffe34f0202b7cab4b15b5",
+     "saved_policy_restored": true,
+     "training_executed": false
+    },
+    {
+     "run_id": "rgb__walker__pixels__s0",
+     "checkpoint_sha256": "f68a5a2da719e8a2e7bd29c7df9a16e1e7bb5c25b1bba7fe9263744056c0f115",
+     "evaluation_sha256": "ec3401113ffec31e1af40d5bce8c8d7373298ee0130ffa935983490ba912842a",
+     "saved_policy_restored": true,
+     "training_executed": false
+    },
+    {
+     "run_id": "rgb__walker__constant__s0",
+     "checkpoint_sha256": "1862945ef8fd4bdfabb50462bde9810314049ff9446339adbf8a20b922ea8d37",
+     "evaluation_sha256": "1e12cbb918b8e8148b81e75c4c7b45bfc0d97784bf9174924b38ba6a1e737dc1",
+     "saved_policy_restored": true,
+     "training_executed": false
+    }
+   ],
+   "source_fingerprint": "42cd15023387070bb369cdac82ca4790ee5cb84be584f9f3399ffd7ded3fe387",
+   "runtime": {
+    "executable": "/home/smirn/nexus_campaign_rgb_venv/bin/python",
+    "packages": {
+     "brax": "0.14.2",
+     "flax": "0.12.7",
+     "jax": "0.10.1",
+     "jaxlib": "0.10.1",
+     "mujoco": "3.9.0",
+     "mujoco-mjx": "3.9.0",
+     "numpy": "2.4.6",
+     "optax": "0.2.8",
+     "playground": "0.2.0",
+     "warp-lang": "1.12.0"
+    },
+    "python": "3.12.13 (main, May 10 2026, 19:30:01) [Clang 22.1.3 ]",
+    "xla_flags": ""
+   },
+   "training_executed": false
+  },
+  "wsl_core.json": {
+   "profile": "wsl_core",
+   "source_fingerprint": "42cd15023387070bb369cdac82ca4790ee5cb84be584f9f3399ffd7ded3fe387",
+   "runtime": {
+    "executable": "/home/smirn/nexus_campaign_core_venv/bin/python",
+    "packages": {
+     "brax": "0.14.2",
+     "flax": "0.12.7",
+     "jax": "0.10.1",
+     "jaxlib": "0.10.1",
+     "mujoco": "3.9.0",
+     "mujoco-mjx": "3.9.0",
+     "numpy": "2.4.6",
+     "optax": "0.2.8",
+     "playground": "0.2.0",
+     "warp-lang": "1.13.0"
+    },
+    "python": "3.12.13 (main, May 10 2026, 19:30:01) [Clang 22.1.3 ]",
+    "xla_flags": "--xla_gpu_enable_command_buffer="
+   },
+   "smoke_training": [
+    {
+     "run_id": "core__hopper__flat__s0",
+     "complete": {
+      "actual_steps": 512,
+      "smoke": true,
+      "snapshots": 3,
+      "final_sha256": "a0e73668dea8fe899ed53c5dd3a12e587440a850ad2b63d16cd742818951f0fe"
+     },
+     "gate": {
+      "source_fingerprint": "42cd15023387070bb369cdac82ca4790ee5cb84be584f9f3399ffd7ded3fe387",
+      "runtime": "{\"executable\": \"/home/smirn/nexus_campaign_core_venv/bin/python\", \"packages\": {\"brax\": \"0.14.2\", \"flax\": \"0.12.7\", \"jax\": \"0.10.1\", \"jaxlib\": \"0.10.1\", \"mujoco\": \"3.9.0\", \"mujoco-mjx\": \"3.9.0\", \"numpy\": \"2.4.6\", \"optax\": \"0.2.8\", \"playground\": \"0.2.0\", \"warp-lang\": \"1.13.0\"}, \"python\": \"3.12.13 (main, May 10 2026, 19:30:01) [Clang 22.1.3 ]\", \"xla_flags\": \"--xla_gpu_enable_command_buffer=\"}",
+      "run_id": "core__hopper__flat__s0",
+      "checkpoint": "/home/smirn/nexus_final_campaign_2026-09-05/results/core__hopper__flat__s0__smoke/final.pkl",
+      "checkpoint_sha256": "a0e73668dea8fe899ed53c5dd3a12e587440a850ad2b63d16cd742818951f0fe",
+      "full_size_memory_tested": false
+     }
+    },
+    {
+     "run_id": "core__hopper__hpqn__s0",
+     "complete": {
+      "actual_steps": 512,
+      "smoke": true,
+      "snapshots": 3,
+      "final_sha256": "6031028a7b96173d465d16498783c802926398cfa07951f0ae552afa6c730fa8"
+     },
+     "gate": {
+      "source_fingerprint": "42cd15023387070bb369cdac82ca4790ee5cb84be584f9f3399ffd7ded3fe387",
+      "runtime": "{\"executable\": \"/home/smirn/nexus_campaign_core_venv/bin/python\", \"packages\": {\"brax\": \"0.14.2\", \"flax\": \"0.12.7\", \"jax\": \"0.10.1\", \"jaxlib\": \"0.10.1\", \"mujoco\": \"3.9.0\", \"mujoco-mjx\": \"3.9.0\", \"numpy\": \"2.4.6\", \"optax\": \"0.2.8\", \"playground\": \"0.2.0\", \"warp-lang\": \"1.13.0\"}, \"python\": \"3.12.13 (main, May 10 2026, 19:30:01) [Clang 22.1.3 ]\", \"xla_flags\": \"--xla_gpu_enable_command_buffer=\"}",
+      "run_id": "core__hopper__hpqn__s0",
+      "checkpoint": "/home/smirn/nexus_final_campaign_2026-09-05/results/core__hopper__hpqn__s0__smoke/final.pkl",
+      "checkpoint_sha256": "6031028a7b96173d465d16498783c802926398cfa07951f0ae552afa6c730fa8",
+      "full_size_memory_tested": false
+     }
+    },
+    {
+     "run_id": "core__hopper__neural__s0",
+     "complete": {
+      "actual_steps": 512,
+      "smoke": true,
+      "snapshots": 3,
+      "final_sha256": "8bbdbefd0a705ad0f47b395df8672ddab2f8bf1fe3cded67211f7dee7b97f856"
+     },
+     "gate": {
+      "source_fingerprint": "42cd15023387070bb369cdac82ca4790ee5cb84be584f9f3399ffd7ded3fe387",
+      "runtime": "{\"executable\": \"/home/smirn/nexus_campaign_core_venv/bin/python\", \"packages\": {\"brax\": \"0.14.2\", \"flax\": \"0.12.7\", \"jax\": \"0.10.1\", \"jaxlib\": \"0.10.1\", \"mujoco\": \"3.9.0\", \"mujoco-mjx\": \"3.9.0\", \"numpy\": \"2.4.6\", \"optax\": \"0.2.8\", \"playground\": \"0.2.0\", \"warp-lang\": \"1.13.0\"}, \"python\": \"3.12.13 (main, May 10 2026, 19:30:01) [Clang 22.1.3 ]\", \"xla_flags\": \"--xla_gpu_enable_command_buffer=\"}",
+      "run_id": "core__hopper__neural__s0",
+      "checkpoint": "/home/smirn/nexus_final_campaign_2026-09-05/results/core__hopper__neural__s0__smoke/final.pkl",
+      "checkpoint_sha256": "8bbdbefd0a705ad0f47b395df8672ddab2f8bf1fe3cded67211f7dee7b97f856",
+      "full_size_memory_tested": false
+     }
+    },
+    {
+     "run_id": "core__hopper__symbolic__s0",
+     "complete": {
+      "actual_steps": 512,
+      "smoke": true,
+      "snapshots": 3,
+      "final_sha256": "32c650dda1f1b5cb182d0cd8e28b3dba5775616fd0641bb212e817783906d027"
+     },
+     "gate": {
+      "source_fingerprint": "42cd15023387070bb369cdac82ca4790ee5cb84be584f9f3399ffd7ded3fe387",
+      "runtime": "{\"executable\": \"/home/smirn/nexus_campaign_core_venv/bin/python\", \"packages\": {\"brax\": \"0.14.2\", \"flax\": \"0.12.7\", \"jax\": \"0.10.1\", \"jaxlib\": \"0.10.1\", \"mujoco\": \"3.9.0\", \"mujoco-mjx\": \"3.9.0\", \"numpy\": \"2.4.6\", \"optax\": \"0.2.8\", \"playground\": \"0.2.0\", \"warp-lang\": \"1.13.0\"}, \"python\": \"3.12.13 (main, May 10 2026, 19:30:01) [Clang 22.1.3 ]\", \"xla_flags\": \"--xla_gpu_enable_command_buffer=\"}",
+      "run_id": "core__hopper__symbolic__s0",
+      "checkpoint": "/home/smirn/nexus_final_campaign_2026-09-05/results/core__hopper__symbolic__s0__smoke/final.pkl",
+      "checkpoint_sha256": "32c650dda1f1b5cb182d0cd8e28b3dba5775616fd0641bb212e817783906d027",
+      "full_size_memory_tested": false
+     }
+    },
+    {
+     "run_id": "core__hopper__nesy__s0",
+     "complete": {
+      "actual_steps": 512,
+      "smoke": true,
+      "snapshots": 3,
+      "final_sha256": "904a736b4d7a965321db2ae8e82501216d138edeb405aaea07c070a1c3820fdb"
+     },
+     "gate": {
+      "source_fingerprint": "42cd15023387070bb369cdac82ca4790ee5cb84be584f9f3399ffd7ded3fe387",
+      "runtime": "{\"executable\": \"/home/smirn/nexus_campaign_core_venv/bin/python\", \"packages\": {\"brax\": \"0.14.2\", \"flax\": \"0.12.7\", \"jax\": \"0.10.1\", \"jaxlib\": \"0.10.1\", \"mujoco\": \"3.9.0\", \"mujoco-mjx\": \"3.9.0\", \"numpy\": \"2.4.6\", \"optax\": \"0.2.8\", \"playground\": \"0.2.0\", \"warp-lang\": \"1.13.0\"}, \"python\": \"3.12.13 (main, May 10 2026, 19:30:01) [Clang 22.1.3 ]\", \"xla_flags\": \"--xla_gpu_enable_command_buffer=\"}",
+      "run_id": "core__hopper__nesy__s0",
+      "checkpoint": "/home/smirn/nexus_final_campaign_2026-09-05/results/core__hopper__nesy__s0__smoke/final.pkl",
+      "checkpoint_sha256": "904a736b4d7a965321db2ae8e82501216d138edeb405aaea07c070a1c3820fdb",
+      "full_size_memory_tested": false
+     }
+    },
+    {
+     "run_id": "core__hopper__ppo__s0",
+     "complete": {
+      "actual_steps": 320,
+      "smoke": true,
+      "snapshots": 2,
+      "final_sha256": "4fc12b052964c1cc426a5213b57398b3e6f2d280bd06ebc938c9c16cfa1b8f64",
+      "wall_seconds": 43.29924738000045
+     },
+     "gate": {
+      "source_fingerprint": "42cd15023387070bb369cdac82ca4790ee5cb84be584f9f3399ffd7ded3fe387",
+      "runtime": "{\"executable\": \"/home/smirn/nexus_campaign_core_venv/bin/python\", \"packages\": {\"brax\": \"0.14.2\", \"flax\": \"0.12.7\", \"jax\": \"0.10.1\", \"jaxlib\": \"0.10.1\", \"mujoco\": \"3.9.0\", \"mujoco-mjx\": \"3.9.0\", \"numpy\": \"2.4.6\", \"optax\": \"0.2.8\", \"playground\": \"0.2.0\", \"warp-lang\": \"1.13.0\"}, \"python\": \"3.12.13 (main, May 10 2026, 19:30:01) [Clang 22.1.3 ]\", \"xla_flags\": \"--xla_gpu_enable_command_buffer=\"}",
+      "run_id": "core__hopper__ppo__s0",
+      "checkpoint": "/home/smirn/nexus_final_campaign_2026-09-05/results/core__hopper__ppo__s0__smoke/final.pkl",
+      "checkpoint_sha256": "4fc12b052964c1cc426a5213b57398b3e6f2d280bd06ebc938c9c16cfa1b8f64",
+      "full_size_memory_tested": false
+     }
+    },
+    {
+     "run_id": "core__go1__flat__s0",
+     "complete": {
+      "actual_steps": 512,
+      "smoke": true,
+      "snapshots": 3,
+      "final_sha256": "c1ed76fc71185ae0ebfa7488ec7369ac8972f615ae878f2425656f1a3fcca758"
+     },
+     "gate": {
+      "source_fingerprint": "42cd15023387070bb369cdac82ca4790ee5cb84be584f9f3399ffd7ded3fe387",
+      "runtime": "{\"executable\": \"/home/smirn/nexus_campaign_core_venv/bin/python\", \"packages\": {\"brax\": \"0.14.2\", \"flax\": \"0.12.7\", \"jax\": \"0.10.1\", \"jaxlib\": \"0.10.1\", \"mujoco\": \"3.9.0\", \"mujoco-mjx\": \"3.9.0\", \"numpy\": \"2.4.6\", \"optax\": \"0.2.8\", \"playground\": \"0.2.0\", \"warp-lang\": \"1.13.0\"}, \"python\": \"3.12.13 (main, May 10 2026, 19:30:01) [Clang 22.1.3 ]\", \"xla_flags\": \"--xla_gpu_enable_command_buffer=\"}",
+      "run_id": "core__go1__flat__s0",
+      "checkpoint": "/home/smirn/nexus_final_campaign_2026-09-05/results/core__go1__flat__s0__smoke/final.pkl",
+      "checkpoint_sha256": "c1ed76fc71185ae0ebfa7488ec7369ac8972f615ae878f2425656f1a3fcca758",
+      "full_size_memory_tested": false
+     }
+    },
+    {
+     "run_id": "core__go1__hpqn__s0",
+     "complete": {
+      "actual_steps": 512,
+      "smoke": true,
+      "snapshots": 3,
+      "final_sha256": "16e7811c36b56051094d7a06078ff0ea0a97fe8f5432fbb5f65564155bd93fb9"
+     },
+     "gate": {
+      "source_fingerprint": "42cd15023387070bb369cdac82ca4790ee5cb84be584f9f3399ffd7ded3fe387",
+      "runtime": "{\"executable\": \"/home/smirn/nexus_campaign_core_venv/bin/python\", \"packages\": {\"brax\": \"0.14.2\", \"flax\": \"0.12.7\", \"jax\": \"0.10.1\", \"jaxlib\": \"0.10.1\", \"mujoco\": \"3.9.0\", \"mujoco-mjx\": \"3.9.0\", \"numpy\": \"2.4.6\", \"optax\": \"0.2.8\", \"playground\": \"0.2.0\", \"warp-lang\": \"1.13.0\"}, \"python\": \"3.12.13 (main, May 10 2026, 19:30:01) [Clang 22.1.3 ]\", \"xla_flags\": \"--xla_gpu_enable_command_buffer=\"}",
+      "run_id": "core__go1__hpqn__s0",
+      "checkpoint": "/home/smirn/nexus_final_campaign_2026-09-05/results/core__go1__hpqn__s0__smoke/final.pkl",
+      "checkpoint_sha256": "16e7811c36b56051094d7a06078ff0ea0a97fe8f5432fbb5f65564155bd93fb9",
+      "full_size_memory_tested": false
+     }
+    },
+    {
+     "run_id": "core__go1__neural__s0",
+     "complete": {
+      "actual_steps": 512,
+      "smoke": true,
+      "snapshots": 3,
+      "final_sha256": "49009e50852f2a053f06595d1497c6d625d51d5b7074123af7c800d06b20feee"
+     },
+     "gate": {
+      "source_fingerprint": "42cd15023387070bb369cdac82ca4790ee5cb84be584f9f3399ffd7ded3fe387",
+      "runtime": "{\"executable\": \"/home/smirn/nexus_campaign_core_venv/bin/python\", \"packages\": {\"brax\": \"0.14.2\", \"flax\": \"0.12.7\", \"jax\": \"0.10.1\", \"jaxlib\": \"0.10.1\", \"mujoco\": \"3.9.0\", \"mujoco-mjx\": \"3.9.0\", \"numpy\": \"2.4.6\", \"optax\": \"0.2.8\", \"playground\": \"0.2.0\", \"warp-lang\": \"1.13.0\"}, \"python\": \"3.12.13 (main, May 10 2026, 19:30:01) [Clang 22.1.3 ]\", \"xla_flags\": \"--xla_gpu_enable_command_buffer=\"}",
+      "run_id": "core__go1__neural__s0",
+      "checkpoint": "/home/smirn/nexus_final_campaign_2026-09-05/results/core__go1__neural__s0__smoke/final.pkl",
+      "checkpoint_sha256": "49009e50852f2a053f06595d1497c6d625d51d5b7074123af7c800d06b20feee",
+      "full_size_memory_tested": false
+     }
+    },
+    {
+     "run_id": "core__go1__symbolic__s0",
+     "complete": {
+      "actual_steps": 512,
+      "smoke": true,
+      "snapshots": 3,
+      "final_sha256": "1c2cd28822ccdb066edafa6a98a1c33a528f4303161d041cdeb6184fdd7ec31a"
+     },
+     "gate": {
+      "source_fingerprint": "42cd15023387070bb369cdac82ca4790ee5cb84be584f9f3399ffd7ded3fe387",
+      "runtime": "{\"executable\": \"/home/smirn/nexus_campaign_core_venv/bin/python\", \"packages\": {\"brax\": \"0.14.2\", \"flax\": \"0.12.7\", \"jax\": \"0.10.1\", \"jaxlib\": \"0.10.1\", \"mujoco\": \"3.9.0\", \"mujoco-mjx\": \"3.9.0\", \"numpy\": \"2.4.6\", \"optax\": \"0.2.8\", \"playground\": \"0.2.0\", \"warp-lang\": \"1.13.0\"}, \"python\": \"3.12.13 (main, May 10 2026, 19:30:01) [Clang 22.1.3 ]\", \"xla_flags\": \"--xla_gpu_enable_command_buffer=\"}",
+      "run_id": "core__go1__symbolic__s0",
+      "checkpoint": "/home/smirn/nexus_final_campaign_2026-09-05/results/core__go1__symbolic__s0__smoke/final.pkl",
+      "checkpoint_sha256": "1c2cd28822ccdb066edafa6a98a1c33a528f4303161d041cdeb6184fdd7ec31a",
+      "full_size_memory_tested": false
+     }
+    },
+    {
+     "run_id": "core__go1__nesy__s0",
+     "complete": {
+      "actual_steps": 512,
+      "smoke": true,
+      "snapshots": 3,
+      "final_sha256": "2bfea2ff15512e10a1373952641d6d47fa4bca72dc9ada1c55c6d037e8279833"
+     },
+     "gate": {
+      "source_fingerprint": "42cd15023387070bb369cdac82ca4790ee5cb84be584f9f3399ffd7ded3fe387",
+      "runtime": "{\"executable\": \"/home/smirn/nexus_campaign_core_venv/bin/python\", \"packages\": {\"brax\": \"0.14.2\", \"flax\": \"0.12.7\", \"jax\": \"0.10.1\", \"jaxlib\": \"0.10.1\", \"mujoco\": \"3.9.0\", \"mujoco-mjx\": \"3.9.0\", \"numpy\": \"2.4.6\", \"optax\": \"0.2.8\", \"playground\": \"0.2.0\", \"warp-lang\": \"1.13.0\"}, \"python\": \"3.12.13 (main, May 10 2026, 19:30:01) [Clang 22.1.3 ]\", \"xla_flags\": \"--xla_gpu_enable_command_buffer=\"}",
+      "run_id": "core__go1__nesy__s0",
+      "checkpoint": "/home/smirn/nexus_final_campaign_2026-09-05/results/core__go1__nesy__s0__smoke/final.pkl",
+      "checkpoint_sha256": "2bfea2ff15512e10a1373952641d6d47fa4bca72dc9ada1c55c6d037e8279833",
+      "full_size_memory_tested": false
+     }
+    },
+    {
+     "run_id": "core__go1__ppo__s0",
+     "complete": {
+      "actual_steps": 320,
+      "smoke": true,
+      "snapshots": 2,
+      "final_sha256": "c754c205b75018c28365a6193b04963864bda954493ca082e7155b28792a19f5",
+      "wall_seconds": 60.79490468899985
+     },
+     "gate": {
+      "source_fingerprint": "42cd15023387070bb369cdac82ca4790ee5cb84be584f9f3399ffd7ded3fe387",
+      "runtime": "{\"executable\": \"/home/smirn/nexus_campaign_core_venv/bin/python\", \"packages\": {\"brax\": \"0.14.2\", \"flax\": \"0.12.7\", \"jax\": \"0.10.1\", \"jaxlib\": \"0.10.1\", \"mujoco\": \"3.9.0\", \"mujoco-mjx\": \"3.9.0\", \"numpy\": \"2.4.6\", \"optax\": \"0.2.8\", \"playground\": \"0.2.0\", \"warp-lang\": \"1.13.0\"}, \"python\": \"3.12.13 (main, May 10 2026, 19:30:01) [Clang 22.1.3 ]\", \"xla_flags\": \"--xla_gpu_enable_command_buffer=\"}",
+      "run_id": "core__go1__ppo__s0",
+      "checkpoint": "/home/smirn/nexus_final_campaign_2026-09-05/results/core__go1__ppo__s0__smoke/final.pkl",
+      "checkpoint_sha256": "c754c205b75018c28365a6193b04963864bda954493ca082e7155b28792a19f5",
+      "full_size_memory_tested": false
+     }
+    },
+    {
+     "run_id": "llm_reference__cheetah__nesy__s0",
+     "complete": {
+      "actual_steps": 512,
+      "smoke": true,
+      "snapshots": 3,
+      "final_sha256": "03978bb24098e74f1a66c04b8be7039bbdd864b57718525ce1254eaa78fa25fa"
+     },
+     "gate": {
+      "source_fingerprint": "42cd15023387070bb369cdac82ca4790ee5cb84be584f9f3399ffd7ded3fe387",
+      "runtime": "{\"executable\": \"/home/smirn/nexus_campaign_core_venv/bin/python\", \"packages\": {\"brax\": \"0.14.2\", \"flax\": \"0.12.7\", \"jax\": \"0.10.1\", \"jaxlib\": \"0.10.1\", \"mujoco\": \"3.9.0\", \"mujoco-mjx\": \"3.9.0\", \"numpy\": \"2.4.6\", \"optax\": \"0.2.8\", \"playground\": \"0.2.0\", \"warp-lang\": \"1.13.0\"}, \"python\": \"3.12.13 (main, May 10 2026, 19:30:01) [Clang 22.1.3 ]\", \"xla_flags\": \"--xla_gpu_enable_command_buffer=\"}",
+      "run_id": "llm_reference__cheetah__nesy__s0",
+      "checkpoint": "/home/smirn/nexus_final_campaign_2026-09-05/results/llm_reference__cheetah__nesy__s0__smoke/final.pkl",
+      "checkpoint_sha256": "03978bb24098e74f1a66c04b8be7039bbdd864b57718525ce1254eaa78fa25fa",
+      "full_size_memory_tested": false
+     }
+    },
+    {
+     "run_id": "llm_pilot__cheetah__initial__g0__s900",
+     "complete": {
+      "actual_steps": 512,
+      "smoke": true,
+      "snapshots": 3,
+      "final_sha256": "ebafa6a87b6274d0d029e4b82822fcb341a9310e9995ee415f174a44983b5ea6"
+     },
+     "gate": {
+      "source_fingerprint": "42cd15023387070bb369cdac82ca4790ee5cb84be584f9f3399ffd7ded3fe387",
+      "runtime": "{\"executable\": \"/home/smirn/nexus_campaign_core_venv/bin/python\", \"packages\": {\"brax\": \"0.14.2\", \"flax\": \"0.12.7\", \"jax\": \"0.10.1\", \"jaxlib\": \"0.10.1\", \"mujoco\": \"3.9.0\", \"mujoco-mjx\": \"3.9.0\", \"numpy\": \"2.4.6\", \"optax\": \"0.2.8\", \"playground\": \"0.2.0\", \"warp-lang\": \"1.13.0\"}, \"python\": \"3.12.13 (main, May 10 2026, 19:30:01) [Clang 22.1.3 ]\", \"xla_flags\": \"--xla_gpu_enable_command_buffer=\"}",
+      "run_id": "llm_pilot__cheetah__initial__g0__s900",
+      "checkpoint": "/home/smirn/nexus_final_campaign_2026-09-05/results/llm_pilot__cheetah__initial__g0__s900__smoke/final.pkl",
+      "checkpoint_sha256": "ebafa6a87b6274d0d029e4b82822fcb341a9310e9995ee415f174a44983b5ea6",
+      "full_size_memory_tested": false
+     }
+    },
+    {
+     "run_id": "llm_reference__walker__nesy__s0",
+     "complete": {
+      "actual_steps": 512,
+      "smoke": true,
+      "snapshots": 3,
+      "final_sha256": "7b656253833a49b592d5faeac5da8cf2949152228dda6d8d9fc177d7f3db7f9f"
+     },
+     "gate": {
+      "source_fingerprint": "42cd15023387070bb369cdac82ca4790ee5cb84be584f9f3399ffd7ded3fe387",
+      "runtime": "{\"executable\": \"/home/smirn/nexus_campaign_core_venv/bin/python\", \"packages\": {\"brax\": \"0.14.2\", \"flax\": \"0.12.7\", \"jax\": \"0.10.1\", \"jaxlib\": \"0.10.1\", \"mujoco\": \"3.9.0\", \"mujoco-mjx\": \"3.9.0\", \"numpy\": \"2.4.6\", \"optax\": \"0.2.8\", \"playground\": \"0.2.0\", \"warp-lang\": \"1.13.0\"}, \"python\": \"3.12.13 (main, May 10 2026, 19:30:01) [Clang 22.1.3 ]\", \"xla_flags\": \"--xla_gpu_enable_command_buffer=\"}",
+      "run_id": "llm_reference__walker__nesy__s0",
+      "checkpoint": "/home/smirn/nexus_final_campaign_2026-09-05/results/llm_reference__walker__nesy__s0__smoke/final.pkl",
+      "checkpoint_sha256": "7b656253833a49b592d5faeac5da8cf2949152228dda6d8d9fc177d7f3db7f9f",
+      "full_size_memory_tested": false
+     }
+    },
+    {
+     "run_id": "llm_pilot__walker__initial__g0__s900",
+     "complete": {
+      "actual_steps": 512,
+      "smoke": true,
+      "snapshots": 3,
+      "final_sha256": "24e0857ba32e037ab0ab4b8c226a1f3e84ddb02cf5d8dbaa24e870c93ff1ab93"
+     },
+     "gate": {
+      "source_fingerprint": "42cd15023387070bb369cdac82ca4790ee5cb84be584f9f3399ffd7ded3fe387",
+      "runtime": "{\"executable\": \"/home/smirn/nexus_campaign_core_venv/bin/python\", \"packages\": {\"brax\": \"0.14.2\", \"flax\": \"0.12.7\", \"jax\": \"0.10.1\", \"jaxlib\": \"0.10.1\", \"mujoco\": \"3.9.0\", \"mujoco-mjx\": \"3.9.0\", \"numpy\": \"2.4.6\", \"optax\": \"0.2.8\", \"playground\": \"0.2.0\", \"warp-lang\": \"1.13.0\"}, \"python\": \"3.12.13 (main, May 10 2026, 19:30:01) [Clang 22.1.3 ]\", \"xla_flags\": \"--xla_gpu_enable_command_buffer=\"}",
+      "run_id": "llm_pilot__walker__initial__g0__s900",
+      "checkpoint": "/home/smirn/nexus_final_campaign_2026-09-05/results/llm_pilot__walker__initial__g0__s900__smoke/final.pkl",
+      "checkpoint_sha256": "24e0857ba32e037ab0ab4b8c226a1f3e84ddb02cf5d8dbaa24e870c93ff1ab93",
+      "full_size_memory_tested": false
+     }
+    }
+   ],
+   "restore_tests": [
+    {
+     "run_id": "core__hopper__flat__s0",
+     "tests": [
+      {
+       "test": "native",
+       "pass_restore_and_rollout": true
+      },
+      {
+       "test": "initial_snapshot",
+       "pass_restore_and_rollout": true
+      }
+     ],
+     "smoke_only": true,
+     "learning_quality_evaluated": false
+    },
+    {
+     "run_id": "core__hopper__hpqn__s0",
+     "tests": [
+      {
+       "test": "native",
+       "pass_restore_and_rollout": true
+      },
+      {
+       "test": "initial_snapshot",
+       "pass_restore_and_rollout": true
+      }
+     ],
+     "smoke_only": true,
+     "learning_quality_evaluated": false
+    },
+    {
+     "run_id": "core__hopper__neural__s0",
+     "tests": [
+      {
+       "test": "native",
+       "pass_restore_and_rollout": true
+      },
+      {
+       "test": "initial_snapshot",
+       "pass_restore_and_rollout": true
+      }
+     ],
+     "smoke_only": true,
+     "learning_quality_evaluated": false
+    },
+    {
+     "run_id": "core__hopper__symbolic__s0",
+     "tests": [
+      {
+       "test": "native",
+       "pass_restore_and_rollout": true
+      },
+      {
+       "test": "initial_snapshot",
+       "pass_restore_and_rollout": true
+      }
+     ],
+     "smoke_only": true,
+     "learning_quality_evaluated": false
+    },
+    {
+     "run_id": "core__hopper__nesy__s0",
+     "tests": [
+      {
+       "test": "native",
+       "pass_restore_and_rollout": true
+      },
+      {
+       "test": "initial_snapshot",
+       "pass_restore_and_rollout": true
+      },
+      {
+       "test": "force0",
+       "pass_restore_and_rollout": true
+      },
+      {
+       "test": "delete0",
+       "pass_restore_and_rollout": true
+      },
+      {
+       "test": "unmasked",
+       "pass_restore_and_rollout": true
+      },
+      {
+       "test": "symbolic_selector",
+       "pass_restore_and_rollout": true
+      }
+     ],
+     "smoke_only": true,
+     "learning_quality_evaluated": false
+    },
+    {
+     "run_id": "core__hopper__ppo__s0",
+     "tests": [
+      {
+       "test": "native",
+       "pass_restore_and_rollout": true
+      },
+      {
+       "test": "initial_snapshot",
+       "pass_restore_and_rollout": true
+      }
+     ],
+     "smoke_only": true,
+     "learning_quality_evaluated": false
+    },
+    {
+     "run_id": "core__go1__flat__s0",
+     "tests": [
+      {
+       "test": "native",
+       "pass_restore_and_rollout": true
+      },
+      {
+       "test": "initial_snapshot",
+       "pass_restore_and_rollout": true
+      }
+     ],
+     "smoke_only": true,
+     "learning_quality_evaluated": false
+    },
+    {
+     "run_id": "core__go1__hpqn__s0",
+     "tests": [
+      {
+       "test": "native",
+       "pass_restore_and_rollout": true
+      },
+      {
+       "test": "initial_snapshot",
+       "pass_restore_and_rollout": true
+      }
+     ],
+     "smoke_only": true,
+     "learning_quality_evaluated": false
+    },
+    {
+     "run_id": "core__go1__neural__s0",
+     "tests": [
+      {
+       "test": "native",
+       "pass_restore_and_rollout": true
+      },
+      {
+       "test": "initial_snapshot",
+       "pass_restore_and_rollout": true
+      }
+     ],
+     "smoke_only": true,
+     "learning_quality_evaluated": false
+    },
+    {
+     "run_id": "core__go1__symbolic__s0",
+     "tests": [
+      {
+       "test": "native",
+       "pass_restore_and_rollout": true
+      },
+      {
+       "test": "initial_snapshot",
+       "pass_restore_and_rollout": true
+      }
+     ],
+     "smoke_only": true,
+     "learning_quality_evaluated": false
+    },
+    {
+     "run_id": "core__go1__nesy__s0",
+     "tests": [
+      {
+       "test": "native",
+       "pass_restore_and_rollout": true
+      },
+      {
+       "test": "initial_snapshot",
+       "pass_restore_and_rollout": true
+      },
+      {
+       "test": "force0",
+       "pass_restore_and_rollout": true
+      },
+      {
+       "test": "delete0",
+       "pass_restore_and_rollout": true
+      },
+      {
+       "test": "unmasked",
+       "pass_restore_and_rollout": true
+      },
+      {
+       "test": "symbolic_selector",
+       "pass_restore_and_rollout": true
+      },
+      {
+       "test": "stop",
+       "pass_restore_and_rollout": true
+      },
+      {
+       "test": "rough",
+       "pass_restore_and_rollout": true
+      }
+     ],
+     "smoke_only": true,
+     "learning_quality_evaluated": false
+    },
+    {
+     "run_id": "core__go1__ppo__s0",
+     "tests": [
+      {
+       "test": "native",
+       "pass_restore_and_rollout": true
+      },
+      {
+       "test": "initial_snapshot",
+       "pass_restore_and_rollout": true
+      }
+     ],
+     "smoke_only": true,
+     "learning_quality_evaluated": false
+    },
+    {
+     "run_id": "llm_reference__cheetah__nesy__s0",
+     "tests": [
+      {
+       "test": "native",
+       "pass_restore_and_rollout": true
+      },
+      {
+       "test": "initial_snapshot",
+       "pass_restore_and_rollout": true
+      },
+      {
+       "test": "force0",
+       "pass_restore_and_rollout": true
+      },
+      {
+       "test": "delete0",
+       "pass_restore_and_rollout": true
+      },
+      {
+       "test": "unmasked",
+       "pass_restore_and_rollout": true
+      },
+      {
+       "test": "symbolic_selector",
+       "pass_restore_and_rollout": true
+      }
+     ],
+     "smoke_only": true,
+     "learning_quality_evaluated": false
+    },
+    {
+     "run_id": "llm_pilot__cheetah__initial__g0__s900",
+     "tests": [
+      {
+       "test": "native",
+       "pass_restore_and_rollout": true
+      },
+      {
+       "test": "initial_snapshot",
+       "pass_restore_and_rollout": true
+      }
+     ],
+     "smoke_only": true,
+     "learning_quality_evaluated": false
+    },
+    {
+     "run_id": "llm_reference__walker__nesy__s0",
+     "tests": [
+      {
+       "test": "native",
+       "pass_restore_and_rollout": true
+      },
+      {
+       "test": "initial_snapshot",
+       "pass_restore_and_rollout": true
+      },
+      {
+       "test": "force0",
+       "pass_restore_and_rollout": true
+      },
+      {
+       "test": "delete0",
+       "pass_restore_and_rollout": true
+      },
+      {
+       "test": "unmasked",
+       "pass_restore_and_rollout": true
+      },
+      {
+       "test": "symbolic_selector",
+       "pass_restore_and_rollout": true
+      }
+     ],
+     "smoke_only": true,
+     "learning_quality_evaluated": false
+    },
+    {
+     "run_id": "llm_pilot__walker__initial__g0__s900",
+     "tests": [
+      {
+       "test": "native",
+       "pass_restore_and_rollout": true
+      },
+      {
+       "test": "initial_snapshot",
+       "pass_restore_and_rollout": true
+      }
+     ],
+     "smoke_only": true,
+     "learning_quality_evaluated": false
+    }
+   ],
+   "capacity": [
+    {
+     "task": "go1",
+     "method": "nesy",
+     "seconds": 36.21620098299991,
+     "steps": 1310720,
+     "scientific_sample": false,
+     "device": "cuda:0",
+     "device_kind": "NVIDIA GeForce RTX 5080",
+     "memory_stats": {
+      "num_allocs": 13207,
+      "bytes_in_use": 31488,
+      "peak_bytes_in_use": 432582912,
+      "largest_alloc_size": 330998784,
+      "bytes_limit": 12439289856,
+      "bytes_reserved": 0,
+      "peak_bytes_reserved": 0,
+      "largest_free_block_bytes": 0,
+      "pool_bytes": 12439289856,
+      "peak_pool_bytes": 12439289856
+     },
+     "evidence_path": "/home/smirn/nexus_campaign_verified_outputs/nvidia_capacity/go1_nesy/PASS.json"
+    },
+    {
+     "task": "go1",
+     "method": "ppo",
+     "seconds": 107.71693316900019,
+     "steps": 1638400,
+     "scientific_sample": false,
+     "device": "cuda:0",
+     "device_kind": "NVIDIA GeForce RTX 5080",
+     "memory_stats": {
+      "num_allocs": 122805,
+      "bytes_in_use": 1716992,
+      "peak_bytes_in_use": 905994240,
+      "largest_alloc_size": 569624320,
+      "bytes_limit": 12439289856,
+      "bytes_reserved": 0,
+      "peak_bytes_reserved": 0,
+      "largest_free_block_bytes": 0,
+      "pool_bytes": 12439289856,
+      "peak_pool_bytes": 12439289856
+     },
+     "evidence_path": "/home/smirn/nexus_campaign_verified_outputs/nvidia_capacity/go1_ppo/PASS.json"
+    },
+    {
+     "task": "hopper",
+     "method": "nesy",
+     "seconds": 31.30023862500002,
+     "steps": 1310720,
+     "scientific_sample": false,
+     "device": "cuda:0",
+     "device_kind": "NVIDIA GeForce RTX 5080",
+     "memory_stats": {
+      "num_allocs": 20809,
+      "bytes_in_use": 24064,
+      "peak_bytes_in_use": 197219840,
+      "largest_alloc_size": 155470080,
+      "bytes_limit": 12439289856,
+      "bytes_reserved": 0,
+      "peak_bytes_reserved": 0,
+      "largest_free_block_bytes": 0,
+      "pool_bytes": 12439289856,
+      "peak_pool_bytes": 12439289856
+     },
+     "evidence_path": "/home/smirn/nexus_campaign_verified_outputs/nvidia_capacity/hopper_nesy/PASS.json"
+    },
+    {
+     "task": "hopper",
+     "method": "ppo",
+     "seconds": 128.113707042,
+     "steps": 9830400,
+     "scientific_sample": false,
+     "device": "cuda:0",
+     "device_kind": "NVIDIA GeForce RTX 5080",
+     "memory_stats": {
+      "num_allocs": 385722,
+      "bytes_in_use": 1136640,
+      "peak_bytes_in_use": 726766592,
+      "largest_alloc_size": 692975616,
+      "bytes_limit": 12439289856,
+      "bytes_reserved": 0,
+      "peak_bytes_reserved": 0,
+      "largest_free_block_bytes": 0,
+      "pool_bytes": 12439289856,
+      "peak_pool_bytes": 12439289856
+     },
+     "evidence_path": "/home/smirn/nexus_campaign_verified_outputs/nvidia_capacity/hopper_ppo/PASS.json"
+    }
+   ],
+   "all_required_checks_passed": true,
+   "primary_matrix_training_started": false
+  },
+  "wsl_rgb.json": {
+   "profile": "wsl_rgb",
+   "source_fingerprint": "42cd15023387070bb369cdac82ca4790ee5cb84be584f9f3399ffd7ded3fe387",
+   "runtime": {
+    "executable": "/home/smirn/nexus_campaign_rgb_venv/bin/python",
+    "packages": {
+     "brax": "0.14.2",
+     "flax": "0.12.7",
+     "jax": "0.10.1",
+     "jaxlib": "0.10.1",
+     "mujoco": "3.9.0",
+     "mujoco-mjx": "3.9.0",
+     "numpy": "2.4.6",
+     "optax": "0.2.8",
+     "playground": "0.2.0",
+     "warp-lang": "1.12.0"
+    },
+    "python": "3.12.13 (main, May 10 2026, 19:30:01) [Clang 22.1.3 ]",
+    "xla_flags": ""
+   },
+   "smoke_training": [
+    {
+     "run_id": "rgb__cartpole__state__s0",
+     "complete": {
+      "smoke": true,
+      "actual_steps": 1024,
+      "final_sha256": "0c73abd336e6a4fed891870c939bae5520c566e8d4ef81cf1532eba5ad35a9a5",
+      "wall_seconds": 31.68195558000025,
+      "loaded": null
+     },
+     "gate": {
+      "source_fingerprint": "42cd15023387070bb369cdac82ca4790ee5cb84be584f9f3399ffd7ded3fe387",
+      "runtime": "{\"executable\": \"/home/smirn/nexus_campaign_rgb_venv/bin/python\", \"packages\": {\"brax\": \"0.14.2\", \"flax\": \"0.12.7\", \"jax\": \"0.10.1\", \"jaxlib\": \"0.10.1\", \"mujoco\": \"3.9.0\", \"mujoco-mjx\": \"3.9.0\", \"numpy\": \"2.4.6\", \"optax\": \"0.2.8\", \"playground\": \"0.2.0\", \"warp-lang\": \"1.12.0\"}, \"python\": \"3.12.13 (main, May 10 2026, 19:30:01) [Clang 22.1.3 ]\", \"xla_flags\": \"\"}",
+      "run_id": "rgb__cartpole__state__s0",
+      "checkpoint": "/home/smirn/nexus_campaign_verified_v2/rgb_release/rgb__cartpole__state__s0__smoke/final.pkl",
+      "checkpoint_sha256": "0c73abd336e6a4fed891870c939bae5520c566e8d4ef81cf1532eba5ad35a9a5",
+      "full_size_memory_tested": false
+     }
+    },
+    {
+     "run_id": "rgb__cartpole__pixels__s0",
+     "complete": {
+      "smoke": true,
+      "actual_steps": 1024,
+      "final_sha256": "760213fe3ea8ed1966f4428bcd311ab9766401165c12a44af56cc14a1fc560e7",
+      "wall_seconds": 21.092230835999544,
+      "loaded": null
+     },
+     "gate": {
+      "source_fingerprint": "42cd15023387070bb369cdac82ca4790ee5cb84be584f9f3399ffd7ded3fe387",
+      "runtime": "{\"executable\": \"/home/smirn/nexus_campaign_rgb_venv/bin/python\", \"packages\": {\"brax\": \"0.14.2\", \"flax\": \"0.12.7\", \"jax\": \"0.10.1\", \"jaxlib\": \"0.10.1\", \"mujoco\": \"3.9.0\", \"mujoco-mjx\": \"3.9.0\", \"numpy\": \"2.4.6\", \"optax\": \"0.2.8\", \"playground\": \"0.2.0\", \"warp-lang\": \"1.12.0\"}, \"python\": \"3.12.13 (main, May 10 2026, 19:30:01) [Clang 22.1.3 ]\", \"xla_flags\": \"\"}",
+      "run_id": "rgb__cartpole__pixels__s0",
+      "checkpoint": "/home/smirn/nexus_campaign_verified_v2/rgb_release/rgb__cartpole__pixels__s0__smoke/final.pkl",
+      "checkpoint_sha256": "760213fe3ea8ed1966f4428bcd311ab9766401165c12a44af56cc14a1fc560e7",
+      "full_size_memory_tested": false
+     }
+    },
+    {
+     "run_id": "rgb__cartpole__constant__s0",
+     "complete": {
+      "smoke": true,
+      "actual_steps": 1024,
+      "final_sha256": "7764fd06ef023f326d4972bb2180995e099020cd4ab198cf2c4708c1dba0bde5",
+      "wall_seconds": 17.892772033000256,
+      "loaded": null
+     },
+     "gate": {
+      "source_fingerprint": "42cd15023387070bb369cdac82ca4790ee5cb84be584f9f3399ffd7ded3fe387",
+      "runtime": "{\"executable\": \"/home/smirn/nexus_campaign_rgb_venv/bin/python\", \"packages\": {\"brax\": \"0.14.2\", \"flax\": \"0.12.7\", \"jax\": \"0.10.1\", \"jaxlib\": \"0.10.1\", \"mujoco\": \"3.9.0\", \"mujoco-mjx\": \"3.9.0\", \"numpy\": \"2.4.6\", \"optax\": \"0.2.8\", \"playground\": \"0.2.0\", \"warp-lang\": \"1.12.0\"}, \"python\": \"3.12.13 (main, May 10 2026, 19:30:01) [Clang 22.1.3 ]\", \"xla_flags\": \"\"}",
+      "run_id": "rgb__cartpole__constant__s0",
+      "checkpoint": "/home/smirn/nexus_campaign_verified_v2/rgb_release/rgb__cartpole__constant__s0__smoke/final.pkl",
+      "checkpoint_sha256": "7764fd06ef023f326d4972bb2180995e099020cd4ab198cf2c4708c1dba0bde5",
+      "full_size_memory_tested": false
+     }
+    },
+    {
+     "run_id": "rgb__walker__state__s0",
+     "complete": {
+      "smoke": true,
+      "actual_steps": 1024,
+      "final_sha256": "6195f27c19e7f2b056468536bf64fa5fd2b84139675e6ef9bf97b847742bb503",
+      "wall_seconds": 21.90690681399974,
+      "loaded": null
+     },
+     "gate": {
+      "source_fingerprint": "42cd15023387070bb369cdac82ca4790ee5cb84be584f9f3399ffd7ded3fe387",
+      "runtime": "{\"executable\": \"/home/smirn/nexus_campaign_rgb_venv/bin/python\", \"packages\": {\"brax\": \"0.14.2\", \"flax\": \"0.12.7\", \"jax\": \"0.10.1\", \"jaxlib\": \"0.10.1\", \"mujoco\": \"3.9.0\", \"mujoco-mjx\": \"3.9.0\", \"numpy\": \"2.4.6\", \"optax\": \"0.2.8\", \"playground\": \"0.2.0\", \"warp-lang\": \"1.12.0\"}, \"python\": \"3.12.13 (main, May 10 2026, 19:30:01) [Clang 22.1.3 ]\", \"xla_flags\": \"\"}",
+      "run_id": "rgb__walker__state__s0",
+      "checkpoint": "/home/smirn/nexus_campaign_verified_v2/rgb_release/rgb__walker__state__s0__smoke/final.pkl",
+      "checkpoint_sha256": "6195f27c19e7f2b056468536bf64fa5fd2b84139675e6ef9bf97b847742bb503",
+      "full_size_memory_tested": false
+     }
+    },
+    {
+     "run_id": "rgb__walker__pixels__s0",
+     "complete": {
+      "smoke": true,
+      "actual_steps": 1024,
+      "final_sha256": "f68a5a2da719e8a2e7bd29c7df9a16e1e7bb5c25b1bba7fe9263744056c0f115",
+      "wall_seconds": 19.544946402000278,
+      "loaded": null
+     },
+     "gate": {
+      "source_fingerprint": "42cd15023387070bb369cdac82ca4790ee5cb84be584f9f3399ffd7ded3fe387",
+      "runtime": "{\"executable\": \"/home/smirn/nexus_campaign_rgb_venv/bin/python\", \"packages\": {\"brax\": \"0.14.2\", \"flax\": \"0.12.7\", \"jax\": \"0.10.1\", \"jaxlib\": \"0.10.1\", \"mujoco\": \"3.9.0\", \"mujoco-mjx\": \"3.9.0\", \"numpy\": \"2.4.6\", \"optax\": \"0.2.8\", \"playground\": \"0.2.0\", \"warp-lang\": \"1.12.0\"}, \"python\": \"3.12.13 (main, May 10 2026, 19:30:01) [Clang 22.1.3 ]\", \"xla_flags\": \"\"}",
+      "run_id": "rgb__walker__pixels__s0",
+      "checkpoint": "/home/smirn/nexus_campaign_verified_v2/rgb_release/rgb__walker__pixels__s0__smoke/final.pkl",
+      "checkpoint_sha256": "f68a5a2da719e8a2e7bd29c7df9a16e1e7bb5c25b1bba7fe9263744056c0f115",
+      "full_size_memory_tested": false
+     }
+    },
+    {
+     "run_id": "rgb__walker__constant__s0",
+     "complete": {
+      "smoke": true,
+      "actual_steps": 1024,
+      "final_sha256": "1862945ef8fd4bdfabb50462bde9810314049ff9446339adbf8a20b922ea8d37",
+      "wall_seconds": 17.80456231900007,
+      "loaded": null
+     },
+     "gate": {
+      "source_fingerprint": "42cd15023387070bb369cdac82ca4790ee5cb84be584f9f3399ffd7ded3fe387",
+      "runtime": "{\"executable\": \"/home/smirn/nexus_campaign_rgb_venv/bin/python\", \"packages\": {\"brax\": \"0.14.2\", \"flax\": \"0.12.7\", \"jax\": \"0.10.1\", \"jaxlib\": \"0.10.1\", \"mujoco\": \"3.9.0\", \"mujoco-mjx\": \"3.9.0\", \"numpy\": \"2.4.6\", \"optax\": \"0.2.8\", \"playground\": \"0.2.0\", \"warp-lang\": \"1.12.0\"}, \"python\": \"3.12.13 (main, May 10 2026, 19:30:01) [Clang 22.1.3 ]\", \"xla_flags\": \"\"}",
+      "run_id": "rgb__walker__constant__s0",
+      "checkpoint": "/home/smirn/nexus_campaign_verified_v2/rgb_release/rgb__walker__constant__s0__smoke/final.pkl",
+      "checkpoint_sha256": "1862945ef8fd4bdfabb50462bde9810314049ff9446339adbf8a20b922ea8d37",
+      "full_size_memory_tested": false
+     }
+    }
+   ],
+   "restore_tests": [
+    {
+     "run_id": "rgb__cartpole__state__s0",
+     "evaluation_sha256": "709c7d2a668df1e22d44f1f5b94008b9397f038ad48ffde28c70c0a02ed0b882",
+     "saved_checkpoint": "0c73abd336e6a4fed891870c939bae5520c566e8d4ef81cf1532eba5ad35a9a5",
+     "evaluation_keys": [
+      "actor_input",
+      "actor_uses_pixels",
+      "actor_uses_pixels_strict",
+      "actor_variation_needed",
+      "attribution_note",
+      "conditions_run",
+      "env",
+      "episodes",
+      "eval_pairing_note",
+      "eval_reset_key_formula",
+      "eval_steps",
+      "final_train_return",
+      "meta",
+      "meta_pixels_held_intact",
+      "metric_key",
+      "motion_sensitive",
+      "num_envs",
+      "performance_drop_fraction",
+      "pixel_drop_median",
+      "pixel_drop_min",
+      "results",
+      "rgb_meta_sees_pixels",
+      "rgb_proprio",
+      "rgb_shared_encoder",
+      "sd_convention",
+      "seed",
+      "skipped_conditions",
+      "skipped_conditions_reason",
+      "state_only",
+      "updates",
+      "verdict_caveat"
+     ]
+    },
+    {
+     "run_id": "rgb__cartpole__pixels__s0",
+     "evaluation_sha256": "744ef3b3916dc91ccfec2e5deeba369fc3394b2c26dbfc7177763fc91279165e",
+     "saved_checkpoint": "760213fe3ea8ed1966f4428bcd311ab9766401165c12a44af56cc14a1fc560e7",
+     "evaluation_keys": [
+      "actor_input",
+      "actor_uses_pixels",
+      "actor_uses_pixels_strict",
+      "actor_variation_needed",
+      "attribution_note",
+      "conditions_run",
+      "env",
+      "episodes",
+      "eval_pairing_note",
+      "eval_reset_key_formula",
+      "eval_steps",
+      "final_train_return",
+      "meta",
+      "meta_pixels_held_intact",
+      "metric_key",
+      "motion_sensitive",
+      "num_envs",
+      "performance_drop_fraction",
+      "pixel_drop_median",
+      "pixel_drop_min",
+      "results",
+      "rgb_meta_sees_pixels",
+      "rgb_proprio",
+      "rgb_shared_encoder",
+      "sd_convention",
+      "seed",
+      "skipped_conditions",
+      "skipped_conditions_reason",
+      "state_only",
+      "updates",
+      "verdict_caveat"
+     ]
+    },
+    {
+     "run_id": "rgb__cartpole__constant__s0",
+     "evaluation_sha256": "61ac28e4309906a8800637adb8936c832b8fd207edc9bbf8316df585c70c4863",
+     "saved_checkpoint": "7764fd06ef023f326d4972bb2180995e099020cd4ab198cf2c4708c1dba0bde5",
+     "evaluation_keys": [
+      "actor_input",
+      "actor_uses_pixels",
+      "actor_uses_pixels_strict",
+      "actor_variation_needed",
+      "attribution_note",
+      "conditions_run",
+      "env",
+      "episodes",
+      "eval_pairing_note",
+      "eval_reset_key_formula",
+      "eval_steps",
+      "final_train_return",
+      "meta",
+      "meta_pixels_held_intact",
+      "metric_key",
+      "motion_sensitive",
+      "num_envs",
+      "performance_drop_fraction",
+      "pixel_drop_median",
+      "pixel_drop_min",
+      "results",
+      "rgb_meta_sees_pixels",
+      "rgb_proprio",
+      "rgb_shared_encoder",
+      "sd_convention",
+      "seed",
+      "skipped_conditions",
+      "skipped_conditions_reason",
+      "state_only",
+      "updates",
+      "verdict_caveat"
+     ]
+    },
+    {
+     "run_id": "rgb__walker__state__s0",
+     "evaluation_sha256": "e7cbb202d0c8bf60f104063baa4def1e953f3344379ffe34f0202b7cab4b15b5",
+     "saved_checkpoint": "6195f27c19e7f2b056468536bf64fa5fd2b84139675e6ef9bf97b847742bb503",
+     "evaluation_keys": [
+      "actor_input",
+      "actor_uses_pixels",
+      "actor_uses_pixels_strict",
+      "actor_variation_needed",
+      "attribution_note",
+      "conditions_run",
+      "env",
+      "episodes",
+      "eval_pairing_note",
+      "eval_reset_key_formula",
+      "eval_steps",
+      "final_train_return",
+      "meta",
+      "meta_pixels_held_intact",
+      "metric_key",
+      "motion_sensitive",
+      "num_envs",
+      "performance_drop_fraction",
+      "pixel_drop_median",
+      "pixel_drop_min",
+      "results",
+      "rgb_meta_sees_pixels",
+      "rgb_proprio",
+      "rgb_shared_encoder",
+      "sd_convention",
+      "seed",
+      "skipped_conditions",
+      "skipped_conditions_reason",
+      "state_only",
+      "updates",
+      "verdict_caveat"
+     ]
+    },
+    {
+     "run_id": "rgb__walker__pixels__s0",
+     "evaluation_sha256": "ec3401113ffec31e1af40d5bce8c8d7373298ee0130ffa935983490ba912842a",
+     "saved_checkpoint": "f68a5a2da719e8a2e7bd29c7df9a16e1e7bb5c25b1bba7fe9263744056c0f115",
+     "evaluation_keys": [
+      "actor_input",
+      "actor_uses_pixels",
+      "actor_uses_pixels_strict",
+      "actor_variation_needed",
+      "attribution_note",
+      "conditions_run",
+      "env",
+      "episodes",
+      "eval_pairing_note",
+      "eval_reset_key_formula",
+      "eval_steps",
+      "final_train_return",
+      "meta",
+      "meta_pixels_held_intact",
+      "metric_key",
+      "motion_sensitive",
+      "num_envs",
+      "performance_drop_fraction",
+      "pixel_drop_median",
+      "pixel_drop_min",
+      "results",
+      "rgb_meta_sees_pixels",
+      "rgb_proprio",
+      "rgb_shared_encoder",
+      "sd_convention",
+      "seed",
+      "skipped_conditions",
+      "skipped_conditions_reason",
+      "state_only",
+      "updates",
+      "verdict_caveat"
+     ]
+    },
+    {
+     "run_id": "rgb__walker__constant__s0",
+     "evaluation_sha256": "1e12cbb918b8e8148b81e75c4c7b45bfc0d97784bf9174924b38ba6a1e737dc1",
+     "saved_checkpoint": "1862945ef8fd4bdfabb50462bde9810314049ff9446339adbf8a20b922ea8d37",
+     "evaluation_keys": [
+      "actor_input",
+      "actor_uses_pixels",
+      "actor_uses_pixels_strict",
+      "actor_variation_needed",
+      "attribution_note",
+      "conditions_run",
+      "env",
+      "episodes",
+      "eval_pairing_note",
+      "eval_reset_key_formula",
+      "eval_steps",
+      "final_train_return",
+      "meta",
+      "meta_pixels_held_intact",
+      "metric_key",
+      "motion_sensitive",
+      "num_envs",
+      "performance_drop_fraction",
+      "pixel_drop_median",
+      "pixel_drop_min",
+      "results",
+      "rgb_meta_sees_pixels",
+      "rgb_proprio",
+      "rgb_shared_encoder",
+      "sd_convention",
+      "seed",
+      "skipped_conditions",
+      "skipped_conditions_reason",
+      "state_only",
+      "updates",
+      "verdict_caveat"
+     ]
+    }
+   ],
+   "capacity": [
+    {
+     "task": "cartpole",
+     "updates": 2,
+     "num_envs": 128,
+     "scientific_sample": false,
+     "wall_seconds": 36.18962242299949,
+     "memory_stats": {
+      "num_allocs": 37988,
+      "bytes_in_use": 402723072,
+      "peak_bytes_in_use": 5653889024,
+      "largest_alloc_size": 3905643264,
+      "bytes_limit": 12439289856,
+      "bytes_reserved": 0,
+      "peak_bytes_reserved": 0,
+      "largest_free_block_bytes": 0,
+      "pool_bytes": 9665773568,
+      "peak_pool_bytes": 9665773568
+     },
+     "evidence_path": "/home/smirn/nexus_campaign_verified_outputs/capacity/cartpole/PASS.json"
+    },
+    {
+     "task": "walker",
+     "updates": 2,
+     "num_envs": 128,
+     "scientific_sample": false,
+     "wall_seconds": 26.90716820600028,
+     "memory_stats": {
+      "num_allocs": 38619,
+      "bytes_in_use": 46592,
+      "peak_bytes_in_use": 2039571968,
+      "largest_alloc_size": 1603339008,
+      "bytes_limit": 12439289856,
+      "bytes_reserved": 0,
+      "peak_bytes_reserved": 0,
+      "largest_free_block_bytes": 0,
+      "pool_bytes": 4431282176,
+      "peak_pool_bytes": 4431282176
+     },
+     "evidence_path": "/home/smirn/nexus_campaign_verified_outputs/capacity/walker/PASS.json"
+    }
+   ],
+   "model_inference": {
+    "pass_inference": true,
+    "model": "Qwen/Qwen2.5-1.5B-Instruct",
+    "revision": "989aa7980e4cf806f80c7fef2b1adb7bc71aa306",
+    "device": "cpu",
+    "dtype": "float32",
+    "torch": "2.6.0+cpu",
+    "transformers": "4.57.1",
+    "seconds": 1.8234522060001837,
+    "generated_tokens": 8,
+    "scientific_sample": false
+   },
+   "all_required_checks_passed": true,
+   "primary_matrix_training_started": false
+  }
+ },
+ "matrix_log_phases": [
+  "BEGIN phase=core UTC=2026-09-07T08:05:44Z",
+  "END phase=core UTC=2026-09-07T15:25:36Z",
+  "BEGIN phase=initial UTC=2026-09-07T15:25:37Z",
+  "END phase=initial UTC=2026-09-07T15:39:03Z",
+  "BEGIN phase=resample UTC=2026-09-07T15:39:03Z",
+  "END phase=resample UTC=2026-09-07T15:57:56Z",
+  "BEGIN phase=llm_reference UTC=2026-09-07T15:57:56Z",
+  "END phase=llm_reference UTC=2026-09-07T16:50:55Z",
+  "BEGIN phase=llm_pilot UTC=2026-09-07T16:50:55Z",
+  "END phase=llm_pilot UTC=2026-09-07T16:50:55Z",
+  "BEGIN phase=pilot_eval UTC=2026-09-07T16:50:56Z",
+  "END phase=pilot_eval UTC=2026-09-07T16:50:56Z",
+  "BEGIN phase=refine UTC=2026-09-07T16:50:56Z",
+  "END phase=refine UTC=2026-09-07T16:50:56Z",
+  "BEGIN phase=llm_final UTC=2026-09-07T16:50:56Z",
+  "END phase=llm_final UTC=2026-09-07T16:50:56Z",
+  "BEGIN phase=rgb UTC=2026-09-07T16:50:56Z",
+  "END phase=rgb UTC=2026-09-08T01:55:39Z",
+  "BEGIN phase=curves UTC=2026-09-08T01:55:39Z",
+  "END phase=curves UTC=2026-09-08T04:01:27Z",
+  "BEGIN phase=probes UTC=2026-09-08T04:01:27Z",
+  "END phase=probes UTC=2026-09-08T05:15:22Z",
+  "BEGIN phase=shifts UTC=2026-09-08T05:15:22Z",
+  "END phase=shifts UTC=2026-09-08T06:56:53Z",
+  "BEGIN phase=llm_eval UTC=2026-09-08T06:56:53Z",
+  "END phase=llm_eval UTC=2026-09-08T07:00:47Z",
+  "BEGIN phase=media UTC=2026-09-08T07:00:47Z",
+  "END phase=media UTC=2026-09-08T07:03:49Z",
+  "ALL_DECLARED_PHASES_COMPLETED UTC=2026-09-08T07:03:50Z"
+ ],
+ "matrix_log": "matrix_2026-09-07_08-05-44.log",
+ "kit_git_commit": ""
+}

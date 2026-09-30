@@ -1,0 +1,218 @@
+[
+  {
+    "env": "Go1JoystickFlatTerrain",
+    "checkpoint": "go1_nesy_s0",
+    "removed_skill": "stand",
+    "intact_success": 0.28368934988975525,
+    "success": 0.3093251883983612,
+    "prediction": "minor (>=80% of intact)",
+    "prediction_held": true
+  },
+  {
+    "env": "Go1JoystickFlatTerrain",
+    "checkpoint": "go1_nesy_s0",
+    "removed_skill": "track_velocity",
+    "intact_success": 0.28368934988975525,
+    "success": 0.25354260206222534,
+    "prediction": "drop (<80% of intact)",
+    "prediction_held": false
+  },
+  {
+    "env": "Go1JoystickFlatTerrain",
+    "checkpoint": "go1_nesy_s0",
+    "removed_skill": "turn",
+    "intact_success": 0.28368934988975525,
+    "success": 0.2063932716846466,
+    "prediction": "drop (<80% of intact)",
+    "prediction_held": true
+  },
+  {
+    "env": "Go1JoystickFlatTerrain",
+    "checkpoint": "go1_nesy_s0",
+    "removed_skill": "recover",
+    "intact_success": 0.28368934988975525,
+    "success": 0.2871803045272827,
+    "prediction": "large drop (<50% of intact)",
+    "prediction_held": false
+  },
+  {
+    "env": "Go1JoystickFlatTerrain",
+    "checkpoint": "go1_nesy_s1",
+    "removed_skill": "stand",
+    "intact_success": 0.17554029822349548,
+    "success": 0.15953348577022552,
+    "prediction": "minor (>=80% of intact)",
+    "prediction_held": true
+  },
+  {
+    "env": "Go1JoystickFlatTerrain",
+    "checkpoint": "go1_nesy_s1",
+    "removed_skill": "track_velocity",
+    "intact_success": 0.17554029822349548,
+    "success": 0.14703160524368286,
+    "prediction": "drop (<80% of intact)",
+    "prediction_held": false
+  },
+  {
+    "env": "Go1JoystickFlatTerrain",
+    "checkpoint": "go1_nesy_s1",
+    "removed_skill": "turn",
+    "intact_success": 0.17554029822349548,
+    "success": 0.20675429701805115,
+    "prediction": "drop (<80% of intact)",
+    "prediction_held": false
+  },
+  {
+    "env": "Go1JoystickFlatTerrain",
+    "checkpoint": "go1_nesy_s1",
+    "removed_skill": "recover",
+    "intact_success": 0.17554029822349548,
+    "success": 0.1680552065372467,
+    "prediction": "large drop (<50% of intact)",
+    "prediction_held": false
+  },
+  {
+    "env": "Go1JoystickFlatTerrain",
+    "checkpoint": "go1_nesy_s2",
+    "removed_skill": "stand",
+    "intact_success": 0.3187026381492615,
+    "success": 0.4461178779602051,
+    "prediction": "minor (>=80% of intact)",
+    "prediction_held": true
+  },
+  {
+    "env": "Go1JoystickFlatTerrain",
+    "checkpoint": "go1_nesy_s2",
+    "removed_skill": "track_velocity",
+    "intact_success": 0.3187026381492615,
+    "success": 0.23256656527519226,
+    "prediction": "drop (<80% of intact)",
+    "prediction_held": true
+  },
+  {
+    "env": "Go1JoystickFlatTerrain",
+    "checkpoint": "go1_nesy_s2",
+    "removed_skill": "turn",
+    "intact_success": 0.3187026381492615,
+    "success": 0.2752559185028076,
+    "prediction": "drop (<80% of intact)",
+    "prediction_held": false
+  },
+  {
+    "env": "Go1JoystickFlatTerrain",
+    "checkpoint": "go1_nesy_s2",
+    "removed_skill": "recover",
+    "intact_success": 0.3187026381492615,
+    "success": 0.3206768035888672,
+    "prediction": "large drop (<50% of intact)",
+    "prediction_held": false
+  },
+  {
+    "env": "HopperHop",
+    "checkpoint": "hopper_nesy_s0",
+    "removed_skill": "stand_recover",
+    "intact_success": 0.19770312309265137,
+    "success": 0.19242186844348907,
+    "prediction": "drop (<80% of intact)",
+    "prediction_held": false
+  },
+  {
+    "env": "HopperHop",
+    "checkpoint": "hopper_nesy_s0",
+    "removed_skill": "hop_forward",
+    "intact_success": 0.19770312309265137,
+    "success": 0.16187499463558197,
+    "prediction": "large drop (<50% of intact)",
+    "prediction_held": false
+  },
+  {
+    "env": "HopperHop",
+    "checkpoint": "hopper_nesy_s0",
+    "removed_skill": "stabilize_landing",
+    "intact_success": 0.19770312309265137,
+    "success": 0.1771562397480011,
+    "prediction": "minor (>=80% of intact)",
+    "prediction_held": true
+  },
+  {
+    "env": "HopperHop",
+    "checkpoint": "hopper_nesy_s0",
+    "removed_skill": "energy_efficient",
+    "intact_success": 0.19770312309265137,
+    "success": 0.17812500894069672,
+    "prediction": "no collapse (>=50% of intact)",
+    "prediction_held": true
+  },
+  {
+    "env": "HopperHop",
+    "checkpoint": "hopper_nesy_s1",
+    "removed_skill": "stand_recover",
+    "intact_success": 0.21832811832427979,
+    "success": 0.21504688262939453,
+    "prediction": "drop (<80% of intact)",
+    "prediction_held": false
+  },
+  {
+    "env": "HopperHop",
+    "checkpoint": "hopper_nesy_s1",
+    "removed_skill": "hop_forward",
+    "intact_success": 0.21832811832427979,
+    "success": 0.22176562249660492,
+    "prediction": "large drop (<50% of intact)",
+    "prediction_held": false
+  },
+  {
+    "env": "HopperHop",
+    "checkpoint": "hopper_nesy_s1",
+    "removed_skill": "stabilize_landing",
+    "intact_success": 0.21832811832427979,
+    "success": 0.21962499618530273,
+    "prediction": "minor (>=80% of intact)",
+    "prediction_held": true
+  },
+  {
+    "env": "HopperHop",
+    "checkpoint": "hopper_nesy_s1",
+    "removed_skill": "energy_efficient",
+    "intact_success": 0.21832811832427979,
+    "success": 0.1842968761920929,
+    "prediction": "no collapse (>=50% of intact)",
+    "prediction_held": true
+  },
+  {
+    "env": "HopperHop",
+    "checkpoint": "hopper_nesy_s2",
+    "removed_skill": "stand_recover",
+    "intact_success": 0.3696562647819519,
+    "success": 0.37232810258865356,
+    "prediction": "drop (<80% of intact)",
+    "prediction_held": false
+  },
+  {
+    "env": "HopperHop",
+    "checkpoint": "hopper_nesy_s2",
+    "removed_skill": "hop_forward",
+    "intact_success": 0.3696562647819519,
+    "success": 0.31993746757507324,
+    "prediction": "large drop (<50% of intact)",
+    "prediction_held": false
+  },
+  {
+    "env": "HopperHop",
+    "checkpoint": "hopper_nesy_s2",
+    "removed_skill": "stabilize_landing",
+    "intact_success": 0.3696562647819519,
+    "success": 0.35148435831069946,
+    "prediction": "minor (>=80% of intact)",
+    "prediction_held": true
+  },
+  {
+    "env": "HopperHop",
+    "checkpoint": "hopper_nesy_s2",
+    "removed_skill": "energy_efficient",
+    "intact_success": 0.3696562647819519,
+    "success": 0.32409369945526123,
+    "prediction": "no collapse (>=50% of intact)",
+    "prediction_held": true
+  }
+]

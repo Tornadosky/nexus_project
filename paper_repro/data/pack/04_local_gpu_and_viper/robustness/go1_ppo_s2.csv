@@ -1,0 +1,6 @@
+arm,env,episode_length_mean,episode_return_mean,episode_return_std,meta,mode,num_timesteps,perturbation,primary_goal_metric,primary_success_rate,seed,train_env
+ppo,Go1JoystickFlatTerrain,847.328125,15.404012680053711,7.0977559089660645,ppo,action_noise,20000000,0.0,0.01754419133067131,0.9747116565704346,2,Go1JoystickFlatTerrain
+ppo,Go1JoystickFlatTerrain,836.640625,15.090790748596191,7.143362522125244,ppo,action_noise,20000000,0.05,0.017309052869677544,0.9744439125061035,2,Go1JoystickFlatTerrain
+ppo,Go1JoystickFlatTerrain,853.296875,14.317513465881348,6.360532760620117,ppo,action_noise,20000000,0.1,0.016325440257787704,0.9764903783798218,2,Go1JoystickFlatTerrain
+ppo,Go1JoystickFlatTerrain,920.0625,9.042640686035156,4.1869306564331055,ppo,action_noise,20000000,0.2,0.009567661210894585,0.8789854049682617,2,Go1JoystickFlatTerrain
+ppo,Go1JoystickFlatTerrain,831.296875,2.4647598266601562,2.2115230560302734,ppo,action_noise,20000000,0.3,0.0028226464055478573,0.4005779027938843,2,Go1JoystickFlatTerrain

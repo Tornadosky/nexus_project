@@ -1,0 +1,6 @@
+arm,env,episode_length_mean,episode_return_mean,episode_return_std,meta,mode,num_timesteps,perturbation,primary_goal_metric,primary_success_rate,seed,train_env
+ppo,PandaPickCube,150.0,737.2076416015625,58.998634338378906,ppo,action_noise,26214400,0.0,4.914717674255371,1.0,1,PandaPickCube
+ppo,PandaPickCube,150.0,736.930908203125,58.085567474365234,ppo,action_noise,26214400,0.05,4.912873268127441,1.0,1,PandaPickCube
+ppo,PandaPickCube,150.0,736.2630615234375,58.5882568359375,ppo,action_noise,26214400,0.1,4.908420562744141,1.0,1,PandaPickCube
+ppo,PandaPickCube,150.0,734.6124267578125,60.210391998291016,ppo,action_noise,26214400,0.2,4.897416114807129,1.0,1,PandaPickCube
+ppo,PandaPickCube,150.0,723.423583984375,73.1277847290039,ppo,action_noise,26214400,0.3,4.822824478149414,1.0,1,PandaPickCube

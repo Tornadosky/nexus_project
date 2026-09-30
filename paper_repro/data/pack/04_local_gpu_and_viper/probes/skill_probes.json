@@ -1,0 +1,98 @@
+[
+  {
+    "env": "Go1JoystickFlatTerrain",
+    "skill": "stand",
+    "episode_return_mean": 5.935941378275554,
+    "semantics": {
+      "go1/no_fall_rate": 0.9941274126370748,
+      "go1/velocity_tracking_error_mean": 0.8655891617139181,
+      "go1/yaw_tracking_error_mean": 0.5152123073736826
+    },
+    "specialty": "go1/no_fall_rate",
+    "matches_name": true
+  },
+  {
+    "env": "Go1JoystickFlatTerrain",
+    "skill": "track_velocity",
+    "episode_return_mean": 0.8274540106455485,
+    "semantics": {
+      "go1/no_fall_rate": 0.7321024338404337,
+      "go1/velocity_tracking_error_mean": 0.35038264592488605,
+      "go1/yaw_tracking_error_mean": 1.0766373475392659
+    },
+    "specialty": "go1/velocity_tracking_error_mean",
+    "matches_name": true
+  },
+  {
+    "env": "Go1JoystickFlatTerrain",
+    "skill": "turn",
+    "episode_return_mean": 4.336205164591472,
+    "semantics": {
+      "go1/no_fall_rate": 0.5324670461316904,
+      "go1/velocity_tracking_error_mean": 0.8997401197751363,
+      "go1/yaw_tracking_error_mean": 0.1934709995985031
+    },
+    "specialty": "go1/yaw_tracking_error_mean",
+    "matches_name": true
+  },
+  {
+    "env": "Go1JoystickFlatTerrain",
+    "skill": "recover",
+    "episode_return_mean": 6.44083817799886,
+    "semantics": {
+      "go1/no_fall_rate": 0.9892487724622091,
+      "go1/velocity_tracking_error_mean": 0.8853139479955038,
+      "go1/yaw_tracking_error_mean": 0.5243648687998453
+    },
+    "specialty": "go1/no_fall_rate",
+    "matches_name": true
+  },
+  {
+    "env": "HopperHop",
+    "skill": "stand_recover",
+    "episode_return_mean": 45.30922603607178,
+    "semantics": {
+      "hopper/upright_rate": 0.2839583332339923,
+      "hopper/forward_velocity_mean": 0.14695688306043544,
+      "hopper/joint_speed": 1.1766241590181987
+    },
+    "specialty": "hopper/upright_rate",
+    "matches_name": true
+  },
+  {
+    "env": "HopperHop",
+    "skill": "hop_forward",
+    "episode_return_mean": 98.65479787190755,
+    "semantics": {
+      "hopper/upright_rate": 0.12048437694708507,
+      "hopper/forward_velocity_mean": 1.1723770499229431,
+      "hopper/joint_speed": 4.389095624287923
+    },
+    "specialty": "hopper/forward_velocity_mean",
+    "matches_name": true
+  },
+  {
+    "env": "HopperHop",
+    "skill": "stabilize_landing",
+    "episode_return_mean": 4.628839651743571,
+    "semantics": {
+      "hopper/upright_rate": 0.167218749721845,
+      "hopper/forward_velocity_mean": 0.006234630011022091,
+      "hopper/joint_speed": 0.3727271358172099
+    },
+    "specialty": "hopper/joint_speed",
+    "matches_name": true
+  },
+  {
+    "env": "HopperHop",
+    "skill": "energy_efficient",
+    "episode_return_mean": 164.58614603678384,
+    "semantics": {
+      "hopper/upright_rate": 0.2648229201634725,
+      "hopper/forward_velocity_mean": 0.8827972412109375,
+      "hopper/joint_speed": 3.8116663297017417
+    },
+    "specialty": "hopper/joint_speed",
+    "matches_name": false
+  }
+]
