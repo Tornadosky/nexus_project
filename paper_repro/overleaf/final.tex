@@ -39,7 +39,7 @@ Evaluation of Hierarchical Skills, Symbolic Selection, Language-Generated Skills
 \maketitle
 
 \begin{abstract}
-NEXUS represents a policy as a high-level choice among semantically named skills. We extend this structure from discrete actions to continuous control by replacing each low-level discrete skill policy with a bounded deterministic actor and state--action critic while retaining the discrete skill selector. We compare neural, symbolic, and neuro-symbolic (NeSy) variants with flat and hierarchical baselines across locomotion and manipulation tasks. The experiments test performance and robustness, the behavioral and causal role of individual skills, the contribution of symbolic selection, language-generated skill specifications, and visual augmentation. Neural and NeSy variants improve reliability over the matched flat learner on the Hopper and Go1 evaluations, but the advantage is task-dependent and does not imply superiority to PPO. Skill interventions show meaningful but partly redundant modules, symbolic rules work better as constraints than as a complete controller, and neither generated skills nor camera input provides a consistent performance benefit under the tested conditions.
+NEXUS represents a policy as a high-level choice among semantically named skills. We extend this structure from discrete actions to continuous control by replacing each low-level discrete skill policy with a bounded deterministic actor and state--action critic while retaining the discrete skill selector. We compare neural, symbolic, and neuro-symbolic (NeSy) variants with flat and hierarchical baselines across locomotion and manipulation tasks. The experiments test performance and robustness, the behavior of individual skills and their contribution to task success, the contribution of symbolic selection, language-generated skill specifications, and visual augmentation. Neural and NeSy variants improve reliability over the matched flat learner on the Hopper and Go1 evaluations, but the advantage is task-dependent and does not imply superiority to PPO. Skill interventions show meaningful but partly redundant modules, symbolic rules work better as constraints than as a complete controller, and neither generated skills nor camera input provides a consistent performance benefit under the tested conditions.
 \end{abstract}
 
 \vspace{2pt}
@@ -286,7 +286,7 @@ Neural and NeSy outperform Flat in the Hopper and Go1 task-success comparisons a
 This subsection addresses Q2 using skill-reward curves, forced execution, and skill removal.
 
 \subsubsection{Skill-reward learning}
-Figure~\ref{fig:skillreturns} tracks each hand-written skill reward during NeSy training across all six tasks. The forward-motion rewards grow on Cheetah and Walker, while Cartpole's recovery reward has a large negative early transient. Each curve sums that reward over the whole episode, including steps when another skill acts. It therefore tracks the corresponding objective, not how much that actor contributes to task return. Reward magnitudes also differ by design, so behavioral and removal tests are needed to establish what the skills do. Appendix~\ref{app:skillreturns} repeats the measurement on Go1 and Hopper for the Flat, HPQN, and PPO baselines (Fig.~\ref{fig:skillbaselines}) and for the Neural and Symbolic variants beside NeSy (Fig.~\ref{fig:skillvariants}); the other four tasks have no matched baseline logs.
+Figure~\ref{fig:skillreturns} tracks each hand-written skill reward during NeSy training across all six tasks. The forward-motion rewards grow on Cheetah and Walker, while Cartpole's recovery reward has a large negative early transient. Each curve sums that reward over the whole episode, including steps when another skill acts. It therefore tracks the corresponding objective, not how much that actor contributes to task return. Reward magnitudes also differ by design, so behavioral and removal tests are needed to establish what the skills do. These curves characterize objective learning within NeSy, but do not establish superior skill-learning efficiency relative to a flat RL baseline. Appendix~\ref{app:skillreturns} repeats the measurement on Go1 and Hopper for the Flat, HPQN, and PPO baselines (Fig.~\ref{fig:skillbaselines}) and for the Neural and Symbolic variants beside NeSy (Fig.~\ref{fig:skillvariants}); the other four tasks have no matched baseline logs.
 
 \begin{figure*}[!t]
 \centering
@@ -310,7 +310,7 @@ We next remove one actor from a trained NeSy policy and let the selector reroute
 \end{figure}
 
 \par\noindent\emph{\textbf{Q2 conclusion.}}
-The tested NeSy actors are mostly behaviorally consistent with their semantic names, but the skill library is partly redundant: removing one actor often preserves substantial task success because the learned selector reroutes through other skills. The hierarchy is therefore best described as an interpretable set of behavioral modes rather than a collection of strictly independent causal modules.
+The tested NeSy actors are mostly behaviorally consistent with their semantic names, but the skill library is partly redundant: removing one actor often preserves substantial task success because the learned selector reroutes through other skills. The hierarchy is therefore best described as an interpretable set of behavioral modes with overlapping roles.
 
 \subsection{Symbolic Selection}
 This subsection addresses Q3.
@@ -376,19 +376,21 @@ The comparisons reported here test camera augmentation, not vision-only control.
 The state-only condition uses the same vision-configured environment but disables the actor's camera pathway, keeping the task, reward, and state representation unchanged. The fixed-image condition, labeled \emph{Constant} in figures, keeps the encoder and its extra parameters but feeds the same frozen image at every time step. It therefore tests whether any change comes from informative visual content rather than simply adding a CNN pathway. Representative camera inputs and supplementary rollouts are available on the project website linked at the beginning of the paper.
 
 \subsubsection{Performance and visual information}
+\emph{Evaluation score} is the headline metric of the camera evaluation and is not the same quantity on every environment. On Cartpole it is the fraction of evaluation steps with the pole upright and the cart inside the track ($|\theta|<0.25$, $|x|<1$), which matches the task-success predicate. On Walker and Cheetah it is the mean environment reward per step, not the binary task-success rate used elsewhere. Each score is the mean over the evaluation episodes of one run, so values are not comparable across environments.
+
 Figure~\ref{fig:rgbchange} reports seed-matched changes in evaluation score relative to state-only on Cartpole, Walker, and Cheetah. Walker often improves, but not in every run; Cartpole includes substantial losses, while Cheetah has smaller mixed changes. The pattern does not support a general benefit from adding the camera pathway.
 
 \begin{figure}[!t]
 \centering
 \includegraphics[width=0.96\columnwidth]{fig_rgb_change.pdf}
-\caption{Seed-matched percentage change in the reported evaluation score from state-only to state+camera on Cartpole, Walker, and Cheetah. Positive values indicate improvement; negative values indicate a decrease. These relative changes should not be interpreted as a common task-success scale across environments.}
+\caption{Seed-matched percentage change in the evaluation score from state-only to state+camera on Cartpole, Walker, and Cheetah, computed as $100\times(\text{camera}-\text{state-only})/\text{state-only}$. Each environment has $n=8$ points: three 30-episode runs plus five 64-episode runs on Cartpole and Walker, and three 30-episode runs plus five changes recorded only as percentages on Cheetah. Positive values indicate improvement; negative values indicate a decrease. These relative changes should not be interpreted as a common task-success scale across environments.}
 \label{fig:rgbchange}
 \end{figure}
 
 \begin{figure*}[!t]
 \centering
 \includegraphics[width=0.96\textwidth]{fig_rgb_controlled.pdf}
-\caption{Visual-input evaluation scores on Cartpole and Walker for state-only, state+camera, and fixed-image NeSy. ``state+RGB'' denotes the camera pathway and ``constant'' the fixed-image condition. The overlapping ranges show no clear, consistent camera advantage in this comparison.}
+\caption{Visual-input evaluation scores on Cartpole and Walker for state-only, state+camera, and fixed-image NeSy. Each point is one of five seeds evaluated on 64 episodes; the score is the upright-and-centered step fraction on Cartpole and reward per step on Walker, so the axes share a range but not units. ``state+RGB'' denotes the camera pathway and ``constant'' the fixed-image condition. The overlapping ranges show no clear, consistent camera advantage in this comparison.}
 \label{fig:rgbsummary}
 \end{figure*}
 
@@ -400,10 +402,10 @@ Adding the camera pathway does not provide a consistent performance advantage ov
 
 \section{Discussion}
 \subsection{What the hierarchy contributes}
-The results suggest that hierarchy can help organize learning rather than guarantee higher performance. Neural and NeSy improve on Flat AC-PQN, but the HPQN comparison shows that the source of the improvement is task-dependent: multiple actors already help on Hopper, while skill-specific objectives matter on Go1.
+The results suggest that hierarchy can help organize learning rather than guarantee higher performance. In the Hopper and Go1 task-success comparisons, Neural and NeSy improve on Flat AC-PQN, but the HPQN comparison shows that the source of the improvement is task-dependent: multiple actors already help on Hopper, while skill-specific objectives matter on Go1.
 
 \subsection{Behavioral interpretability versus modular necessity}
-Here interpretability means that named skills correspond to observable behavioral modes and permit direct interventions. Forced execution tests behavioral meaning, removal tests causal contribution, and selector editing tests symbolic structure. The experiments show meaningful but overlapping skills, so the hierarchy exposes an interpretable control interface rather than a set of strictly independent modules.
+Here interpretability means that named skills correspond to observable behavioral modes and permit direct interventions. Forced execution tests behavioral meaning, removal tests causal contribution under the removal intervention, and selector editing tests symbolic structure. The experiments show meaningful but overlapping skills, so the hierarchy exposes an interpretable control interface rather than a set of strictly independent modules.
 
 \subsection{Reliability and competitiveness are different questions}
 A matched Flat ablation tests the effect of the hierarchy, while PPO provides an external performance reference. Neural and NeSy outperform Flat on Hopper and Go1 task success, but PPO achieves higher average success on Go1 and lower success on Hopper. Improving Flat therefore does not establish universal superiority over other RL methods.
@@ -626,7 +628,7 @@ Go1 & $0.284\pm0.084$ & $0.037\pm0.011$ & $0.017$\\
 
 
 \begin{table}[!t]
-\caption{Separate exploratory feedback-refinement trajectories from iteration 0 to iteration 3, allowing the skill count to change. Each iteration is one training run. These are not the fixed-count, one-revision comparisons in Fig.~\ref{fig:llm}, and iteration 0 is not the multi-seed initial mean in Table~\ref{tab:llmmain}.}
+\caption{Feedback-refinement trajectories from iteration 0 to iteration 3, allowing the skill count to change. Each iteration is one training run. These are not the fixed-count, one-revision comparisons in Fig.~\ref{fig:llm}, and iteration 0 is not the multi-seed initial mean in Table~\ref{tab:llmmain}.}
 \label{tab:refineoutcome}
 \centering
 \footnotesize
@@ -649,7 +651,7 @@ Go1 & $0.0062\rightarrow0.0000059$ & $3\rightarrow5$ & collapse after iter.~0\\
 \centering
 \includegraphics[width=0.98\textwidth]{fig_skill_usage_Cartpole.pdf}\\[3pt]
 \includegraphics[width=0.98\textwidth]{fig_skill_usage_Cheetah.pdf}
-\caption{Skill usage for Cartpole and Cheetah. Each block is the fraction of rollout steps spent in that skill. Generated sets can concentrate selection in a single generic skill; Cartpole's initial set uses one skill on every step.}
+\caption{Skill usage for Cartpole and Cheetah. Each bar is the fraction of rollout steps spent in that skill. Generated sets can concentrate selection in a single generic skill; Cartpole's initial set uses one skill on every step.}
 \label{fig:usagecartpole}
 \end{figure*}
 
