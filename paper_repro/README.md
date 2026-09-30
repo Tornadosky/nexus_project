@@ -2,7 +2,7 @@
 
 This folder is everything needed to check `final.tex` against the numbers and to redraw the figures. It does not include training checkpoints.
 
-Run the scripts from `code/` with `numpy` and `matplotlib` installed:
+Run the scripts from `code/` with `numpy` and `matplotlib` installed. The committed PDFs were written by matplotlib 3.10.8; `make_skill_return_figs.py` reproduces them pixel for pixel under that version, and another version shifts the page size by a fraction of a point.
 
 ```bash
 cd paper_repro/code
@@ -22,7 +22,7 @@ Each script writes PDFs into `../figures/`. Paths are relative to this bundle (`
 
 `fig_ladder.pdf` and `fig_skill_returns.pdf` also differ between `overleaf/` and `figures/`. `figures/` is what the scripts in `code/` produce. `overleaf/` is what is uploaded now.
 
-`fig_skill_returns_baselines.pdf` is produced by `make_skill_return_figs.py` and is not in the Overleaf project.
+`fig_skill_returns_baselines.pdf` (Flat, HPQN, PPO) and `fig_skill_returns_variants.pdf` (Neural, Symbolic, NeSy) are produced by `make_skill_return_figs.py` and are cited in Appendix B of `final.tex`. Both PDFs are in `overleaf/` and need uploading to the Overleaf project.
 
 `make_sweep_fig.py` does not read a results table. The five seeds in `fig1_sweep.pdf` are written in that file.
 
@@ -40,7 +40,7 @@ Each script writes PDFs into `../figures/`. Paths are relative to this bundle (`
 | `fig8` / six-env curves in `make_extra_figs.py` | `make_extra_figs.py` | `curves_return.csv`, `ppo_baseline/*.progress.json`, zip `curves.csv` |
 | `fig_controlled_llm.pdf` | `make_controlled_figs.py` | zip: `llm_v2_metrics.csv`, `final_metrics.csv`, `llm.json` |
 | `fig_rgb_change.pdf`, `fig_rgb_controlled.pdf` | `make_rgb_figs.py` | `data/pack/02_rosela_berberi_rgb_melody/state_plus_rgb_eval30/`; zip `rgb_conditions.csv` |
-| `fig_skill_returns.pdf`, `fig_skill_returns_baselines.pdf` | `make_skill_return_figs.py` | `data/logs/skill_returns_local.csv`; zip `curves.csv` metric `common_skill_return/` |
+| `fig_skill_returns.pdf`, `fig_skill_returns_baselines.pdf`, `fig_skill_returns_variants.pdf` | `make_skill_return_figs.py` | `data/logs/skill_returns_local.csv`; zip `curves.csv` metric `common_skill_return/` |
 | `fig_rgb_fusion.pdf` | `make_rgb_fusion.py` | diagram only, no results file |
 
 The zip is `data/sealed/nexus_matrix_review_2026-09-08_18-28.zip`. The same files are extracted beside it under `data/sealed/nexus_matrix_review/` so tables can be opened without unzipping. `make_controlled_figs.py` also prints the dominant-skill fractions used in the language tables.

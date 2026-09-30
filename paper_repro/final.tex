@@ -286,7 +286,7 @@ Neural and NeSy outperform Flat in the Hopper and Go1 task-success comparisons a
 This subsection addresses Q2 using skill-reward curves, forced execution, and skill removal.
 
 \subsubsection{Skill-reward learning}
-Figure~\ref{fig:skillreturns} tracks each hand-written skill reward during NeSy training across all six tasks. The forward-motion rewards grow on Cheetah and Walker, while Cartpole's recovery reward has a large negative early transient. Each curve sums that reward over the whole episode, including steps when another skill acts. It therefore tracks the corresponding objective, not how much that actor contributes to task return. Reward magnitudes also differ by design, so behavioral and removal tests are needed to establish what the skills do.
+Figure~\ref{fig:skillreturns} tracks each hand-written skill reward during NeSy training across all six tasks. The forward-motion rewards grow on Cheetah and Walker, while Cartpole's recovery reward has a large negative early transient. Each curve sums that reward over the whole episode, including steps when another skill acts. It therefore tracks the corresponding objective, not how much that actor contributes to task return. Reward magnitudes also differ by design, so behavioral and removal tests are needed to establish what the skills do. Appendix~\ref{app:skillreturns} repeats the measurement on Go1 and Hopper for the Flat, HPQN, and PPO baselines (Fig.~\ref{fig:skillbaselines}) and for the Neural and Symbolic variants beside NeSy (Fig.~\ref{fig:skillvariants}); the other four tasks have no matched baseline logs.
 
 \begin{figure*}[!t]
 \centering
@@ -651,6 +651,25 @@ Go1 & $0.0062\rightarrow0.0000059$ & $3\rightarrow5$ & collapse after iter.~0\\
 \includegraphics[width=0.98\textwidth]{fig_skill_usage_Cheetah.pdf}
 \caption{Skill usage for Cartpole and Cheetah. Each block is the fraction of rollout steps spent in that skill. Generated sets can concentrate selection in a single generic skill; Cartpole's initial set uses one skill on every step.}
 \label{fig:usagecartpole}
+\end{figure*}
+
+\section{Skill Returns for Baselines and Variants}
+\label{app:skillreturns}
+
+Figures~\ref{fig:skillbaselines} and~\ref{fig:skillvariants} score the hand-written Go1 and Hopper skill rewards on every method's evaluation behavior, using the same quantity as Fig.~\ref{fig:skillreturns}. Flat, HPQN, and PPO were not trained on these rewards, so their curves show how much of each skill objective the policy's behavior satisfies, not skill learning. On Hopper, Neural and NeSy reach the highest return on all four skills, HPQN follows on \texttt{hop\_forward}, and PPO stays near or below zero. On Go1 the Flat, HPQN, and hierarchical curves end close together, whereas PPO is higher on \texttt{stand}, \texttt{turn}, and \texttt{recover}. Bands are seed min--max with $n=5$ and overlap substantially on Go1, so these are descriptive comparisons.
+
+\begin{figure*}[!t]
+\centering
+\includegraphics[width=0.93\textwidth]{fig_skill_returns_baselines.pdf}
+\caption{Per-skill reward accumulated over the episode versus environment interaction steps for the Flat, HPQN, and PPO baselines on Go1 and Hopper, scored on the same hand-written skill rewards as Fig.~\ref{fig:skillreturns}. The baselines were not trained on these rewards. Each line is one skill and each band is the seed min--max ($n=5$). Rewards include all steps, and reward scales differ between skills and tasks.}
+\label{fig:skillbaselines}
+\end{figure*}
+
+\begin{figure*}[!t]
+\centering
+\includegraphics[width=0.93\textwidth]{fig_skill_returns_variants.pdf}
+\caption{Per-skill reward accumulated over the episode versus environment interaction steps for the Neural, Symbolic, and NeSy variants on Go1 and Hopper. The NeSy panels repeat the Go1 and Hopper panels of Fig.~\ref{fig:skillreturns}. Each line is one skill and each band is the seed min--max ($n=5$). Rewards include all steps, even when another skill acts.}
+\label{fig:skillvariants}
 \end{figure*}
 
 

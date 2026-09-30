@@ -123,16 +123,8 @@ def _sealed_methods(methods):
     return out
 
 
-def fig_skill_returns_baselines():
-    """Go1 and Hopper. Flat, HPQN, and PPO scored on the NeSy skill rewards.
-
-    Cartpole, Cheetah, Panda, and Walker are absent: their flat logs contain
-    only ``skill_return/0_flat_actor``, and PPO logs episode reward, not these
-    skill objectives. The sealed matrix is the only place the same quantity
-    exists for a non-NeSy policy.
-    """
-    methods = ("flat", "hpqn", "ppo")
-    titles = {"flat": "flat", "hpqn": "HPQN", "ppo": "PPO"}
+def _sealed_grid(methods, titles, name):
+    """Go1 and Hopper, one column per method, scored on the NeSy skill rewards."""
     pretty = {"Go1JoystickFlatTerrain": "Go1", "HopperHop": "Hopper"}
     sealed = _sealed_methods(methods)
     apply()
@@ -166,8 +158,33 @@ def fig_skill_returns_baselines():
     axes[1, 0].set_ylabel("skill return")
     for out in OUTS:
         out.mkdir(parents=True, exist_ok=True)
-        fig.savefig(out / "fig_skill_returns_baselines.pdf", bbox_inches="tight", pad_inches=0.02)
+        fig.savefig(out / name, bbox_inches="tight", pad_inches=0.02)
     plt.close(fig)
+
+
+def fig_skill_returns_baselines():
+    """Go1 and Hopper. Flat, HPQN, and PPO scored on the NeSy skill rewards.
+
+    Cartpole, Cheetah, Panda, and Walker are absent: their flat logs contain
+    only ``skill_return/0_flat_actor``, and PPO logs episode reward, not these
+    skill objectives. The sealed matrix is the only place the same quantity
+    exists for a non-NeSy policy.
+    """
+    _sealed_grid(("flat", "hpqn", "ppo"),
+                 {"flat": "flat", "hpqn": "HPQN", "ppo": "PPO"},
+                 "fig_skill_returns_baselines.pdf")
+
+
+def fig_skill_returns_variants():
+    """Go1 and Hopper. Neural, symbolic, and NeSy on the same skill rewards.
+
+    Same sealed ``common_skill_return`` series as the baselines figure. NeSy is
+    repeated from ``fig_skill_returns.pdf`` so the three hierarchical variants
+    sit side by side on one axis per row.
+    """
+    _sealed_grid(("neural", "symbolic", "nesy"),
+                 {"neural": "neural", "symbolic": "symbolic", "nesy": "NeSy"},
+                 "fig_skill_returns_variants.pdf")
 
 
 def fig_skill_returns():
@@ -217,3 +234,4 @@ def fig_skill_returns():
 if __name__ == "__main__":
     fig_skill_returns()
     fig_skill_returns_baselines()
+    fig_skill_returns_variants()
